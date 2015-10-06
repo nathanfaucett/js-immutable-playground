@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+    <meta charset="utf-8"/>
+
+    <meta http-equiv="cleartype" content="on"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
+
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="description" content=""/>
+    <meta name="keywords" content=""/>
+
+    <title>Immutable Playground</title>
+
+    <link href="index.css" rel="stylesheet"/>
+
+    <script type="application/javascript" async src="index.js"></script>
+
+  </head>
+
+  <body>
+
+    <h1>Module Immutable Persistent Data Structures</h1>
+    <p>Open console to play with ImmutableList, ImmutableVector, ImmutableMap, and ImmutableSet.</p>
+
+    <h1>Example</h1>
+    <pre>
+        > var a = new ImmutableList(0, 1, 2, 3);
+        > var b = a.push(4, 5, 6);
+        > a.toArray(); // -> [0, 1, 2, 3]
+        > b.toArray(); // -> [0, 1, 2, 3, 4, 5, 6]
+    </pre>
+
+    <h1>Github</h1>
+    <a href="https://github.com/nathanfaucett/immutable-list" target="_blank">Immutable List</a><br/>
+    <a href="https://github.com/nathanfaucett/immutable-vector" target="_blank">Immutable Vector</a><br/>
+    <a href="https://github.com/nathanfaucett/immutable-map" target="_blank">Immutable Map</a><br/>
+    <a href="https://github.com/nathanfaucett/immutable-set" target="_blank">Immutable Set</a><br/>
+
+  </body>
+
+</html>

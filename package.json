@@ -1,0 +1,36 @@
+{
+  "name": "immutable-playground",
+  "version": "0.0.1",
+  "description": "immutable persistent data structure playground for the browser",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nathanfaucett/immutable-playground.git"
+  },
+  "main": "src/index.js",
+  "scripts": {
+    "build": "npm run build_js && npm run build_css",
+    "build_js": "comn -f src/index.js -o index.js",
+    "build_css": "comn_css -f css/index.less -o index.css"
+  },
+  "keywords": [
+    "immutable-playground",
+    "immutable-playground.js"
+  ],
+  "author": "Nathan Faucett",
+  "license": "MIT",
+  "readmeFilename": "README.md",
+  "devDependencies": {
+    "comn": "git://github.com/nathanfaucett/comn.git",
+    "comn_css": "git://github.com/nathanfaucett/comn_css.git",
+    "grunt": "^0.4.5",
+    "grunt-contrib-jshint": "^0.10.0",
+    "grunt-jsbeautifier": "^0.2.7"
+  },
+  "dependencies": {
+    "immutable-list": "git://github.com/nathanfaucett/immutable-list.git",
+    "immutable-map": "git://github.com/nathanfaucett/immutable-map.git",
+    "immutable-set": "git://github.com/nathanfaucett/immutable-set.git",
+    "immutable-vector": "git://github.com/nathanfaucett/immutable-vector.git",
+    "native.less": "git://github.com/nathanfaucett/native.less.git"
+  }
+}
