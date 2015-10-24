@@ -51,9 +51,9 @@ function(require, exports, module, global) {
 var isNull = require(2),
     isUndefined = require(3),
     isArrayLike = require(4),
-    fastBindThis = require(10),
-    fastSlice = require(11),
-    defineProperty = require(13),
+    fastBindThis = require(9),
+    fastSlice = require(10),
+    defineProperty = require(12),
     isEqual = require(21);
 
 
@@ -933,7 +933,7 @@ module.exports = isFunction;
 },
 function(require, exports, module, global) {
 
-var isNullOrUndefined = require(9);
+var isNull = require(2);
 
 
 module.exports = isObject;
@@ -941,34 +941,7 @@ module.exports = isObject;
 
 function isObject(value) {
     var type = typeof(value);
-    return type === "function" || (!isNullOrUndefined(value) && type === "object") || false;
-}
-
-
-},
-function(require, exports, module, global) {
-
-var isNull = require(2),
-    isUndefined = require(3);
-
-
-module.exports = isNullOrUndefined;
-
-/**
-  isNullOrUndefined accepts any value and returns true
-  if the value is null or undefined. For all other values
-  false is returned.
-  
-  @param {Any}        any value to test
-  @returns {Boolean}  the boolean result of testing value
-
-  @example
-    isNullOrUndefined(null);   // returns true
-    isNullOrUndefined(undefined);   // returns true
-    isNullOrUndefined("string");    // returns false
-**/
-function isNullOrUndefined(value) {
-    return isNull(value) || isUndefined(value);
+    return type === "function" || (!isNull(value) && type === "object") || false;
 }
 
 
@@ -1014,7 +987,7 @@ function fastBindThis(callback, thisArg, length) {
 },
 function(require, exports, module, global) {
 
-var clamp = require(12),
+var clamp = require(11),
     isNumber = require(6);
 
 
@@ -1062,7 +1035,7 @@ function(require, exports, module, global) {
 
 var isObject = require(8),
     isFunction = require(7),
-    isPrimitive = require(14),
+    isPrimitive = require(13),
     isNative = require(15),
     has = require(19);
 
@@ -1114,7 +1087,7 @@ if (!isNative(nativeDefineProperty) || !(function() {
 },
 function(require, exports, module, global) {
 
-var isNullOrUndefined = require(9);
+var isNullOrUndefined = require(14);
 
 
 module.exports = isPrimitive;
@@ -1129,8 +1102,35 @@ function isPrimitive(obj) {
 },
 function(require, exports, module, global) {
 
+var isNull = require(2),
+    isUndefined = require(3);
+
+
+module.exports = isNullOrUndefined;
+
+/**
+  isNullOrUndefined accepts any value and returns true
+  if the value is null or undefined. For all other values
+  false is returned.
+  
+  @param {Any}        any value to test
+  @returns {Boolean}  the boolean result of testing value
+
+  @example
+    isNullOrUndefined(null);   // returns true
+    isNullOrUndefined(undefined);   // returns true
+    isNullOrUndefined("string");    // returns false
+**/
+function isNullOrUndefined(value) {
+    return isNull(value) || isUndefined(value);
+}
+
+
+},
+function(require, exports, module, global) {
+
 var isFunction = require(7),
-    isNullOrUndefined = require(9),
+    isNullOrUndefined = require(14),
     escapeRegExp = require(16);
 
 
@@ -1202,7 +1202,7 @@ function escapeRegExp(string) {
 function(require, exports, module, global) {
 
 var isString = require(18),
-    isNullOrUndefined = require(9);
+    isNullOrUndefined = require(14);
 
 
 module.exports = toString;
@@ -1235,7 +1235,7 @@ function(require, exports, module, global) {
 
 var isNative = require(15),
     getPrototypeOf = require(20),
-    isNullOrUndefined = require(9);
+    isNullOrUndefined = require(14);
 
 
 var nativeHasOwnProp = Object.prototype.hasOwnProperty,
@@ -1275,7 +1275,7 @@ function(require, exports, module, global) {
 
 var isObject = require(8),
     isNative = require(15),
-    isNullOrUndefined = require(9);
+    isNullOrUndefined = require(14);
 
 
 var nativeGetPrototypeOf = Object.getPrototypeOf,
@@ -1327,9 +1327,9 @@ function(require, exports, module, global) {
 var isNull = require(2),
     isUndefined = require(3),
     isArrayLike = require(4),
-    fastBindThis = require(10),
-    fastSlice = require(11),
-    defineProperty = require(13),
+    fastBindThis = require(9),
+    fastSlice = require(10),
+    defineProperty = require(12),
     isEqual = require(21);
 
 
@@ -2215,11 +2215,11 @@ var has = require(19),
     isNull = require(2),
     isUndefined = require(3),
     isObject = require(8),
-    defineProperty = require(13),
+    defineProperty = require(12),
     isEqual = require(21),
     hashCode = require(24),
     isArrayLike = require(4),
-    fastBindThis = require(10),
+    fastBindThis = require(9),
     Box = require(31),
     Iterator = require(32),
     IteratorValue = require(33),
@@ -2734,7 +2734,7 @@ var WeakMapPolyfill = require(25),
     isString = require(18),
     isFunction = require(7),
     isBoolean = require(27),
-    isNullOrUndefined = require(9),
+    isNullOrUndefined = require(14),
     numberHashCode = require(28),
     booleanHashCode = require(29),
     stringHashCode = require(30);
@@ -2803,7 +2803,7 @@ function setHashCode(value) {
 function(require, exports, module, global) {
 
 var isNative = require(15),
-    isPrimitive = require(14),
+    isPrimitive = require(13),
     createStore = require(26);
 
 
@@ -2858,8 +2858,8 @@ module.exports = WeakMapPolyfill;
 function(require, exports, module, global) {
 
 var has = require(19),
-    defineProperty = require(13),
-    isPrimitive = require(14);
+    defineProperty = require(12),
+    isPrimitive = require(13);
 
 
 var emptyStore = {
@@ -3533,7 +3533,7 @@ function iteratorReverse(_this) {
 function(require, exports, module, global) {
 
 var isNull = require(2),
-    isNullOrUndefined = require(9),
+    isNullOrUndefined = require(14),
     consts = require(35),
     mask = require(37),
     cloneAndSet = require(39),
@@ -3882,7 +3882,7 @@ function(require, exports, module, global) {
 var ImmutableMap = require(23),
     isUndefined = require(3),
     isArrayLike = require(4),
-    defineProperty = require(13);
+    defineProperty = require(12);
 
 
 var INTERNAL_CREATE = {},
