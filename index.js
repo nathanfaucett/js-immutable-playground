@@ -1,5 +1,17 @@
-(function(dependencies, undefined, global) {
+(function(dependencies, chunks, undefined, global) {
+    
     var cache = [];
+    
+
+    function Module() {
+        this.id = null;
+        this.filename = null;
+        this.dirname = null;
+        this.exports = {};
+        this.loaded = false;
+    }
+
+    Module.prototype.require = require;
 
     function require(index) {
         var module = cache[index],
@@ -9,14 +21,13 @@
             return module.exports;
         } else {
             callback = dependencies[index];
-            exports = {};
 
-            cache[index] = module = {
-                exports: exports,
-                require: require
-            };
+            cache[index] = module = new Module();
+            exports = module.exports;
 
-            callback.call(exports, require, exports, module, global);
+            callback.call(exports, require, exports, module, undefined, global);
+            module.loaded = true;
+
             return module.exports;
         }
     }
@@ -24,6 +35,14 @@
     require.resolve = function(path) {
         return path;
     };
+
+    
+
+    require.async = function async(index, callback) {
+        callback(require(index));
+    };
+
+    
 
     if (typeof(define) === "function" && define.amd) {
         define([], function() {
@@ -37,24 +56,27 @@
         
     }
 }([
-function(require, exports, module, global) {
+function(require, exports, module, undefined, global) {
+/* index.js */
 
 global.ImmutableList = require(1);
-global.ImmutableVector = require(22);
-global.ImmutableMap = require(23);
-global.ImmutableSet = require(46);
+global.ImmutableVector = require(2);
+global.ImmutableMap = require(3);
+global.ImmutableSet = require(4);
 
 
 },
-function(require, exports, module, global) {
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-list/src/index.js */
 
-var isNull = require(2),
-    isUndefined = require(3),
-    isArrayLike = require(4),
-    fastBindThis = require(9),
-    fastSlice = require(10),
-    defineProperty = require(12),
-    isEqual = require(21);
+var isNull = require(5),
+    isUndefined = require(6),
+    isArrayLike = require(7),
+    fastBindThis = require(8),
+    fastSlice = require(9),
+    defineProperty = require(10),
+    freeze = require(11),
+    isEqual = require(12);
 
 
 var INTERNAL_CREATE = {},
@@ -86,7 +108,7 @@ function List(value) {
     }
 }
 
-List.EMPTY = EMPTY_LIST;
+List.EMPTY = freeze(EMPTY_LIST);
 
 function List_createList(_this, value, values) {
     var length = values.length;
@@ -101,7 +123,7 @@ function List_createList(_this, value, values) {
         } else {
             _this.__root = _this.__tail = new Node(value, null);
             _this.__size = 1;
-            return _this;
+            return freeze(_this);
         }
     } else {
         return EMPTY_LIST;
@@ -122,7 +144,7 @@ function List_fromArray(_this, array) {
     _this.__root = root;
     _this.__tail = tail;
 
-    return _this;
+    return freeze(_this);
 }
 
 List.of = function(value) {
@@ -235,7 +257,7 @@ function List_set(_this, node, index, value) {
     list.__root = root;
     list.__tail = tail;
 
-    return list;
+    return freeze(list);
 }
 
 ListPrototype.set = function(index, value) {
@@ -292,7 +314,7 @@ function List_insert(_this, node, index, values) {
     list.__root = root;
     list.__tail = tail;
 
-    return list;
+    return freeze(list);
 }
 
 ListPrototype.insert = function(index) {
@@ -322,7 +344,7 @@ function List_remove(_this, node, count) {
     list.__root = root;
     list.__tail = tail;
 
-    return list;
+    return freeze(list);
 }
 
 ListPrototype.remove = function(index, count) {
@@ -370,7 +392,7 @@ function List_conj(_this, values) {
     list.__root = root;
     list.__tail = tail;
 
-    return list;
+    return freeze(list);
 }
 
 ListPrototype.conj = function() {
@@ -404,7 +426,7 @@ function List_pop(_this) {
     list.__root = newRoot;
     list.__tail = newTail;
 
-    return list;
+    return freeze(list);
 }
 
 ListPrototype.pop = function() {
@@ -426,7 +448,7 @@ function List_shift(_this) {
     list.__root = _this.__root.next;
     list.__tail = _this.__tail;
 
-    return list;
+    return freeze(list);
 }
 
 ListPrototype.shift = function() {
@@ -475,7 +497,7 @@ function List_push(_this, values, length) {
     list.__root = root;
     list.__tail = tail;
 
-    return list;
+    return freeze(list);
 }
 
 ListPrototype.push = function() {
@@ -505,7 +527,8 @@ function List_concat(a, b) {
         list.__size = asize + bsize;
         list.__root = root;
         list.__tail = tail;
-        return list;
+
+        return freeze(list);
     }
 }
 
@@ -840,497 +863,17 @@ function findNode(root, index) {
 
 
 },
-function(require, exports, module, global) {
-
-module.exports = isNull;
-
-
-function isNull(value) {
-    return value === null;
-}
-
-
-},
-function(require, exports, module, global) {
-
-module.exports = isUndefined;
-
-
-function isUndefined(value) {
-    return value === void(0);
-}
-
-
-},
-function(require, exports, module, global) {
-
-var isLength = require(5),
-    isFunction = require(7),
-    isObject = require(8);
-
-
-module.exports = isArrayLike;
-
-
-function isArrayLike(value) {
-    return !isFunction(value) && isObject(value) && isLength(value.length);
-}
-
-
-},
-function(require, exports, module, global) {
-
-var isNumber = require(6);
-
-
-var MAX_SAFE_INTEGER = Math.pow(2, 53) - 1;
-
-
-module.exports = isLength;
-
-
-function isLength(value) {
-    return isNumber(value) && value > -1 && value % 1 === 0 && value <= MAX_SAFE_INTEGER;
-}
-
-
-},
-function(require, exports, module, global) {
-
-module.exports = isNumber;
-
-
-function isNumber(value) {
-    return typeof(value) === "number" || false;
-}
-
-
-},
-function(require, exports, module, global) {
-
-var objectToString = Object.prototype.toString,
-    isFunction;
-
-
-if (objectToString.call(function() {}) === "[object Object]") {
-    isFunction = function isFunction(value) {
-        return value instanceof Function;
-    };
-} else if (typeof(/./) === "function" || (typeof(Uint8Array) !== "undefined" && typeof(Uint8Array) !== "function")) {
-    isFunction = function isFunction(value) {
-        return objectToString.call(value) === "[object Function]";
-    };
-} else {
-    isFunction = function isFunction(value) {
-        return typeof(value) === "function" || false;
-    };
-}
-
-
-module.exports = isFunction;
-
-
-},
-function(require, exports, module, global) {
-
-var isNull = require(2);
-
-
-module.exports = isObject;
-
-
-function isObject(value) {
-    var type = typeof(value);
-    return type === "function" || (!isNull(value) && type === "object") || false;
-}
-
-
-},
-function(require, exports, module, global) {
-
-var isNumber = require(6);
-
-
-module.exports = fastBindThis;
-
-
-function fastBindThis(callback, thisArg, length) {
-    switch (isNumber(length) ? length : (callback.length || -1)) {
-        case 0:
-            return function bound() {
-                return callback.call(thisArg);
-            };
-        case 1:
-            return function bound(a1) {
-                return callback.call(thisArg, a1);
-            };
-        case 2:
-            return function bound(a1, a2) {
-                return callback.call(thisArg, a1, a2);
-            };
-        case 3:
-            return function bound(a1, a2, a3) {
-                return callback.call(thisArg, a1, a2, a3);
-            };
-        case 4:
-            return function bound(a1, a2, a3, a4) {
-                return callback.call(thisArg, a1, a2, a3, a4);
-            };
-        default:
-            return function bound() {
-                return callback.apply(thisArg, arguments);
-            };
-    }
-}
-
-
-},
-function(require, exports, module, global) {
-
-var clamp = require(11),
-    isNumber = require(6);
-
-
-module.exports = fastSlice;
-
-
-function fastSlice(array, offset) {
-    var length = array.length,
-        newLength, i, il, result, j;
-
-    offset = clamp(isNumber(offset) ? offset : 0, 0, length);
-    i = offset - 1;
-    il = length - 1;
-    newLength = length - offset;
-    result = new Array(newLength);
-    j = 0;
-
-    while (i++ < il) {
-        result[j++] = array[i];
-    }
-
-    return result;
-}
-
-
-},
-function(require, exports, module, global) {
-
-module.exports = clamp;
-
-
-function clamp(x, min, max) {
-    if (x < min) {
-        return min;
-    } else if (x > max) {
-        return max;
-    } else {
-        return x;
-    }
-}
-
-
-},
-function(require, exports, module, global) {
-
-var isObject = require(8),
-    isFunction = require(7),
-    isPrimitive = require(13),
-    isNative = require(15),
-    has = require(19);
-
-
-var nativeDefineProperty = Object.defineProperty;
-
-
-module.exports = defineProperty;
-
-
-function defineProperty(object, name, descriptor) {
-    if (isPrimitive(descriptor) || isFunction(descriptor)) {
-        descriptor = {
-            value: descriptor
-        };
-    }
-    return nativeDefineProperty(object, name, descriptor);
-}
-
-defineProperty.hasGettersSetters = true;
-
-if (!isNative(nativeDefineProperty) || !(function() {
-        var object = {};
-        try {
-            nativeDefineProperty(object, "key", {
-                value: "value"
-            });
-            if (has(object, "key") && object.key === "value") {
-                return true;
-            }
-        } catch (e) {}
-        return false;
-    }())) {
-
-    defineProperty.hasGettersSetters = false;
-
-    nativeDefineProperty = function defineProperty(object, name, descriptor) {
-        if (!isObject(object)) {
-            throw new TypeError("defineProperty(object, name, descriptor) called on non-object");
-        }
-        if (has(descriptor, "get") || has(descriptor, "set")) {
-            throw new TypeError("defineProperty(object, name, descriptor) this environment does not support getters or setters");
-        }
-        object[name] = descriptor.value;
-    };
-}
-
-
-},
-function(require, exports, module, global) {
-
-var isNullOrUndefined = require(14);
-
-
-module.exports = isPrimitive;
-
-
-function isPrimitive(obj) {
-    var typeStr;
-    return isNullOrUndefined(obj) || ((typeStr = typeof(obj)) !== "object" && typeStr !== "function") || false;
-}
-
-
-},
-function(require, exports, module, global) {
-
-var isNull = require(2),
-    isUndefined = require(3);
-
-
-module.exports = isNullOrUndefined;
-
-/**
-  isNullOrUndefined accepts any value and returns true
-  if the value is null or undefined. For all other values
-  false is returned.
-  
-  @param {Any}        any value to test
-  @returns {Boolean}  the boolean result of testing value
-
-  @example
-    isNullOrUndefined(null);   // returns true
-    isNullOrUndefined(undefined);   // returns true
-    isNullOrUndefined("string");    // returns false
-**/
-function isNullOrUndefined(value) {
-    return isNull(value) || isUndefined(value);
-}
-
-
-},
-function(require, exports, module, global) {
-
-var isFunction = require(7),
-    isNullOrUndefined = require(14),
-    escapeRegExp = require(16);
-
-
-var reHostCtor = /^\[object .+?Constructor\]$/,
-
-    functionToString = Function.prototype.toString,
-
-    reNative = RegExp("^" +
-        escapeRegExp(Object.prototype.toString)
-        .replace(/toString|(function).*?(?=\\\()| for .+?(?=\\\])/g, "$1.*?") + "$"
-    ),
-
-    isHostObject;
-
-
-module.exports = isNative;
-
-
-function isNative(value) {
-    return !isNullOrUndefined(value) && (
-        isFunction(value) ?
-        reNative.test(functionToString.call(value)) : (
-            typeof(value) === "object" && (
-                (isHostObject(value) ? reNative : reHostCtor).test(value) || false
-            )
-        )
-    ) || false;
-}
-
-try {
-    String({
-        "toString": 0
-    } + "");
-} catch (e) {
-    isHostObject = function isHostObject() {
-        return false;
-    };
-}
-
-isHostObject = function isHostObject(value) {
-    return !isFunction(value.toString) && typeof(value + "") === "string";
-};
-
-
-},
-function(require, exports, module, global) {
-
-var toString = require(17);
-
-
-var reRegExpChars = /[.*+?\^${}()|\[\]\/\\]/g,
-    reHasRegExpChars = new RegExp(reRegExpChars.source);
-
-
-module.exports = escapeRegExp;
-
-
-function escapeRegExp(string) {
-    string = toString(string);
-    return (
-        (string && reHasRegExpChars.test(string)) ?
-        string.replace(reRegExpChars, "\\$&") :
-        string
-    );
-}
-
-
-},
-function(require, exports, module, global) {
-
-var isString = require(18),
-    isNullOrUndefined = require(14);
-
-
-module.exports = toString;
-
-
-function toString(value) {
-    if (isString(value)) {
-        return value;
-    } else if (isNullOrUndefined(value)) {
-        return "";
-    } else {
-        return value + "";
-    }
-}
-
-
-},
-function(require, exports, module, global) {
-
-module.exports = isString;
-
-
-function isString(value) {
-    return typeof(value) === "string" || false;
-}
-
-
-},
-function(require, exports, module, global) {
-
-var isNative = require(15),
-    getPrototypeOf = require(20),
-    isNullOrUndefined = require(14);
-
-
-var nativeHasOwnProp = Object.prototype.hasOwnProperty,
-    baseHas;
-
-
-module.exports = has;
-
-
-function has(object, key) {
-    if (isNullOrUndefined(object)) {
-        return false;
-    } else {
-        return baseHas(object, key);
-    }
-}
-
-if (isNative(nativeHasOwnProp)) {
-    baseHas = function baseHas(object, key) {
-        return nativeHasOwnProp.call(object, key);
-    };
-} else {
-    baseHas = function baseHas(object, key) {
-        var proto = getPrototypeOf(object);
-
-        if (isNullOrUndefined(proto)) {
-            return key in object;
-        } else {
-            return (key in object) && (!(key in proto) || proto[key] !== object[key]);
-        }
-    };
-}
-
-
-},
-function(require, exports, module, global) {
-
-var isObject = require(8),
-    isNative = require(15),
-    isNullOrUndefined = require(14);
-
-
-var nativeGetPrototypeOf = Object.getPrototypeOf,
-    baseGetPrototypeOf;
-
-
-module.exports = getPrototypeOf;
-
-
-function getPrototypeOf(value) {
-    if (isNullOrUndefined(value)) {
-        return null;
-    } else {
-        return baseGetPrototypeOf(value);
-    }
-}
-
-if (isNative(nativeGetPrototypeOf)) {
-    baseGetPrototypeOf = function baseGetPrototypeOf(value) {
-        return nativeGetPrototypeOf(isObject(value) ? value : Object(value)) || null;
-    };
-} else {
-    if ("".__proto__ === String.prototype) {
-        baseGetPrototypeOf = function baseGetPrototypeOf(value) {
-            return value.__proto__ || null;
-        };
-    } else {
-        baseGetPrototypeOf = function baseGetPrototypeOf(value) {
-            return value.constructor ? value.constructor.prototype : null;
-        };
-    }
-}
-
-
-},
-function(require, exports, module, global) {
-
-module.exports = isEqual;
-
-
-function isEqual(a, b) {
-    return !(a !== b && !(a !== a && b !== b));
-}
-
-
-},
-function(require, exports, module, global) {
-
-var isNull = require(2),
-    isUndefined = require(3),
-    isArrayLike = require(4),
-    fastBindThis = require(9),
-    fastSlice = require(10),
-    defineProperty = require(12),
-    isEqual = require(21);
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-vector/src/index.js */
+
+var freeze = require(11),
+    isNull = require(5),
+    isUndefined = require(6),
+    isArrayLike = require(7),
+    fastBindThis = require(8),
+    fastSlice = require(9),
+    defineProperty = require(10),
+    isEqual = require(12);
 
 
 var INTERNAL_CREATE = {},
@@ -1369,6 +912,8 @@ function Vector(value) {
     }
 }
 
+Vector.EMPTY = freeze(EMPTY_VECTOR);
+
 function Vector_createVector(_this, value, args) {
     var length = args.length,
         tail;
@@ -1378,7 +923,7 @@ function Vector_createVector(_this, value, args) {
     } else if (length > 1) {
         _this.__tail = copyArray(args, createArray(), length);
         _this.__size = length;
-        return _this;
+        return freeze(_this);
     } else if (length === 1) {
         if (isVector(value)) {
             return value;
@@ -1388,7 +933,7 @@ function Vector_createVector(_this, value, args) {
             tail = _this.__tail = createArray();
             tail[0] = value;
             _this.__size = 1;
-            return _this;
+            return freeze(_this);
         }
     } else {
         return EMPTY_VECTOR;
@@ -1537,14 +1082,14 @@ function Vector_set(_this, index, value) {
             tail[maskedIndex] = value;
             vector = Vector_clone(_this);
             vector.__tail = tail;
-            return vector;
+            return freeze(vector);
         }
     } else if (isEqual(Vector_get(_this, index), value)) {
         return _this;
     } else {
         vector = Vector_clone(_this);
         vector.__root = newPathSet(_this.__root, size, index, value, _this.__shift);
-        return vector;
+        return freeze(vector);
     }
 }
 
@@ -1714,7 +1259,7 @@ function Vector_conjArray(_this, values) {
         Vector_conj(_this, values[i]);
     }
 
-    return _this;
+    return freeze(_this);
 }
 
 function Vector_clone(_this) {
@@ -1850,7 +1395,7 @@ function Vector_pop(_this) {
     vector.__size = size - 1;
     vector.__shift = newShift;
 
-    return vector;
+    return freeze(vector);
 }
 
 VectorPrototype.pop = function() {
@@ -2209,21 +1754,23 @@ function cloneNode(node, length) {
 
 
 },
-function(require, exports, module, global) {
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-map/src/index.js */
 
-var has = require(19),
-    isNull = require(2),
-    isUndefined = require(3),
-    isObject = require(8),
-    defineProperty = require(12),
-    isEqual = require(21),
-    hashCode = require(24),
-    isArrayLike = require(4),
-    fastBindThis = require(9),
-    Box = require(31),
-    Iterator = require(32),
-    IteratorValue = require(33),
-    BitmapIndexedNode = require(34);
+var has = require(20),
+    freeze = require(11),
+    isNull = require(5),
+    isUndefined = require(6),
+    isObject = require(15),
+    defineProperty = require(10),
+    isEqual = require(12),
+    hashCode = require(27),
+    isArrayLike = require(7),
+    fastBindThis = require(8),
+    Box = require(28),
+    Iterator = require(29),
+    IteratorValue = require(30),
+    BitmapIndexedNode = require(31);
 
 
 var INTERNAL_CREATE = {},
@@ -2256,7 +1803,7 @@ function Map(value) {
 }
 MapPrototype = Map.prototype;
 
-Map.EMPTY = EMPTY_MAP;
+Map.EMPTY = freeze(EMPTY_MAP);
 
 function Map_createMap(_this, value, args) {
     var length = args.length;
@@ -2300,7 +1847,7 @@ function Map_fromObject(_this, object) {
     if (size !== 0) {
         _this.__size = size;
         _this.__root = newRoot;
-        return _this;
+        return freeze(_this);
     } else {
         return EMPTY_MAP;
     }
@@ -2332,7 +1879,7 @@ function Map_fromArray(_this, array) {
     if (size !== 0) {
         _this.__root = root;
         _this.__size = size;
-        return _this;
+        return freeze(_this);
     } else {
         return EMPTY_MAP;
     }
@@ -2404,7 +1951,7 @@ MapPrototype.set = function(key, value) {
         map = new Map(INTERNAL_CREATE);
         map.__size = isNull(addedLeaf.value) ? size : size + 1;
         map.__root = newRoot;
-        return map;
+        return freeze(map);
     }
 };
 
@@ -2426,7 +1973,7 @@ MapPrototype.remove = function(key) {
             map = new Map(INTERNAL_CREATE);
             map.__size = size - 1;
             map.__root = newRoot;
-            return map;
+            return freeze(map);
         }
     }
 };
@@ -2727,1162 +2274,14 @@ MapPrototype.equals = function(b) {
 
 
 },
-function(require, exports, module, global) {
-
-var WeakMapPolyfill = require(25),
-    isNumber = require(6),
-    isString = require(18),
-    isFunction = require(7),
-    isBoolean = require(27),
-    isNullOrUndefined = require(14),
-    numberHashCode = require(28),
-    booleanHashCode = require(29),
-    stringHashCode = require(30);
-
-
-var WEAK_MAP = new WeakMapPolyfill(),
-    HASH_UID = 1;
-
-
-module.exports = hashCode;
-
-
-function hashCode(value) {
-    if (isNullOrUndefined(value)) {
-        return 0;
-    } else {
-        if (isFunction(value.valueOf)) {
-            value = value.valueOf();
-            if (isNullOrUndefined(value)) {
-                return 0;
-            }
-        }
-
-        if (isBoolean(value)) {
-            return booleanHashCode(value);
-        } else if (isNumber(value)) {
-            return numberHashCode(value);
-        } else if (isString(value)) {
-            return stringHashCode(value);
-        } else if (isFunction(value.hashCode)) {
-            return value.hashCode();
-        } else {
-            return getObjectHashCode(value);
-        }
-    }
-}
-
-function getObjectHashCode(value) {
-    var hashCode = getHashCode(value);
-
-    if (hashCode !== undefined) {
-        return hashCode;
-    } else {
-        return setHashCode(value);
-    }
-}
-
-function getHashCode(value) {
-    return WEAK_MAP.get(value);
-}
-
-function setHashCode(value) {
-    var hashCode = HASH_UID++;
-
-    if (HASH_UID & 0x40000000) {
-        HASH_UID = 0;
-    }
-
-    WEAK_MAP.set(value, hashCode);
-
-    return hashCode;
-}
-
-
-},
-function(require, exports, module, global) {
-
-var isNative = require(15),
-    isPrimitive = require(13),
-    createStore = require(26);
-
-
-var NativeWeakMap = typeof(WeakMap) !== "undefined" ? WeakMap : null,
-    WeakMapPolyfill, WeakMapPolyfillPrototype;
-
-
-if (isNative(NativeWeakMap)) {
-    WeakMapPolyfill = NativeWeakMap;
-    WeakMapPolyfillPrototype = WeakMapPolyfill.prototype;
-} else {
-    WeakMapPolyfill = function WeakMap() {
-        if (!(this instanceof WeakMap)) {
-            throw new TypeError("Constructor WeakMap requires 'new'");
-        } else {
-            this.__store = createStore();
-        }
-    };
-    WeakMapPolyfillPrototype = WeakMapPolyfill.prototype;
-    WeakMapPolyfillPrototype.constructor = WeakMapPolyfill;
-
-    WeakMapPolyfillPrototype.get = function(key) {
-        return this.__store.get(key);
-    };
-
-    WeakMapPolyfillPrototype.set = function(key, value) {
-        if (isPrimitive(key)) {
-            throw new TypeError("Invalid value used as key");
-        } else {
-            this.__store.set(key, value);
-        }
-    };
-
-    WeakMapPolyfillPrototype.has = function(key) {
-        return this.__store.has(key);
-    };
-
-    WeakMapPolyfillPrototype["delete"] = function(key) {
-        return this.__store.remove(key);
-    };
-
-    WeakMapPolyfillPrototype.length = 0;
-}
-
-WeakMapPolyfillPrototype.remove = WeakMapPolyfillPrototype["delete"];
-
-
-module.exports = WeakMapPolyfill;
-
-
-},
-function(require, exports, module, global) {
-
-var has = require(19),
-    defineProperty = require(12),
-    isPrimitive = require(13);
-
-
-var emptyStore = {
-    value: undefined
-};
-
-
-module.exports = createStore;
-
-
-function createStore() {
-    var privateKey = {};
-
-    function get(key) {
-        var store;
-
-        if (isPrimitive(key)) {
-            throw new TypeError("Invalid value used as key");
-        } else {
-            store = key.valueOf(privateKey);
-
-            if (!store || store.identity !== privateKey) {
-                store = emptyStore;
-            }
-
-            return store;
-        }
-    }
-
-    function set(key) {
-        var store;
-
-        if (isPrimitive(key)) {
-            throw new TypeError("Invalid value used as key");
-        } else {
-            store = key.valueOf(privateKey);
-
-            if (!store || store.identity !== privateKey) {
-                store = privateStore(key, privateKey);
-            }
-
-            return store;
-        }
-    }
-
-    return {
-        get: function(key) {
-            return get(key).value;
-        },
-        set: function(key, value) {
-            set(key).value = value;
-        },
-        has: function(key) {
-            var store = get(key);
-            return store !== emptyStore ? has(store, "value") : false;
-        },
-        remove: function(key) {
-            var store = get(key);
-            return store !== emptyStore ? store.remove() : false;
-        },
-        clear: function() {
-            privateKey = {};
-        }
-    };
-}
-
-function privateStore(key, privateKey) {
-    var valueOf = key.valueOf || Object.prototype.valueOf,
-        store = {
-            identity: privateKey,
-            remove: function() {
-                key.valueOf = valueOf;
-                return delete store.value;
-            }
-        };
-
-    defineProperty(key, "valueOf", {
-        value: function(value) {
-            return value !== privateKey ? valueOf.apply(this, arguments) : store;
-        },
-        configurable: true,
-        enumerable: false,
-        writable: true
-    });
-
-    return store;
-}
-
-
-},
-function(require, exports, module, global) {
-
-module.exports = isBoolean;
-
-
-function isBoolean(value) {
-    return typeof(value) === "boolean" || false;
-}
-
-
-},
-function(require, exports, module, global) {
-
-module.exports = numberHashCode;
-
-
-function numberHashCode(number) {
-    var hash = number | 0;
-
-    if (hash !== number) {
-        hash ^= number * 0xFFFFFFFF;
-    }
-
-    while (number > 0xFFFFFFFF) {
-        number /= 0xFFFFFFFF;
-        hash ^= o;
-    }
-
-    return ((hash >>> 1) & 0x40000000) | (hash & 0xBFFFFFFF);
-}
-
-
-},
-function(require, exports, module, global) {
-
-module.exports = booleanHashCode;
-
-
-function booleanHashCode(bool) {
-    if (bool !== false) {
-        return 1231;
-    } else {
-        return 1237;
-    }
-}
-
-
-},
-function(require, exports, module, global) {
-
-var isUndefined = require(3);
-
-
-var STRING_HASH_CACHE_MIN_STRING_LENGTH = 16,
-    STRING_HASH_CACHE_MAX_SIZE = 255,
-    STRING_HASH_CACHE_SIZE = 0,
-    SRTING_HASH_CACHE = {};
-
-
-module.exports = stringHashCode;
-
-
-function stringHashCode(string) {
-    if (string.length > STRING_HASH_CACHE_MIN_STRING_LENGTH) {
-        return cachedHashString(string);
-    } else {
-        return hashString(string);
-    }
-}
-
-function cachedHashString(string) {
-    var hash = SRTING_HASH_CACHE[string];
-
-    if (isUndefined(hash)) {
-        hash = hashString(string);
-
-        if (STRING_HASH_CACHE_SIZE === STRING_HASH_CACHE_MAX_SIZE) {
-            STRING_HASH_CACHE_SIZE = 0;
-            SRTING_HASH_CACHE = {};
-        }
-
-        STRING_HASH_CACHE_SIZE += 1;
-        SRTING_HASH_CACHE[string] = hash;
-    }
-
-    return hash;
-}
-
-function hashString(string) {
-    var hash = 0,
-        i = -1,
-        il = string.length - 1;
-
-    while (i++ < il) {
-        hash = 31 * hash + string.charCodeAt(i) | 0;
-    }
-
-    return ((hash >>> 1) & 0x40000000) | (hash & 0xBFFFFFFF);
-}
-
-
-},
-function(require, exports, module, global) {
-
-module.exports = Box;
-
-
-function Box(value) {
-    this.value = value;
-}
-
-
-},
-function(require, exports, module, global) {
-
-module.exports = Iterator;
-
-
-function Iterator(hasNext, next) {
-    this.hasNext = hasNext;
-    this.next = next;
-}
-
-
-},
-function(require, exports, module, global) {
-
-module.exports = IteratorValue;
-
-
-function IteratorValue(done, value) {
-    this.done = done;
-    this.value = value;
-}
-
-
-},
-function(require, exports, module, global) {
-
-var isNull = require(2),
-    isEqual = require(21),
-    hashCode = require(24),
-    consts = require(35),
-    bitpos = require(36),
-    copyArray = require(38),
-    cloneAndSet = require(39),
-    removePair = require(40),
-    mask = require(37),
-    bitCount = require(41),
-    nodeIterator = require(42),
-    ArrayNode, createNode;
-
-
-var SHIFT = consts.SHIFT,
-    MAX_BITMAP_INDEXED_SIZE = consts.MAX_BITMAP_INDEXED_SIZE,
-    EMPTY = new BitmapIndexedNode(0, []),
-    BitmapIndexedNodePrototype = BitmapIndexedNode.prototype;
-
-
-module.exports = BitmapIndexedNode;
-
-
-ArrayNode = require(43);
-createNode = require(44);
-
-
-function BitmapIndexedNode(bitmap, array) {
-    this.bitmap = bitmap;
-    this.array = array;
-}
-
-BitmapIndexedNode.EMPTY = EMPTY;
-
-BitmapIndexedNodePrototype.get = function(shift, keyHash, key, notSetValue) {
-    var bitmap = this.bitmap,
-        bit = bitpos(keyHash, shift),
-        array, index, keyOrNull, valueOrNode;
-
-    if ((bitmap & bit) === 0) {
-        return notSetValue;
-    } else {
-        array = this.array;
-        index = getIndex(bitmap, bit);
-
-        keyOrNull = array[2 * index];
-        valueOrNode = array[2 * index + 1];
-
-        if (isNull(keyOrNull)) {
-            return valueOrNode.get(shift + SHIFT, keyHash, key, notSetValue);
-        } else {
-            if (isEqual(key, keyOrNull)) {
-                return valueOrNode;
-            } else {
-                return notSetValue;
-            }
-        }
-    }
-};
-
-BitmapIndexedNodePrototype.set = function(shift, keyHash, key, value, addedLeaf) {
-    var array = this.array,
-        bitmap = this.bitmap,
-        bit = bitpos(keyHash, shift),
-        index = getIndex(bitmap, bit),
-        keyOrNull, valueOrNode, newNode, nodes, jIndex, i, j, newArray;
-
-    if ((bitmap & bit) !== 0) {
-        keyOrNull = array[2 * index];
-        valueOrNode = array[2 * index + 1];
-
-        if (isNull(keyOrNull)) {
-            newNode = valueOrNode.set(shift + SHIFT, keyHash, key, value, addedLeaf);
-
-            if (newNode === valueOrNode) {
-                return this;
-            } else {
-                return new BitmapIndexedNode(bitmap, cloneAndSet(array, 2 * index + 1, newNode));
-            }
-        }
-        if (isEqual(key, keyOrNull)) {
-            if (value === valueOrNode) {
-                return this;
-            } else {
-                return new BitmapIndexedNode(bitmap, cloneAndSet(array, 2 * index + 1, value));
-            }
-        }
-        addedLeaf.value = addedLeaf;
-        return new BitmapIndexedNode(bitmap,
-            cloneAndSet(array,
-                2 * index, null,
-                2 * index + 1, createNode(shift + SHIFT, keyOrNull, valueOrNode, keyHash, key, value)));
-    } else {
-        newNode = bitCount(bitmap);
-
-        if (newNode >= MAX_BITMAP_INDEXED_SIZE) {
-            nodes = new Array(32);
-            jIndex = mask(keyHash, shift);
-            nodes[jIndex] = EMPTY.set(shift + SHIFT, keyHash, key, value, addedLeaf);
-
-            i = -1;
-            j = 0;
-            while (i++ < 31) {
-                if (((bitmap >>> i) & 1) !== 0) {
-                    if (array[j] == null) {
-                        nodes[i] = array[j + 1];
-                    } else {
-                        nodes[i] = EMPTY.set(shift + SHIFT, hashCode(array[j]), array[j], array[j + 1], addedLeaf);
-                    }
-                    j += 2;
-                }
-            }
-
-            return new ArrayNode(newNode + 1, nodes);
-        } else {
-            newArray = new Array(2 * (newNode + 1));
-            copyArray(array, 0, newArray, 0, 2 * index);
-
-            newArray[2 * index] = key;
-            addedLeaf.value = addedLeaf;
-            newArray[2 * index + 1] = value;
-
-            copyArray(array, 2 * index, newArray, 2 * (index + 1), 2 * (newNode - index));
-
-            return new BitmapIndexedNode(bitmap | bit, newArray);
-        }
-    }
-};
-
-BitmapIndexedNodePrototype.remove = function(shift, keyHash, key) {
-    var bitmap = this.bitmap,
-        bit = bitpos(keyHash, shift),
-        index, array, newNode;
-
-    if ((bitmap & bit) === 0) {
-        return this;
-    } else {
-        index = getIndex(bitmap, bit);
-        array = this.array;
-
-        keyOrNull = array[2 * index];
-        valueOrNode = array[2 * index + 1];
-
-        if (isNull(keyOrNull)) {
-            newNode = valueOrNode.remove(shift + SHIFT, keyHash, key);
-
-            if (newNode === valueOrNode) {
-                return this;
-            } else if (!isNull(newNode)) {
-                return new BitmapIndexedNode(bitmap, cloneAndSet(array, 2 * index + 1, newNode));
-            } else if (bitmap === bit) {
-                return null;
-            } else {
-                return new BitmapIndexedNode(bitmap ^ bit, removePair(array, index));
-            }
-        } else {
-            if (isEqual(key, keyOrNull)) {
-                return new BitmapIndexedNode(bitmap ^ bit, removePair(array, index));
-            } else {
-                return this;
-            }
-        }
-    }
-};
-
-BitmapIndexedNodePrototype.iterator = nodeIterator;
-
-function getIndex(bitmap, bit) {
-    return bitCount(bitmap & (bit - 1));
-}
-
-
-},
-function(require, exports, module, global) {
-
-var consts = exports;
-
-
-consts.SHIFT = 5;
-consts.SIZE = 1 << consts.SHIFT;
-consts.MASK = consts.SIZE - 1;
-
-consts.MAX_ARRAY_MAP_SIZE = consts.SIZE / 4;
-consts.MAX_BITMAP_INDEXED_SIZE = consts.SIZE / 2;
-
-
-},
-function(require, exports, module, global) {
-
-var mask = require(37);
-
-
-module.exports = bitpos;
-
-
-function bitpos(hashCode, shift) {
-    return 1 << mask(hashCode, shift);
-}
-
-
-},
-function(require, exports, module, global) {
-
-var consts = require(35);
-
-
-var MASK = consts.MASK;
-
-
-module.exports = mask;
-
-
-function mask(hashCode, shift) {
-    return (hashCode >>> shift) & MASK;
-}
-
-
-},
-function(require, exports, module, global) {
-
-module.exports = copyArray;
-
-
-function copyArray(src, srcPos, dest, destPos, length) {
-    var i = srcPos - 1,
-        il = srcPos + length - 1;
-
-    while (i++ < il) {
-        dest[destPos++] = src[i];
-    }
-}
-
-
-},
-function(require, exports, module, global) {
-
-var copyArray = require(38);
-
-
-module.exports = cloneAndSet;
-
-
-function cloneAndSet(array, index0, value0, index1, value1) {
-    var length = array.length,
-        results = new Array(length);
-
-    copyArray(array, 0, results, 0, length);
-
-    results[index0] = value0;
-    if (index1 !== undefined) {
-        results[index1] = value1;
-    }
-
-    return results;
-}
-
-
-},
-function(require, exports, module, global) {
-
-var copyArray = require(38);
-
-
-module.exports = removePair;
-
-
-function removePair(array, index) {
-    var length = array.length,
-        newArray = new Array(length - 2);
-
-    copyArray(array, 0, newArray, 0, 2 * index);
-    copyArray(array, 2 * (index + 1), newArray, 2 * index, length - 2 * index);
-
-    return newArray;
-}
-
-
-},
-function(require, exports, module, global) {
-
-module.exports = bitCount;
-
-
-function bitCount(i) {
-    i = i - ((i >>> 1) & 0x55555555);
-    i = (i & 0x33333333) + ((i >>> 2) & 0x33333333);
-    i = (i + (i >>> 4)) & 0x0f0f0f0f;
-    i = i + (i >>> 8);
-    i = i + (i >>> 16);
-    return i & 0x3f;
-}
-
-
-},
-function(require, exports, module, global) {
-
-var isNull = require(2),
-    isUndefined = require(3),
-    Iterator = require(32),
-    IteratorValue = require(33);
-
-
-module.exports = nodeIterator;
-
-
-function nodeIterator(reverse) {
-    if (reverse !== true) {
-        return iterator(this);
-    } else {
-        return iteratorReverse(this);
-    }
-}
-
-function iterator(_this) {
-    var array = _this.array,
-        index = 0,
-        length = array.length,
-        nextIter = null,
-        nextEntry = null;
-
-    function advance() {
-        var key, iter;
-
-        while (index < length) {
-            key = array[index];
-            valueOrNode = array[index + 1];
-            index += 2;
-
-            if (!isUndefined(key)) {
-                nextEntry = [key, valueOrNode];
-                return true;
-            } else if (!isUndefined(valueOrNode)) {
-                iter = valueOrNode.iterator();
-
-                if (!isNull(iter) && iter.hasNext()) {
-                    nextIter = iter;
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    function hasNext() {
-        if (!isNull(nextEntry) || !isNull(nextIter)) {
-            return true;
-        } else {
-            return advance();
-        }
-    }
-
-    function next() {
-        var entry = nextEntry;
-
-        if (!isNull(entry)) {
-            nextEntry = null;
-            return new IteratorValue(false, entry);
-        } else if (!isNull(nextIter)) {
-            entry = nextIter.next();
-
-            if (!nextIter.hasNext()) {
-                nextIter = null;
-            }
-
-            return new IteratorValue(false, entry);
-        } else if (advance()) {
-            return next();
-        } else {
-            return new IteratorValue(true, undefined);
-        }
-    }
-
-    return new Iterator(hasNext, next);
-}
-
-function iteratorReverse(_this) {
-    var array = _this.array,
-        length = array.length,
-        index = length - 1,
-        nextIter = null,
-        nextEntry = null;
-
-    function advance() {
-        var key, iter;
-
-        while (index > -1) {
-            key = array[index - 1];
-            valueOrNode = array[index];
-            index -= 2;
-
-            if (!isUndefined(key)) {
-                nextEntry = [key, valueOrNode];
-                return true;
-            } else if (!isUndefined(valueOrNode)) {
-                iter = valueOrNode.iterator();
-
-                if (!isNull(iter) && iter.hasNext()) {
-                    nextIter = iter;
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    function hasNext() {
-        if (!isNull(nextEntry) || !isNull(nextIter)) {
-            return true;
-        } else {
-            return advance();
-        }
-    }
-
-    function next() {
-        var entry = nextEntry;
-
-        if (!isNull(entry)) {
-            nextEntry = null;
-            return new IteratorValue(false, entry);
-        } else if (!isNull(nextIter)) {
-            entry = nextIter.next();
-
-            if (!nextIter.hasNext()) {
-                nextIter = null;
-            }
-
-            return new IteratorValue(false, entry);
-        } else if (advance()) {
-            return next();
-        } else {
-            return new IteratorValue(true, undefined);
-        }
-    }
-
-    return new Iterator(hasNext, next);
-}
-
-
-},
-function(require, exports, module, global) {
-
-var isNull = require(2),
-    isNullOrUndefined = require(14),
-    consts = require(35),
-    mask = require(37),
-    cloneAndSet = require(39),
-    Iterator = require(32),
-    IteratorValue = require(33),
-    BitmapIndexedNode;
-
-
-var SHIFT = consts.SHIFT,
-    MAX_ARRAY_MAP_SIZE = consts.MAX_ARRAY_MAP_SIZE,
-    EMPTY = new ArrayNode(0, []),
-    ArrayNodePrototype = ArrayNode.prototype;
-
-
-module.exports = ArrayNode;
-
-
-BitmapIndexedNode = require(34);
-
-
-function ArrayNode(count, array) {
-    this.count = count;
-    this.array = array;
-}
-
-ArrayNode.EMPTY = EMPTY;
-
-ArrayNodePrototype.get = function(shift, keyHash, key, notSetValue) {
-    var index = mask(keyHash, shift),
-        node = this.array[index];
-
-    if (isNullOrUndefined(node)) {
-        return notSetValue;
-    } else {
-        return node.get(shift + SHIFT, hash, key, notSetValue);
-    }
-};
-
-ArrayNodePrototype.set = function(shift, keyHash, key, value, addedLeaf) {
-    var index = mask(keyHash, shift),
-        array = this.array,
-        count = this.count,
-        node = array[index],
-        newNode;
-
-    if (isNullOrUndefined(node)) {
-        return new ArrayNode(count + 1, cloneAndSet(array, index, BitmapIndexedNode.EMPTY.set(shift + SHIFT, keyHash, key, value, addedLeaf)));
-    } else {
-        newNode = node.set(shift + SHIFT, keyHash, key, value, addedLeaf);
-
-        if (newNode === node) {
-            return this;
-        } else {
-            return new ArrayNode(count, cloneAndSet(array, index, newNode));
-        }
-    }
-};
-
-ArrayNodePrototype.remove = function(shift, keyHash, key) {
-    var index = mask(keyHash, shift),
-        array = this.array,
-        node = array[index],
-        newNode, count;
-
-    if (isNullOrUndefined(node)) {
-        return this;
-    } else {
-        newNode = node.remove(shift + SHIFT, keyHash, key);
-
-        if (newNode === node) {
-            return this;
-        } else {
-            array = this.array;
-            count = this.count;
-
-            if (isNull(newNode)) {
-                if (count <= MAX_ARRAY_MAP_SIZE) {
-                    return pack(array, index);
-                } else {
-                    return new ArrayNode(count - 1, cloneAndSet(array, index, newNode));
-                }
-            } else {
-                return new ArrayNode(count, cloneAndSet(array, index, newNode));
-            }
-        }
-    }
-};
-
-function ArrayNode_iterator(_this) {
-    var array = _this.array,
-        index = 0,
-        length = array.length,
-        nestedIter = null;
-
-    function hasNext() {
-        var node;
-
-        while (true) {
-            if (!isNull(nestedIter)) {
-                if (nestedIter.hasNext()) {
-                    return true;
-                } else {
-                    nestedIter = null;
-                }
-            } else {
-                if (index === length) {
-                    return false;
-                } else {
-                    node = array[index];
-                    index += 1;
-
-                    if (!isNullOrUndefined(node)) {
-                        nestedIter = node.iterator();
-                    }
-                }
-            }
-        }
-    }
-
-    function next() {
-        if (hasNext()) {
-            return nestedIter.next();
-        } else {
-            return new IteratorValue(true, undefined);
-        }
-    }
-
-    return new Iterator(hasNext, next);
-}
-
-function ArrayNode_iteratorReverse(_this) {
-    var array = _this.array,
-        length = array.length,
-        index = length - 1,
-        nestedIter = null;
-
-    function hasNext() {
-        var node;
-
-        while (true) {
-            if (!isNull(nestedIter)) {
-                if (nestedIter.hasNext()) {
-                    return true;
-                } else {
-                    nestedIter = null;
-                }
-            } else {
-                if (index === -1) {
-                    return false;
-                } else {
-                    node = array[index];
-                    index -= 1;
-
-                    if (!isNullOrUndefined(node)) {
-                        nestedIter = node.iterator();
-                    }
-                }
-            }
-        }
-    }
-
-    function next() {
-        if (hasNext()) {
-            return nestedIter.next();
-        } else {
-            return new IteratorValue(true, undefined);
-        }
-    }
-
-    return new Iterator(hasNext, next);
-}
-
-ArrayNodePrototype.iterator = function(reverse) {
-    if (reverse !== true) {
-        return ArrayNode_iterator(this);
-    } else {
-        return ArrayNode_iteratorReverse(this);
-    }
-};
-
-function pack(array, index) {
-    var newArray = new Array(2 * (count - 1)),
-        j = 1,
-        bitmap = 0,
-        i = -1,
-        il = index - 1;
-
-    while (i++ < il) {
-        if (!isNull(array[i])) {
-            newArray[j] = array[i];
-            bitmap |= 1 << i;
-            j += 2;
-        }
-    }
-
-    i = index - 1;
-    il = array.length - 1;
-    while (i++ < il) {
-        if (!isNull(array[i])) {
-            newArray[j] = array[i];
-            bitmap |= 1 << i;
-            j += 2;
-        }
-    }
-
-    return new BitmapIndexedNode(bitmap, newArray);
-}
-
-
-},
-function(require, exports, module, global) {
-
-var hashCode = require(24),
-    Box = require(31),
-    HashCollisionNode, BitmapIndexedNode;
-
-
-module.exports = createNode;
-
-
-HashCollisionNode = require(45);
-BitmapIndexedNode = require(34);
-
-
-function createNode(shift, key0, value0, keyHash1, key1, value1) {
-    var keyHash0 = hashCode(key0),
-        addedLeaf;
-
-    if (keyHash0 === keyHash1) {
-        return new HashCollisionNode(keyHash0, 2, [key0, value0, key1, value1]);
-    } else {
-        addedLeaf = new Box(null);
-        return BitmapIndexedNode.EMPTY
-            .set(shift, keyHash0, key0, value0, addedLeaf)
-            .set(shift, keyHash1, key1, value1, addedLeaf);
-    }
-}
-
-
-},
-function(require, exports, module, global) {
-
-var isEqual = require(21),
-    bitpos = require(36),
-    copyArray = require(38),
-    cloneAndSet = require(39),
-    removePair = require(40),
-    nodeIterator = require(42),
-    BitmapIndexedNode;
-
-
-var EMPTY = new HashCollisionNode(0, []),
-    HashCollisionNodePrototype = HashCollisionNode.prototype;
-
-
-module.exports = HashCollisionNode;
-
-
-BitmapIndexedNode = require(34);
-
-
-function HashCollisionNode(keyHash, count, array) {
-    this.keyHash = keyHash;
-    this.count = count;
-    this.array = array;
-}
-
-HashCollisionNode.EMPTY = EMPTY;
-
-HashCollisionNodePrototype.get = function(shift, keyHash, key, notSetValue) {
-    var array = this.array,
-        index = getIndex(array, key);
-
-    if (index === -1) {
-        return notFound;
-    } else {
-        if (isEqual(key, array[index])) {
-            return array[index + 1];
-        } else {
-            return notSetValue;
-        }
-    }
-};
-
-HashCollisionNodePrototype.set = function(shift, keyHash, key, value, addedLeaf) {
-    var index, count, array, newArray;
-
-    if (keyHash === this.keyHash) {
-        array = this.array;
-        count = this.count,
-            index = getIndex(array, key);
-
-        if (index !== -1) {
-            if (array[index + 1] === value) {
-                return this;
-            } else {
-                return new HashCollisionNode(keyHash, count, cloneAndSet(array, index + 1, value));
-            }
-        } else {
-            newArray = new Array(2 * (count + 1));
-            copyArray(array, 0, newArray, 0, 2 * count);
-            newArray[2 * count] = key;
-            newArray[2 * count + 1] = value;
-            addedLeaf.value = addedLeaf;
-            return new HashCollisionNode(keyHash, count + 1, newArray);
-        }
-    } else {
-        return new BitmapIndexedNode(bitpos(this.keyHash, shift), [null, this]).set(shift, keyHash, key, value, addedLeaf);
-    }
-};
-
-HashCollisionNodePrototype.remove = function(shift, keyHash, key) {
-    var array = this.array,
-        index = getIndex(array, key);
-
-    if (index === -1) {
-        return this;
-    } else {
-        if (array.length === 1) {
-            return null;
-        } else {
-            return new HashCollisionNode(hash, count - 1, removePair(array, index / 2));
-        }
-    }
-};
-
-HashCollisionNodePrototype.iterator = nodeIterator;
-
-function getIndex(array, key) {
-    var i = -1,
-        il = array.length - 1;
-
-    while (i++ < il) {
-        if (isEqual(array[i], key)) {
-            return i;
-        }
-    }
-
-    return -1;
-}
-
-
-},
-function(require, exports, module, global) {
-
-var ImmutableMap = require(23),
-    isUndefined = require(3),
-    isArrayLike = require(4),
-    defineProperty = require(12);
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-set/src/index.js */
+
+var freeze = require(11),
+    ImmutableMap = require(3),
+    isUndefined = require(6),
+    isArrayLike = require(7),
+    defineProperty = require(10);
 
 
 var INTERNAL_CREATE = {},
@@ -3912,7 +2311,7 @@ function Set(value) {
     }
 }
 
-Set.EMPTY = EMPTY_SET;
+Set.EMPTY = freeze(EMPTY_SET);
 
 function Set_createSet(_this, value, values) {
     var length = values.length;
@@ -3943,7 +2342,7 @@ function Set_fromArray(_this, array) {
 
     if (map.size() !== 0) {
         _this.__map = map;
-        return _this;
+        return freeze(_this);
     } else {
         return EMPTY_SET;
     }
@@ -4019,7 +2418,7 @@ function Set_set(_this, values) {
     if (added !== 0) {
         set = new Set(INTERNAL_CREATE);
         set.__map = map;
-        return set;
+        return freeze(set);
     } else {
         return _this;
     }
@@ -4058,7 +2457,7 @@ function Set_remove(_this, values) {
     if (removed !== 0) {
         set = new Set(INTERNAL_CREATE);
         set.__map = map;
-        return set;
+        return freeze(set);
     } else {
         return _this;
     }
@@ -4319,4 +2718,1760 @@ SetPrototype.equals = function(other) {
 };
 
 
-}], void 0, (new Function("return this;"))()));
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-list/node_modules/is_null/src/index.js */
+
+module.exports = isNull;
+
+
+function isNull(value) {
+    return value === null;
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-list/node_modules/is_undefined/src/index.js */
+
+module.exports = isUndefined;
+
+
+function isUndefined(value) {
+    return value === void(0);
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-list/node_modules/is_array_like/src/index.js */
+
+var isLength = require(13),
+    isFunction = require(14),
+    isObject = require(15);
+
+
+module.exports = isArrayLike;
+
+
+function isArrayLike(value) {
+    return !isFunction(value) && isObject(value) && isLength(value.length);
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-list/node_modules/fast_bind_this/src/index.js */
+
+var isNumber = require(16);
+
+
+module.exports = fastBindThis;
+
+
+function fastBindThis(callback, thisArg, length) {
+    switch (isNumber(length) ? length : (callback.length || -1)) {
+        case 0:
+            return function bound() {
+                return callback.call(thisArg);
+            };
+        case 1:
+            return function bound(a1) {
+                return callback.call(thisArg, a1);
+            };
+        case 2:
+            return function bound(a1, a2) {
+                return callback.call(thisArg, a1, a2);
+            };
+        case 3:
+            return function bound(a1, a2, a3) {
+                return callback.call(thisArg, a1, a2, a3);
+            };
+        case 4:
+            return function bound(a1, a2, a3, a4) {
+                return callback.call(thisArg, a1, a2, a3, a4);
+            };
+        default:
+            return function bound() {
+                return callback.apply(thisArg, arguments);
+            };
+    }
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-list/node_modules/fast_slice/src/index.js */
+
+var clamp = require(17),
+    isNumber = require(16);
+
+
+module.exports = fastSlice;
+
+
+function fastSlice(array, offset) {
+    var length = array.length,
+        newLength, i, il, result, j;
+
+    offset = clamp(isNumber(offset) ? offset : 0, 0, length);
+    i = offset - 1;
+    il = length - 1;
+    newLength = length - offset;
+    result = new Array(newLength);
+    j = 0;
+
+    while (i++ < il) {
+        result[j++] = array[i];
+    }
+
+    return result;
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-list/node_modules/define_property/src/index.js */
+
+var isObject = require(15),
+    isFunction = require(14),
+    isPrimitive = require(18),
+    isNative = require(19),
+    has = require(20);
+
+
+var nativeDefineProperty = Object.defineProperty;
+
+
+module.exports = defineProperty;
+
+
+function defineProperty(object, name, descriptor) {
+    if (isPrimitive(descriptor) || isFunction(descriptor)) {
+        descriptor = {
+            value: descriptor
+        };
+    }
+    return nativeDefineProperty(object, name, descriptor);
+}
+
+defineProperty.hasGettersSetters = true;
+
+if (!isNative(nativeDefineProperty) || !(function() {
+        var object = {},
+            value = {};
+
+        try {
+            nativeDefineProperty(object, "key", {
+                value: value
+            });
+            if (has(object, "key") && object.key === value) {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (e) {}
+
+        return false;
+    }())) {
+
+    defineProperty.hasGettersSetters = false;
+
+    nativeDefineProperty = function defineProperty(object, name, descriptor) {
+        if (!isObject(object)) {
+            throw new TypeError("defineProperty(object, name, descriptor) called on non-object");
+        }
+        if (has(descriptor, "get") || has(descriptor, "set")) {
+            throw new TypeError("defineProperty(object, name, descriptor) this environment does not support getters or setters");
+        }
+        object[name] = descriptor.value;
+    };
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-list/node_modules/freeze/src/index.js */
+
+var isNative = require(19),
+    emptyFunction = require(26);
+
+
+var nativeFreeze = Object.freeze;
+
+
+if (isNative(nativeFreeze) && (function isValidFreeze() {
+        "use strict";
+        var a = {
+            key: "value"
+        };
+
+        try {
+            nativeFreeze(a);
+            a.key = "change";
+            delete a.key;
+        } catch (e) {
+            return true;
+        }
+        return false;
+    }())) {
+    module.exports = nativeFreeze;
+} else {
+    module.exports = emptyFunction.thatReturnsArgument;
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-list/node_modules/is_equal/src/index.js */
+
+module.exports = isEqual;
+
+
+function isEqual(a, b) {
+    return !(a !== b && !(a !== a && b !== b));
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-list/node_modules/is_length/src/index.js */
+
+var isNumber = require(16);
+
+
+var MAX_SAFE_INTEGER = Math.pow(2, 53) - 1;
+
+
+module.exports = isLength;
+
+
+function isLength(value) {
+    return isNumber(value) && value > -1 && value % 1 === 0 && value <= MAX_SAFE_INTEGER;
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-list/node_modules/is_function/src/index.js */
+
+var objectToString = Object.prototype.toString,
+    isFunction;
+
+
+if (objectToString.call(function() {}) === "[object Object]") {
+    isFunction = function isFunction(value) {
+        return value instanceof Function;
+    };
+} else if (typeof(/./) === "function" || (typeof(Uint8Array) !== "undefined" && typeof(Uint8Array) !== "function")) {
+    isFunction = function isFunction(value) {
+        return objectToString.call(value) === "[object Function]";
+    };
+} else {
+    isFunction = function isFunction(value) {
+        return typeof(value) === "function" || false;
+    };
+}
+
+
+module.exports = isFunction;
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-list/node_modules/is_object/src/index.js */
+
+var isNull = require(5);
+
+
+module.exports = isObject;
+
+
+function isObject(value) {
+    var type = typeof(value);
+    return type === "function" || (!isNull(value) && type === "object") || false;
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-list/node_modules/is_number/src/index.js */
+
+module.exports = isNumber;
+
+
+function isNumber(value) {
+    return typeof(value) === "number" || false;
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-list/node_modules/clamp/src/index.js */
+
+module.exports = clamp;
+
+
+function clamp(x, min, max) {
+    if (x < min) {
+        return min;
+    } else if (x > max) {
+        return max;
+    } else {
+        return x;
+    }
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-list/node_modules/is_primitive/src/index.js */
+
+var isNullOrUndefined = require(21);
+
+
+module.exports = isPrimitive;
+
+
+function isPrimitive(obj) {
+    var typeStr;
+    return isNullOrUndefined(obj) || ((typeStr = typeof(obj)) !== "object" && typeStr !== "function") || false;
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-list/node_modules/is_native/src/index.js */
+
+var isFunction = require(14),
+    isNullOrUndefined = require(21),
+    escapeRegExp = require(22);
+
+
+var reHostCtor = /^\[object .+?Constructor\]$/,
+
+    functionToString = Function.prototype.toString,
+
+    reNative = RegExp("^" +
+        escapeRegExp(Object.prototype.toString)
+        .replace(/toString|(function).*?(?=\\\()| for .+?(?=\\\])/g, "$1.*?") + "$"
+    ),
+
+    isHostObject;
+
+
+module.exports = isNative;
+
+
+function isNative(value) {
+    return !isNullOrUndefined(value) && (
+        isFunction(value) ?
+        reNative.test(functionToString.call(value)) : (
+            typeof(value) === "object" && (
+                (isHostObject(value) ? reNative : reHostCtor).test(value) || false
+            )
+        )
+    ) || false;
+}
+
+try {
+    String({
+        "toString": 0
+    } + "");
+} catch (e) {
+    isHostObject = function isHostObject() {
+        return false;
+    };
+}
+
+isHostObject = function isHostObject(value) {
+    return !isFunction(value.toString) && typeof(value + "") === "string";
+};
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-list/node_modules/has/src/index.js */
+
+var isNative = require(19),
+    getPrototypeOf = require(25),
+    isNullOrUndefined = require(21);
+
+
+var nativeHasOwnProp = Object.prototype.hasOwnProperty,
+    baseHas;
+
+
+module.exports = has;
+
+
+function has(object, key) {
+    if (isNullOrUndefined(object)) {
+        return false;
+    } else {
+        return baseHas(object, key);
+    }
+}
+
+if (isNative(nativeHasOwnProp)) {
+    baseHas = function baseHas(object, key) {
+        return nativeHasOwnProp.call(object, key);
+    };
+} else {
+    baseHas = function baseHas(object, key) {
+        var proto = getPrototypeOf(object);
+
+        if (isNullOrUndefined(proto)) {
+            return key in object;
+        } else {
+            return (key in object) && (!(key in proto) || proto[key] !== object[key]);
+        }
+    };
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-list/node_modules/is_null_or_undefined/src/index.js */
+
+var isNull = require(5),
+    isUndefined = require(6);
+
+
+module.exports = isNullOrUndefined;
+
+/**
+  isNullOrUndefined accepts any value and returns true
+  if the value is null or undefined. For all other values
+  false is returned.
+  
+  @param {Any}        any value to test
+  @returns {Boolean}  the boolean result of testing value
+
+  @example
+    isNullOrUndefined(null);   // returns true
+    isNullOrUndefined(undefined);   // returns true
+    isNullOrUndefined("string");    // returns false
+**/
+function isNullOrUndefined(value) {
+    return isNull(value) || isUndefined(value);
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-list/node_modules/escape_regexp/src/index.js */
+
+var toString = require(23);
+
+
+var reRegExpChars = /[.*+?\^${}()|\[\]\/\\]/g,
+    reHasRegExpChars = new RegExp(reRegExpChars.source);
+
+
+module.exports = escapeRegExp;
+
+
+function escapeRegExp(string) {
+    string = toString(string);
+    return (
+        (string && reHasRegExpChars.test(string)) ?
+        string.replace(reRegExpChars, "\\$&") :
+        string
+    );
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-list/node_modules/to_string/src/index.js */
+
+var isString = require(24),
+    isNullOrUndefined = require(21);
+
+
+module.exports = toString;
+
+
+function toString(value) {
+    if (isString(value)) {
+        return value;
+    } else if (isNullOrUndefined(value)) {
+        return "";
+    } else {
+        return value + "";
+    }
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-list/node_modules/is_string/src/index.js */
+
+module.exports = isString;
+
+
+function isString(value) {
+    return typeof(value) === "string" || false;
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-list/node_modules/get_prototype_of/src/index.js */
+
+var isObject = require(15),
+    isNative = require(19),
+    isNullOrUndefined = require(21);
+
+
+var nativeGetPrototypeOf = Object.getPrototypeOf,
+    baseGetPrototypeOf;
+
+
+module.exports = getPrototypeOf;
+
+
+function getPrototypeOf(value) {
+    if (isNullOrUndefined(value)) {
+        return null;
+    } else {
+        return baseGetPrototypeOf(value);
+    }
+}
+
+if (isNative(nativeGetPrototypeOf)) {
+    baseGetPrototypeOf = function baseGetPrototypeOf(value) {
+        return nativeGetPrototypeOf(isObject(value) ? value : Object(value)) || null;
+    };
+} else {
+    if ("".__proto__ === String.prototype) {
+        baseGetPrototypeOf = function baseGetPrototypeOf(value) {
+            return value.__proto__ || null;
+        };
+    } else {
+        baseGetPrototypeOf = function baseGetPrototypeOf(value) {
+            return value.constructor ? value.constructor.prototype : null;
+        };
+    }
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-list/node_modules/empty_function/src/index.js */
+
+module.exports = emptyFunction;
+
+
+function emptyFunction() {}
+
+function makeEmptyFunction(value) {
+    return function() {
+        return value;
+    };
+}
+
+emptyFunction.thatReturns = makeEmptyFunction;
+emptyFunction.thatReturnsFalse = makeEmptyFunction(false);
+emptyFunction.thatReturnsTrue = makeEmptyFunction(true);
+emptyFunction.thatReturnsNull = makeEmptyFunction(null);
+emptyFunction.thatReturnsThis = function() {
+    return this;
+};
+emptyFunction.thatReturnsArgument = function(argument) {
+    return argument;
+};
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-map/node_modules/hash_code/src/index.js */
+
+var WeakMapPolyfill = require(32),
+    isNumber = require(16),
+    isString = require(24),
+    isFunction = require(14),
+    isBoolean = require(33),
+    isNullOrUndefined = require(21),
+    numberHashCode = require(34),
+    booleanHashCode = require(35),
+    stringHashCode = require(36);
+
+
+var WEAK_MAP = new WeakMapPolyfill(),
+    HASH_UID = 1;
+
+
+module.exports = hashCode;
+
+
+function hashCode(value) {
+    if (isNullOrUndefined(value)) {
+        return 0;
+    } else {
+        if (isFunction(value.valueOf)) {
+            value = value.valueOf();
+            if (isNullOrUndefined(value)) {
+                return 0;
+            }
+        }
+
+        if (isBoolean(value)) {
+            return booleanHashCode(value);
+        } else if (isNumber(value)) {
+            return numberHashCode(value);
+        } else if (isString(value)) {
+            return stringHashCode(value);
+        } else if (isFunction(value.hashCode)) {
+            return value.hashCode();
+        } else {
+            return getObjectHashCode(value);
+        }
+    }
+}
+
+function getObjectHashCode(value) {
+    var hashCode = getHashCode(value);
+
+    if (hashCode !== undefined) {
+        return hashCode;
+    } else {
+        return setHashCode(value);
+    }
+}
+
+function getHashCode(value) {
+    return WEAK_MAP.get(value);
+}
+
+function setHashCode(value) {
+    var hashCode = HASH_UID++;
+
+    if (HASH_UID & 0x40000000) {
+        HASH_UID = 0;
+    }
+
+    WEAK_MAP.set(value, hashCode);
+
+    return hashCode;
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-map/src/Box.js */
+
+module.exports = Box;
+
+
+function Box(value) {
+    this.value = value;
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-map/src/Iterator.js */
+
+module.exports = Iterator;
+
+
+function Iterator(hasNext, next) {
+    this.hasNext = hasNext;
+    this.next = next;
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-map/src/IteratorValue.js */
+
+module.exports = IteratorValue;
+
+
+function IteratorValue(done, value) {
+    this.done = done;
+    this.value = value;
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-map/src/BitmapIndexedNode.js */
+
+var isNull = require(5),
+    isEqual = require(12),
+    hashCode = require(27),
+    consts = require(38),
+    bitpos = require(39),
+    copyArray = require(40),
+    cloneAndSet = require(41),
+    removePair = require(42),
+    mask = require(43),
+    bitCount = require(44),
+    nodeIterator = require(45),
+    ArrayNode, createNode;
+
+
+var SHIFT = consts.SHIFT,
+    MAX_BITMAP_INDEXED_SIZE = consts.MAX_BITMAP_INDEXED_SIZE,
+    EMPTY = new BitmapIndexedNode(0, []),
+    BitmapIndexedNodePrototype = BitmapIndexedNode.prototype;
+
+
+module.exports = BitmapIndexedNode;
+
+
+ArrayNode = require(46);
+createNode = require(47);
+
+
+function BitmapIndexedNode(bitmap, array) {
+    this.bitmap = bitmap;
+    this.array = array;
+}
+
+BitmapIndexedNode.EMPTY = EMPTY;
+
+BitmapIndexedNodePrototype.get = function(shift, keyHash, key, notSetValue) {
+    var bitmap = this.bitmap,
+        bit = bitpos(keyHash, shift),
+        array, index, keyOrNull, valueOrNode;
+
+    if ((bitmap & bit) === 0) {
+        return notSetValue;
+    } else {
+        array = this.array;
+        index = getIndex(bitmap, bit);
+
+        keyOrNull = array[2 * index];
+        valueOrNode = array[2 * index + 1];
+
+        if (isNull(keyOrNull)) {
+            return valueOrNode.get(shift + SHIFT, keyHash, key, notSetValue);
+        } else {
+            if (isEqual(key, keyOrNull)) {
+                return valueOrNode;
+            } else {
+                return notSetValue;
+            }
+        }
+    }
+};
+
+BitmapIndexedNodePrototype.set = function(shift, keyHash, key, value, addedLeaf) {
+    var array = this.array,
+        bitmap = this.bitmap,
+        bit = bitpos(keyHash, shift),
+        index = getIndex(bitmap, bit),
+        keyOrNull, valueOrNode, newNode, nodes, jIndex, i, j, newArray;
+
+    if ((bitmap & bit) !== 0) {
+        keyOrNull = array[2 * index];
+        valueOrNode = array[2 * index + 1];
+
+        if (isNull(keyOrNull)) {
+            newNode = valueOrNode.set(shift + SHIFT, keyHash, key, value, addedLeaf);
+
+            if (newNode === valueOrNode) {
+                return this;
+            } else {
+                return new BitmapIndexedNode(bitmap, cloneAndSet(array, 2 * index + 1, newNode));
+            }
+        }
+        if (isEqual(key, keyOrNull)) {
+            if (value === valueOrNode) {
+                return this;
+            } else {
+                return new BitmapIndexedNode(bitmap, cloneAndSet(array, 2 * index + 1, value));
+            }
+        }
+        addedLeaf.value = addedLeaf;
+        return new BitmapIndexedNode(bitmap,
+            cloneAndSet(array,
+                2 * index, null,
+                2 * index + 1, createNode(shift + SHIFT, keyOrNull, valueOrNode, keyHash, key, value)));
+    } else {
+        newNode = bitCount(bitmap);
+
+        if (newNode >= MAX_BITMAP_INDEXED_SIZE) {
+            nodes = new Array(32);
+            jIndex = mask(keyHash, shift);
+            nodes[jIndex] = EMPTY.set(shift + SHIFT, keyHash, key, value, addedLeaf);
+
+            i = -1;
+            j = 0;
+            while (i++ < 31) {
+                if (((bitmap >>> i) & 1) !== 0) {
+                    if (array[j] == null) {
+                        nodes[i] = array[j + 1];
+                    } else {
+                        nodes[i] = EMPTY.set(shift + SHIFT, hashCode(array[j]), array[j], array[j + 1], addedLeaf);
+                    }
+                    j += 2;
+                }
+            }
+
+            return new ArrayNode(newNode + 1, nodes);
+        } else {
+            newArray = new Array(2 * (newNode + 1));
+            copyArray(array, 0, newArray, 0, 2 * index);
+
+            newArray[2 * index] = key;
+            addedLeaf.value = addedLeaf;
+            newArray[2 * index + 1] = value;
+
+            copyArray(array, 2 * index, newArray, 2 * (index + 1), 2 * (newNode - index));
+
+            return new BitmapIndexedNode(bitmap | bit, newArray);
+        }
+    }
+};
+
+BitmapIndexedNodePrototype.remove = function(shift, keyHash, key) {
+    var bitmap = this.bitmap,
+        bit = bitpos(keyHash, shift),
+        index, array, newNode;
+
+    if ((bitmap & bit) === 0) {
+        return this;
+    } else {
+        index = getIndex(bitmap, bit);
+        array = this.array;
+
+        keyOrNull = array[2 * index];
+        valueOrNode = array[2 * index + 1];
+
+        if (isNull(keyOrNull)) {
+            newNode = valueOrNode.remove(shift + SHIFT, keyHash, key);
+
+            if (newNode === valueOrNode) {
+                return this;
+            } else if (!isNull(newNode)) {
+                return new BitmapIndexedNode(bitmap, cloneAndSet(array, 2 * index + 1, newNode));
+            } else if (bitmap === bit) {
+                return null;
+            } else {
+                return new BitmapIndexedNode(bitmap ^ bit, removePair(array, index));
+            }
+        } else {
+            if (isEqual(key, keyOrNull)) {
+                return new BitmapIndexedNode(bitmap ^ bit, removePair(array, index));
+            } else {
+                return this;
+            }
+        }
+    }
+};
+
+BitmapIndexedNodePrototype.iterator = nodeIterator;
+
+function getIndex(bitmap, bit) {
+    return bitCount(bitmap & (bit - 1));
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-map/node_modules/weak_map_polyfill/src/index.js */
+
+var isNative = require(19),
+    isPrimitive = require(18),
+    createStore = require(37);
+
+
+var NativeWeakMap = typeof(WeakMap) !== "undefined" ? WeakMap : null,
+    WeakMapPolyfill, WeakMapPolyfillPrototype;
+
+
+if (isNative(NativeWeakMap)) {
+    WeakMapPolyfill = NativeWeakMap;
+    WeakMapPolyfillPrototype = WeakMapPolyfill.prototype;
+} else {
+    WeakMapPolyfill = function WeakMap() {
+        this.__store = createStore();
+    };
+    WeakMapPolyfillPrototype = WeakMapPolyfill.prototype;
+    WeakMapPolyfillPrototype.constructor = WeakMapPolyfill;
+
+    WeakMapPolyfillPrototype.get = function(key) {
+        return this.__store.get(key);
+    };
+
+    WeakMapPolyfillPrototype.set = function(key, value) {
+        if (isPrimitive(key)) {
+            throw new TypeError("Invalid value used as key");
+        } else {
+            this.__store.set(key, value);
+        }
+    };
+
+    WeakMapPolyfillPrototype.has = function(key) {
+        return this.__store.has(key);
+    };
+
+    WeakMapPolyfillPrototype["delete"] = function(key) {
+        return this.__store.remove(key);
+    };
+
+    WeakMapPolyfillPrototype.length = 0;
+}
+
+WeakMapPolyfillPrototype.remove = WeakMapPolyfillPrototype["delete"];
+
+
+module.exports = WeakMapPolyfill;
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-map/node_modules/is_boolean/src/index.js */
+
+module.exports = isBoolean;
+
+
+function isBoolean(value) {
+    return typeof(value) === "boolean" || false;
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-map/node_modules/number-hash_code/src/index.js */
+
+module.exports = numberHashCode;
+
+
+function numberHashCode(number) {
+    var hash = number | 0;
+
+    if (hash !== number) {
+        hash ^= number * 0xFFFFFFFF;
+    }
+
+    while (number > 0xFFFFFFFF) {
+        number /= 0xFFFFFFFF;
+        hash ^= o;
+    }
+
+    return ((hash >>> 1) & 0x40000000) | (hash & 0xBFFFFFFF);
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-map/node_modules/boolean-hash_code/src/index.js */
+
+module.exports = booleanHashCode;
+
+
+function booleanHashCode(bool) {
+    if (bool !== false) {
+        return 1231;
+    } else {
+        return 1237;
+    }
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-map/node_modules/string-hash_code/src/index.js */
+
+var isUndefined = require(6);
+
+
+var STRING_HASH_CACHE_MIN_STRING_LENGTH = 16,
+    STRING_HASH_CACHE_MAX_SIZE = 255,
+    STRING_HASH_CACHE_SIZE = 0,
+    SRTING_HASH_CACHE = {};
+
+
+module.exports = stringHashCode;
+
+
+function stringHashCode(string) {
+    if (string.length > STRING_HASH_CACHE_MIN_STRING_LENGTH) {
+        return cachedHashString(string);
+    } else {
+        return hashString(string);
+    }
+}
+
+function cachedHashString(string) {
+    var hash = SRTING_HASH_CACHE[string];
+
+    if (isUndefined(hash)) {
+        hash = hashString(string);
+
+        if (STRING_HASH_CACHE_SIZE === STRING_HASH_CACHE_MAX_SIZE) {
+            STRING_HASH_CACHE_SIZE = 0;
+            SRTING_HASH_CACHE = {};
+        }
+
+        STRING_HASH_CACHE_SIZE += 1;
+        SRTING_HASH_CACHE[string] = hash;
+    }
+
+    return hash;
+}
+
+function hashString(string) {
+    var hash = 0,
+        i = -1,
+        il = string.length - 1;
+
+    while (i++ < il) {
+        hash = 31 * hash + string.charCodeAt(i) | 0;
+    }
+
+    return ((hash >>> 1) & 0x40000000) | (hash & 0xBFFFFFFF);
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-map/node_modules/create_store/src/index.js */
+
+var has = require(20),
+    defineProperty = require(10),
+    isPrimitive = require(18);
+
+
+var emptyStore = {
+        value: undefined
+    },
+    ObjectPrototype = Object.prototype;
+
+
+module.exports = createStore;
+
+
+function createStore() {
+    var privateKey = {},
+        size = 0;
+
+
+    function get(key) {
+        var store;
+
+        if (isPrimitive(key)) {
+            throw new TypeError("Invalid value used as key");
+        } else {
+            store = key.valueOf(privateKey);
+
+            if (!store || store.identity !== privateKey) {
+                store = emptyStore;
+            }
+
+            return store;
+        }
+    }
+
+    function set(key) {
+        var store;
+
+        if (isPrimitive(key)) {
+            throw new TypeError("Invalid value used as key");
+        } else {
+            store = key.valueOf(privateKey);
+
+            if (!store || store.identity !== privateKey) {
+                store = privateStore(key, privateKey);
+                size += 1;
+            }
+
+            return store;
+        }
+    }
+
+    return {
+        get: function(key) {
+            return get(key).value;
+        },
+        set: function(key, value) {
+            set(key).value = value;
+        },
+        has: function(key) {
+            var store = get(key);
+            return store !== emptyStore ? has(store, "value") : false;
+        },
+        remove: function(key) {
+            var store = get(key);
+
+            if (store !== emptyStore) {
+                size -= 1;
+                return store.remove();
+            } else {
+                return false;
+            }
+        },
+        clear: function() {
+            privateKey = {};
+            size = 0;
+        },
+        size: function() {
+            return size;
+        }
+    };
+}
+
+function privateStore(key, privateKey) {
+    var keyValueOf = key.valueOf || ObjectPrototype.valueOf,
+        store = {
+            identity: privateKey,
+            remove: function remove() {
+                if (key.valueOf === valueOf) {
+                    key.valueOf = keyValueOf;
+                }
+                return delete store.value;
+            }
+        };
+
+    function valueOf(value) {
+        if (value !== privateKey) {
+            return keyValueOf.apply(this, arguments);
+        } else {
+            return store;
+        }
+    }
+
+    defineProperty(key, "valueOf", {
+        value: valueOf,
+        configurable: true,
+        enumerable: false,
+        writable: true
+    });
+
+    return store;
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-map/src/consts.js */
+
+var consts = exports;
+
+
+consts.SHIFT = 5;
+consts.SIZE = 1 << consts.SHIFT;
+consts.MASK = consts.SIZE - 1;
+
+consts.MAX_ARRAY_MAP_SIZE = consts.SIZE / 4;
+consts.MAX_BITMAP_INDEXED_SIZE = consts.SIZE / 2;
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-map/src/bitpos.js */
+
+var mask = require(43);
+
+
+module.exports = bitpos;
+
+
+function bitpos(hashCode, shift) {
+    return 1 << mask(hashCode, shift);
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-map/src/copyArray.js */
+
+module.exports = copyArray;
+
+
+function copyArray(src, srcPos, dest, destPos, length) {
+    var i = srcPos - 1,
+        il = srcPos + length - 1;
+
+    while (i++ < il) {
+        dest[destPos++] = src[i];
+    }
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-map/src/cloneAndSet.js */
+
+var copyArray = require(40);
+
+
+module.exports = cloneAndSet;
+
+
+function cloneAndSet(array, index0, value0, index1, value1) {
+    var length = array.length,
+        results = new Array(length);
+
+    copyArray(array, 0, results, 0, length);
+
+    results[index0] = value0;
+    if (index1 !== undefined) {
+        results[index1] = value1;
+    }
+
+    return results;
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-map/src/removePair.js */
+
+var copyArray = require(40);
+
+
+module.exports = removePair;
+
+
+function removePair(array, index) {
+    var length = array.length,
+        newArray = new Array(length - 2);
+
+    copyArray(array, 0, newArray, 0, 2 * index);
+    copyArray(array, 2 * (index + 1), newArray, 2 * index, length - 2 * index);
+
+    return newArray;
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-map/src/mask.js */
+
+var consts = require(38);
+
+
+var MASK = consts.MASK;
+
+
+module.exports = mask;
+
+
+function mask(hashCode, shift) {
+    return (hashCode >>> shift) & MASK;
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-map/src/bitCount.js */
+
+module.exports = bitCount;
+
+
+function bitCount(i) {
+    i = i - ((i >>> 1) & 0x55555555);
+    i = (i & 0x33333333) + ((i >>> 2) & 0x33333333);
+    i = (i + (i >>> 4)) & 0x0f0f0f0f;
+    i = i + (i >>> 8);
+    i = i + (i >>> 16);
+    return i & 0x3f;
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-map/src/nodeIterator.js */
+
+var isNull = require(5),
+    isUndefined = require(6),
+    Iterator = require(29),
+    IteratorValue = require(30);
+
+
+module.exports = nodeIterator;
+
+
+function nodeIterator(reverse) {
+    if (reverse !== true) {
+        return iterator(this);
+    } else {
+        return iteratorReverse(this);
+    }
+}
+
+function iterator(_this) {
+    var array = _this.array,
+        index = 0,
+        length = array.length,
+        nextIter = null,
+        nextEntry = null;
+
+    function advance() {
+        var key, iter;
+
+        while (index < length) {
+            key = array[index];
+            valueOrNode = array[index + 1];
+            index += 2;
+
+            if (!isUndefined(key)) {
+                nextEntry = [key, valueOrNode];
+                return true;
+            } else if (!isUndefined(valueOrNode)) {
+                iter = valueOrNode.iterator();
+
+                if (!isNull(iter) && iter.hasNext()) {
+                    nextIter = iter;
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    function hasNext() {
+        if (!isNull(nextEntry) || !isNull(nextIter)) {
+            return true;
+        } else {
+            return advance();
+        }
+    }
+
+    function next() {
+        var entry = nextEntry;
+
+        if (!isNull(entry)) {
+            nextEntry = null;
+            return new IteratorValue(false, entry);
+        } else if (!isNull(nextIter)) {
+            entry = nextIter.next();
+
+            if (!nextIter.hasNext()) {
+                nextIter = null;
+            }
+
+            return new IteratorValue(false, entry);
+        } else if (advance()) {
+            return next();
+        } else {
+            return new IteratorValue(true, undefined);
+        }
+    }
+
+    return new Iterator(hasNext, next);
+}
+
+function iteratorReverse(_this) {
+    var array = _this.array,
+        length = array.length,
+        index = length - 1,
+        nextIter = null,
+        nextEntry = null;
+
+    function advance() {
+        var key, iter;
+
+        while (index > -1) {
+            key = array[index - 1];
+            valueOrNode = array[index];
+            index -= 2;
+
+            if (!isUndefined(key)) {
+                nextEntry = [key, valueOrNode];
+                return true;
+            } else if (!isUndefined(valueOrNode)) {
+                iter = valueOrNode.iterator();
+
+                if (!isNull(iter) && iter.hasNext()) {
+                    nextIter = iter;
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    function hasNext() {
+        if (!isNull(nextEntry) || !isNull(nextIter)) {
+            return true;
+        } else {
+            return advance();
+        }
+    }
+
+    function next() {
+        var entry = nextEntry;
+
+        if (!isNull(entry)) {
+            nextEntry = null;
+            return new IteratorValue(false, entry);
+        } else if (!isNull(nextIter)) {
+            entry = nextIter.next();
+
+            if (!nextIter.hasNext()) {
+                nextIter = null;
+            }
+
+            return new IteratorValue(false, entry);
+        } else if (advance()) {
+            return next();
+        } else {
+            return new IteratorValue(true, undefined);
+        }
+    }
+
+    return new Iterator(hasNext, next);
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-map/src/ArrayNode.js */
+
+var isNull = require(5),
+    isNullOrUndefined = require(21),
+    consts = require(38),
+    mask = require(43),
+    cloneAndSet = require(41),
+    Iterator = require(29),
+    IteratorValue = require(30),
+    BitmapIndexedNode;
+
+
+var SHIFT = consts.SHIFT,
+    MAX_ARRAY_MAP_SIZE = consts.MAX_ARRAY_MAP_SIZE,
+    EMPTY = new ArrayNode(0, []),
+    ArrayNodePrototype = ArrayNode.prototype;
+
+
+module.exports = ArrayNode;
+
+
+BitmapIndexedNode = require(31);
+
+
+function ArrayNode(count, array) {
+    this.count = count;
+    this.array = array;
+}
+
+ArrayNode.EMPTY = EMPTY;
+
+ArrayNodePrototype.get = function(shift, keyHash, key, notSetValue) {
+    var index = mask(keyHash, shift),
+        node = this.array[index];
+
+    if (isNullOrUndefined(node)) {
+        return notSetValue;
+    } else {
+        return node.get(shift + SHIFT, hash, key, notSetValue);
+    }
+};
+
+ArrayNodePrototype.set = function(shift, keyHash, key, value, addedLeaf) {
+    var index = mask(keyHash, shift),
+        array = this.array,
+        count = this.count,
+        node = array[index],
+        newNode;
+
+    if (isNullOrUndefined(node)) {
+        return new ArrayNode(count + 1, cloneAndSet(array, index, BitmapIndexedNode.EMPTY.set(shift + SHIFT, keyHash, key, value, addedLeaf)));
+    } else {
+        newNode = node.set(shift + SHIFT, keyHash, key, value, addedLeaf);
+
+        if (newNode === node) {
+            return this;
+        } else {
+            return new ArrayNode(count, cloneAndSet(array, index, newNode));
+        }
+    }
+};
+
+ArrayNodePrototype.remove = function(shift, keyHash, key) {
+    var index = mask(keyHash, shift),
+        array = this.array,
+        node = array[index],
+        newNode, count;
+
+    if (isNullOrUndefined(node)) {
+        return this;
+    } else {
+        newNode = node.remove(shift + SHIFT, keyHash, key);
+
+        if (newNode === node) {
+            return this;
+        } else {
+            array = this.array;
+            count = this.count;
+
+            if (isNull(newNode)) {
+                if (count <= MAX_ARRAY_MAP_SIZE) {
+                    return pack(array, index);
+                } else {
+                    return new ArrayNode(count - 1, cloneAndSet(array, index, newNode));
+                }
+            } else {
+                return new ArrayNode(count, cloneAndSet(array, index, newNode));
+            }
+        }
+    }
+};
+
+function ArrayNode_iterator(_this) {
+    var array = _this.array,
+        index = 0,
+        length = array.length,
+        nestedIter = null;
+
+    function hasNext() {
+        var node;
+
+        while (true) {
+            if (!isNull(nestedIter)) {
+                if (nestedIter.hasNext()) {
+                    return true;
+                } else {
+                    nestedIter = null;
+                }
+            } else {
+                if (index === length) {
+                    return false;
+                } else {
+                    node = array[index];
+                    index += 1;
+
+                    if (!isNullOrUndefined(node)) {
+                        nestedIter = node.iterator();
+                    }
+                }
+            }
+        }
+    }
+
+    function next() {
+        if (hasNext()) {
+            return nestedIter.next();
+        } else {
+            return new IteratorValue(true, undefined);
+        }
+    }
+
+    return new Iterator(hasNext, next);
+}
+
+function ArrayNode_iteratorReverse(_this) {
+    var array = _this.array,
+        length = array.length,
+        index = length - 1,
+        nestedIter = null;
+
+    function hasNext() {
+        var node;
+
+        while (true) {
+            if (!isNull(nestedIter)) {
+                if (nestedIter.hasNext()) {
+                    return true;
+                } else {
+                    nestedIter = null;
+                }
+            } else {
+                if (index === -1) {
+                    return false;
+                } else {
+                    node = array[index];
+                    index -= 1;
+
+                    if (!isNullOrUndefined(node)) {
+                        nestedIter = node.iterator();
+                    }
+                }
+            }
+        }
+    }
+
+    function next() {
+        if (hasNext()) {
+            return nestedIter.next();
+        } else {
+            return new IteratorValue(true, undefined);
+        }
+    }
+
+    return new Iterator(hasNext, next);
+}
+
+ArrayNodePrototype.iterator = function(reverse) {
+    if (reverse !== true) {
+        return ArrayNode_iterator(this);
+    } else {
+        return ArrayNode_iteratorReverse(this);
+    }
+};
+
+function pack(array, index) {
+    var newArray = new Array(2 * (count - 1)),
+        j = 1,
+        bitmap = 0,
+        i = -1,
+        il = index - 1;
+
+    while (i++ < il) {
+        if (!isNull(array[i])) {
+            newArray[j] = array[i];
+            bitmap |= 1 << i;
+            j += 2;
+        }
+    }
+
+    i = index - 1;
+    il = array.length - 1;
+    while (i++ < il) {
+        if (!isNull(array[i])) {
+            newArray[j] = array[i];
+            bitmap |= 1 << i;
+            j += 2;
+        }
+    }
+
+    return new BitmapIndexedNode(bitmap, newArray);
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-map/src/createNode.js */
+
+var hashCode = require(27),
+    Box = require(28),
+    HashCollisionNode, BitmapIndexedNode;
+
+
+module.exports = createNode;
+
+
+HashCollisionNode = require(48);
+BitmapIndexedNode = require(31);
+
+
+function createNode(shift, key0, value0, keyHash1, key1, value1) {
+    var keyHash0 = hashCode(key0),
+        addedLeaf;
+
+    if (keyHash0 === keyHash1) {
+        return new HashCollisionNode(keyHash0, 2, [key0, value0, key1, value1]);
+    } else {
+        addedLeaf = new Box(null);
+        return BitmapIndexedNode.EMPTY
+            .set(shift, keyHash0, key0, value0, addedLeaf)
+            .set(shift, keyHash1, key1, value1, addedLeaf);
+    }
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-map/src/HashCollisionNode.js */
+
+var isEqual = require(12),
+    bitpos = require(39),
+    copyArray = require(40),
+    cloneAndSet = require(41),
+    removePair = require(42),
+    nodeIterator = require(45),
+    BitmapIndexedNode;
+
+
+var EMPTY = new HashCollisionNode(0, []),
+    HashCollisionNodePrototype = HashCollisionNode.prototype;
+
+
+module.exports = HashCollisionNode;
+
+
+BitmapIndexedNode = require(31);
+
+
+function HashCollisionNode(keyHash, count, array) {
+    this.keyHash = keyHash;
+    this.count = count;
+    this.array = array;
+}
+
+HashCollisionNode.EMPTY = EMPTY;
+
+HashCollisionNodePrototype.get = function(shift, keyHash, key, notSetValue) {
+    var array = this.array,
+        index = getIndex(array, key);
+
+    if (index === -1) {
+        return notFound;
+    } else {
+        if (isEqual(key, array[index])) {
+            return array[index + 1];
+        } else {
+            return notSetValue;
+        }
+    }
+};
+
+HashCollisionNodePrototype.set = function(shift, keyHash, key, value, addedLeaf) {
+    var index, count, array, newArray;
+
+    if (keyHash === this.keyHash) {
+        array = this.array;
+        count = this.count,
+            index = getIndex(array, key);
+
+        if (index !== -1) {
+            if (array[index + 1] === value) {
+                return this;
+            } else {
+                return new HashCollisionNode(keyHash, count, cloneAndSet(array, index + 1, value));
+            }
+        } else {
+            newArray = new Array(2 * (count + 1));
+            copyArray(array, 0, newArray, 0, 2 * count);
+            newArray[2 * count] = key;
+            newArray[2 * count + 1] = value;
+            addedLeaf.value = addedLeaf;
+            return new HashCollisionNode(keyHash, count + 1, newArray);
+        }
+    } else {
+        return new BitmapIndexedNode(bitpos(this.keyHash, shift), [null, this]).set(shift, keyHash, key, value, addedLeaf);
+    }
+};
+
+HashCollisionNodePrototype.remove = function(shift, keyHash, key) {
+    var array = this.array,
+        index = getIndex(array, key);
+
+    if (index === -1) {
+        return this;
+    } else {
+        if (array.length === 1) {
+            return null;
+        } else {
+            return new HashCollisionNode(hash, count - 1, removePair(array, index / 2));
+        }
+    }
+};
+
+HashCollisionNodePrototype.iterator = nodeIterator;
+
+function getIndex(array, key) {
+    var i = -1,
+        il = array.length - 1;
+
+    while (i++ < il) {
+        if (isEqual(array[i], key)) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+
+}], null, void(0), (new Function("return this;"))()));

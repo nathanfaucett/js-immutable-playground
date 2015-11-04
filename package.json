@@ -9,8 +9,8 @@
   "main": "src/index.js",
   "scripts": {
     "build": "npm run build_js && npm run build_css",
-    "build_js": "comn -f src/index.js -o index.js",
-    "build_css": "comn_css -f css/index.less -o index.css"
+    "build_js": "comn -f ./src/index.js -o ./index.js",
+    "build_css": "comn_css -f ./css/index.less -o ./index.css"
   },
   "keywords": [
     "immutable-playground",

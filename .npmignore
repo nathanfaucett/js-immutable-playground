@@ -1,6 +1,8 @@
 test
-bench
+Gruntfile.js
 node_modules
 npm-debug.log
 .npmignore
 .gitignore
+.editorconfig
+.travis.yml
