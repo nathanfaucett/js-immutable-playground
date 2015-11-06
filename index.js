@@ -61,7 +61,7 @@ function(require, exports, module, undefined, global) {
 
 global.ImmutableList = require(1);
 global.ImmutableVector = require(2);
-global.ImmutableMap = require(3);
+global.ImmutableHashMap = require(3);
 global.ImmutableSet = require(4);
 
 
@@ -1755,7 +1755,7 @@ function cloneNode(node, length) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-map/src/index.js */
+/* ../node_modules/immutable-hash_map/src/index.js */
 
 var has = require(20),
     freeze = require(11),
@@ -1776,54 +1776,54 @@ var has = require(20),
 var INTERNAL_CREATE = {},
 
     ITERATOR_SYMBOL = typeof(Symbol) === "function" ? Symbol.iterator : false,
-    IS_MAP = "__ImmutableMap__",
+    IS_MAP = "__ImmutableHashMap__",
 
     NOT_SET = {},
-    EMPTY_MAP = new Map(INTERNAL_CREATE),
+    EMPTY_MAP = new HashMap(INTERNAL_CREATE),
 
-    MapPrototype;
-
-
-module.exports = Map;
+    HashMapPrototype;
 
 
-function Map(value) {
-    if (!(this instanceof Map)) {
-        throw new Error("Map() must be called with new");
+module.exports = HashMap;
+
+
+function HashMap(value) {
+    if (!(this instanceof HashMap)) {
+        throw new Error("HashMap() must be called with new");
     }
 
     this.__size = 0;
     this.__root = null;
 
     if (value !== INTERNAL_CREATE) {
-        return Map_createMap(this, value, arguments);
+        return HashMap_createHashMap(this, value, arguments);
     } else {
         return this;
     }
 }
-MapPrototype = Map.prototype;
+HashMapPrototype = HashMap.prototype;
 
-Map.EMPTY = freeze(EMPTY_MAP);
+HashMap.EMPTY = freeze(EMPTY_MAP);
 
-function Map_createMap(_this, value, args) {
+function HashMap_createHashMap(_this, value, args) {
     var length = args.length;
 
     if (length === 1) {
         if (isArrayLike(value)) {
-            return Map_fromArray(_this, value.toArray ? value.toArray() : value);
+            return HashMap_fromArray(_this, value.toArray ? value.toArray() : value);
         } else if (isObject(value)) {
-            return Map_fromObject(_this, value);
+            return HashMap_fromObject(_this, value);
         } else {
             return EMPTY_MAP;
         }
     } else if (length > 1) {
-        return Map_fromArray(_this, args);
+        return HashMap_fromArray(_this, args);
     } else {
         return EMPTY_MAP;
     }
 }
 
-function Map_fromObject(_this, object) {
+function HashMap_fromObject(_this, object) {
     var size = 0,
         root = BitmapIndexedNode.EMPTY,
         key, value, newRoot, addedLeaf;
@@ -1853,7 +1853,7 @@ function Map_fromObject(_this, object) {
     }
 }
 
-function Map_fromArray(_this, array) {
+function HashMap_fromArray(_this, array) {
     var i = 0,
         il = array.length,
         root = BitmapIndexedNode.EMPTY,
@@ -1885,60 +1885,60 @@ function Map_fromArray(_this, array) {
     }
 }
 
-Map.of = function(value) {
+HashMap.of = function(value) {
     if (arguments.length > 0) {
-        return Map_createMap(new Map(INTERNAL_CREATE), value, arguments);
+        return HashMap_createHashMap(new HashMap(INTERNAL_CREATE), value, arguments);
     } else {
         return EMPTY_MAP;
     }
 };
 
-Map.fromArguments = function(args) {
+HashMap.fromArguments = function(args) {
     if (args.length > 0) {
-        return Map_createMap(new Map(INTERNAL_CREATE), args[0], args);
+        return HashMap_createHashMap(new HashMap(INTERNAL_CREATE), args[0], args);
     } else {
         return EMPTY_MAP;
     }
 };
 
-Map.isMap = function(value) {
+HashMap.isHashMap = function(value) {
     return value && value[IS_MAP] === true;
 };
 
-defineProperty(MapPrototype, IS_MAP, {
+defineProperty(HashMapPrototype, IS_MAP, {
     configurable: false,
     enumerable: false,
     writable: false,
     value: true
 });
 
-MapPrototype.size = function() {
+HashMapPrototype.size = function() {
     return this.__size;
 };
 
 if (defineProperty.hasGettersSetters) {
-    defineProperty(MapPrototype, "length", {
-        get: MapPrototype.size
+    defineProperty(HashMapPrototype, "length", {
+        get: HashMapPrototype.size
     });
 }
 
-MapPrototype.count = MapPrototype.size;
+HashMapPrototype.count = HashMapPrototype.size;
 
-MapPrototype.isEmpty = function() {
+HashMapPrototype.isEmpty = function() {
     return this.__size === 0;
 };
 
-MapPrototype.has = function(key) {
+HashMapPrototype.has = function(key) {
     var root = this.__root;
     return isNull(root) ? false : root.get(0, hashCode(key), key, NOT_SET) !== NOT_SET;
 };
 
-MapPrototype.get = function(key) {
+HashMapPrototype.get = function(key) {
     var root = this.__root;
     return isNull(root) ? undefined : root.get(0, hashCode(key), key);
 };
 
-MapPrototype.set = function(key, value) {
+HashMapPrototype.set = function(key, value) {
     var root = this.__root,
         size = this.__size,
         addedLeaf = new Box(null),
@@ -1948,14 +1948,14 @@ MapPrototype.set = function(key, value) {
     if (newRoot === root) {
         return this;
     } else {
-        map = new Map(INTERNAL_CREATE);
+        map = new HashMap(INTERNAL_CREATE);
         map.__size = isNull(addedLeaf.value) ? size : size + 1;
         map.__root = newRoot;
         return freeze(map);
     }
 };
 
-MapPrototype.remove = function(key) {
+HashMapPrototype.remove = function(key) {
     var root = this.__root,
         size = this.__size,
         newRoot;
@@ -1970,7 +1970,7 @@ MapPrototype.remove = function(key) {
         if (newRoot === root) {
             return this;
         } else {
-            map = new Map(INTERNAL_CREATE);
+            map = new HashMap(INTERNAL_CREATE);
             map.__size = size - 1;
             map.__root = newRoot;
             return freeze(map);
@@ -1986,7 +1986,7 @@ function next() {
     return new IteratorValue(true, undefined);
 }
 
-MapPrototype.iterator = function(reverse) {
+HashMapPrototype.iterator = function(reverse) {
     var root = this.__root;
 
     if (isNull(root)) {
@@ -1997,10 +1997,10 @@ MapPrototype.iterator = function(reverse) {
 };
 
 if (ITERATOR_SYMBOL) {
-    MapPrototype[ITERATOR_SYMBOL] = MapPrototype.iterator;
+    HashMapPrototype[ITERATOR_SYMBOL] = HashMapPrototype.iterator;
 }
 
-function Map_every(_this, it, callback) {
+function HashMap_every(_this, it, callback) {
     var next = it.next(),
         nextValue;
 
@@ -2015,11 +2015,11 @@ function Map_every(_this, it, callback) {
     return true;
 }
 
-MapPrototype.every = function(callback, thisArg) {
-    return Map_every(this, this.iterator(), isUndefined(thisArg) ? callback : fastBindThis(callback, thisArg, 3));
+HashMapPrototype.every = function(callback, thisArg) {
+    return HashMap_every(this, this.iterator(), isUndefined(thisArg) ? callback : fastBindThis(callback, thisArg, 3));
 };
 
-function Map_filter(_this, it, callback) {
+function HashMap_filter(_this, it, callback) {
     var results = [],
         next = it.next(),
         index = 0,
@@ -2038,14 +2038,14 @@ function Map_filter(_this, it, callback) {
         next = it.next();
     }
 
-    return Map.of(results);
+    return HashMap.of(results);
 }
 
-MapPrototype.filter = function(callback, thisArg) {
-    return Map_filter(this, this.iterator(), isUndefined(thisArg) ? callback : fastBindThis(callback, thisArg, 3));
+HashMapPrototype.filter = function(callback, thisArg) {
+    return HashMap_filter(this, this.iterator(), isUndefined(thisArg) ? callback : fastBindThis(callback, thisArg, 3));
 };
 
-function Map_forEach(_this, it, callback) {
+function HashMap_forEach(_this, it, callback) {
     var next = it.next(),
         nextValue;
 
@@ -2060,13 +2060,13 @@ function Map_forEach(_this, it, callback) {
     return _this;
 }
 
-MapPrototype.forEach = function(callback, thisArg) {
-    return Map_forEach(this, this.iterator(), isUndefined(thisArg) ? callback : fastBindThis(callback, thisArg, 3));
+HashMapPrototype.forEach = function(callback, thisArg) {
+    return HashMap_forEach(this, this.iterator(), isUndefined(thisArg) ? callback : fastBindThis(callback, thisArg, 3));
 };
 
-MapPrototype.each = MapPrototype.forEach;
+HashMapPrototype.each = HashMapPrototype.forEach;
 
-function Map_forEachRight(_this, it, callback) {
+function HashMap_forEachRight(_this, it, callback) {
     var next = it.next(),
         nextValue;
 
@@ -2081,13 +2081,13 @@ function Map_forEachRight(_this, it, callback) {
     return _this;
 }
 
-MapPrototype.forEachRight = function(callback, thisArg) {
-    return Map_forEachRight(this, this.iterator(true), isUndefined(thisArg) ? callback : fastBindThis(callback, thisArg, 3));
+HashMapPrototype.forEachRight = function(callback, thisArg) {
+    return HashMap_forEachRight(this, this.iterator(true), isUndefined(thisArg) ? callback : fastBindThis(callback, thisArg, 3));
 };
 
-MapPrototype.eachRight = MapPrototype.forEachRight;
+HashMapPrototype.eachRight = HashMapPrototype.forEachRight;
 
-function Map_map(_this, it, callback) {
+function HashMap_map(_this, it, callback) {
     var next = it.next(),
         results = new Array(_this.__size * 2),
         index = 0,
@@ -2102,14 +2102,14 @@ function Map_map(_this, it, callback) {
         next = it.next();
     }
 
-    return Map.of(results);
+    return HashMap.of(results);
 }
 
-MapPrototype.map = function(callback, thisArg) {
-    return Map_map(this, this.iterator(), isUndefined(thisArg) ? callback : fastBindThis(callback, thisArg, 3));
+HashMapPrototype.map = function(callback, thisArg) {
+    return HashMap_map(this, this.iterator(), isUndefined(thisArg) ? callback : fastBindThis(callback, thisArg, 3));
 };
 
-function Map_reduce(_this, it, callback, initialValue) {
+function HashMap_reduce(_this, it, callback, initialValue) {
     var next = it.next(),
         value = initialValue,
         nextValue, key;
@@ -2130,11 +2130,11 @@ function Map_reduce(_this, it, callback, initialValue) {
     return value;
 }
 
-MapPrototype.reduce = function(callback, initialValue, thisArg) {
-    return Map_reduce(this, this.iterator(), isUndefined(thisArg) ? callback : fastBindThis(callback, thisArg, 4), initialValue);
+HashMapPrototype.reduce = function(callback, initialValue, thisArg) {
+    return HashMap_reduce(this, this.iterator(), isUndefined(thisArg) ? callback : fastBindThis(callback, thisArg, 4), initialValue);
 };
 
-function Map_reduceRight(_this, it, callback, initialValue) {
+function HashMap_reduceRight(_this, it, callback, initialValue) {
     var next = it.next(),
         value = initialValue,
         nextValue, key;
@@ -2155,11 +2155,11 @@ function Map_reduceRight(_this, it, callback, initialValue) {
     return value;
 }
 
-MapPrototype.reduceRight = function(callback, initialValue, thisArg) {
-    return Map_reduceRight(this, this.iterator(true), isUndefined(thisArg) ? callback : fastBindThis(callback, thisArg, 4), initialValue);
+HashMapPrototype.reduceRight = function(callback, initialValue, thisArg) {
+    return HashMap_reduceRight(this, this.iterator(true), isUndefined(thisArg) ? callback : fastBindThis(callback, thisArg, 4), initialValue);
 };
 
-function Map_some(_this, it, callback) {
+function HashMap_some(_this, it, callback) {
     var next = it.next(),
         nextValue;
 
@@ -2175,11 +2175,11 @@ function Map_some(_this, it, callback) {
     return false;
 }
 
-MapPrototype.some = function(callback, thisArg) {
-    return Map_some(this, this.iterator(), isUndefined(thisArg) ? callback : fastBindThis(callback, thisArg, 3));
+HashMapPrototype.some = function(callback, thisArg) {
+    return HashMap_some(this, this.iterator(), isUndefined(thisArg) ? callback : fastBindThis(callback, thisArg, 3));
 };
 
-MapPrototype.toArray = function() {
+HashMapPrototype.toArray = function() {
     var it = this.iterator(),
         next = it.next(),
         results = new Array(this.__size * 2),
@@ -2195,7 +2195,7 @@ MapPrototype.toArray = function() {
     return results;
 };
 
-MapPrototype.toObject = function() {
+HashMapPrototype.toObject = function() {
     var it = this.iterator(),
         next = it.next(),
         results = {};
@@ -2209,7 +2209,7 @@ MapPrototype.toObject = function() {
     return results;
 };
 
-MapPrototype.join = function(separator, keyValueSeparator) {
+HashMapPrototype.join = function(separator, keyValueSeparator) {
     var it = this.iterator(),
         next = it.next(),
         result = "";
@@ -2232,13 +2232,13 @@ MapPrototype.join = function(separator, keyValueSeparator) {
     return result;
 };
 
-MapPrototype.toString = function() {
+HashMapPrototype.toString = function() {
     return "{" + this.join() + "}";
 };
 
-MapPrototype.inspect = MapPrototype.toString;
+HashMapPrototype.inspect = HashMapPrototype.toString;
 
-function Map_equal(ait, bit) {
+function HashMap_equal(ait, bit) {
     var anext = ait.next(),
         bnext = bit.next(),
         anextValue, bnextValue;
@@ -2258,18 +2258,18 @@ function Map_equal(ait, bit) {
     return true;
 }
 
-Map.equal = function(a, b) {
+HashMap.equal = function(a, b) {
     if (a === b) {
         return true;
     } else if (!a || !b || a.__size !== b.__size) {
         return false;
     } else {
-        return Map_equal(a.iterator(), b.iterator());
+        return HashMap_equal(a.iterator(), b.iterator());
     }
 };
 
-MapPrototype.equals = function(b) {
-    return Map.equal(this, b);
+HashMapPrototype.equals = function(b) {
+    return HashMap.equal(this, b);
 };
 
 
@@ -2278,7 +2278,7 @@ function(require, exports, module, undefined, global) {
 /* ../node_modules/immutable-set/src/index.js */
 
 var freeze = require(11),
-    ImmutableMap = require(3),
+    ImmutableHashMap = require(3),
     isUndefined = require(6),
     isArrayLike = require(7),
     defineProperty = require(10);
@@ -2302,7 +2302,7 @@ function Set(value) {
         throw new Error("Set() must be called with new");
     }
 
-    this.__map = ImmutableMap.EMPTY;
+    this.__hashMap = ImmutableHashMap.EMPTY;
 
     if (value !== INTERNAL_CREATE) {
         return Set_createSet(this, value, arguments);
@@ -2332,16 +2332,16 @@ function Set_createSet(_this, value, values) {
 function Set_fromArray(_this, array) {
     var i = -1,
         il = array.length - 1,
-        map = _this.__map,
+        hashMap = _this.__hashMap,
         value;
 
     while (i++ < il) {
         value = array[i];
-        map = map.set(value, true);
+        hashMap = hashMap.set(value, true);
     }
 
-    if (map.size() !== 0) {
-        _this.__map = map;
+    if (hashMap.size() !== 0) {
+        _this.__hashMap = hashMap;
         return freeze(_this);
     } else {
         return EMPTY_SET;
@@ -2368,7 +2368,7 @@ defineProperty(SetPrototype, IS_SET, {
 });
 
 SetPrototype.size = function() {
-    return this.__map.size();
+    return this.__hashMap.size();
 };
 
 if (defineProperty.hasGettersSetters) {
@@ -2380,15 +2380,15 @@ if (defineProperty.hasGettersSetters) {
 SetPrototype.count = SetPrototype.size;
 
 SetPrototype.isEmpty = function() {
-    return this.__map.isEmpty();
+    return this.__hashMap.isEmpty();
 };
 
 SetPrototype.has = function(value) {
-    return this.__map.has(value);
+    return this.__hashMap.has(value);
 };
 
 SetPrototype.get = function(value) {
-    if (this.__map.has(value)) {
+    if (this.__hashMap.has(value)) {
         return value;
     } else {
         return undefined;
@@ -2396,20 +2396,20 @@ SetPrototype.get = function(value) {
 };
 
 function Set_set(_this, values) {
-    var map = _this.__map,
+    var hashMap = _this.__hashMap,
         i = -1,
         il = values.length - 1,
         added = 0,
-        newImmutableMap, set, value;
+        newImmutableHashMap, set, value;
 
     while (i++ < il) {
         value = values[i];
 
-        if (!map.has(value)) {
-            newImmutableMap = map.set(value, true);
+        if (!hashMap.has(value)) {
+            newImmutableHashMap = hashMap.set(value, true);
 
-            if (newImmutableMap !== map) {
-                map = newImmutableMap;
+            if (newImmutableHashMap !== hashMap) {
+                hashMap = newImmutableHashMap;
                 added += 1;
             }
         }
@@ -2417,7 +2417,7 @@ function Set_set(_this, values) {
 
     if (added !== 0) {
         set = new Set(INTERNAL_CREATE);
-        set.__map = map;
+        set.__hashMap = hashMap;
         return freeze(set);
     } else {
         return _this;
@@ -2435,20 +2435,20 @@ SetPrototype.set = function() {
 SetPrototype.conj = SetPrototype.cons = SetPrototype.add = SetPrototype.set;
 
 function Set_remove(_this, values) {
-    var map = _this.__map,
+    var hashMap = _this.__hashMap,
         i = -1,
         il = values.length - 1,
         removed = 0,
-        newImmutableMap, set, value;
+        newImmutableHashMap, set, value;
 
     while (i++ < il) {
         value = values[i];
 
-        if (map.has(value)) {
-            newImmutableMap = map.remove(value);
+        if (hashMap.has(value)) {
+            newImmutableHashMap = hashMap.remove(value);
 
-            if (newImmutableMap !== map) {
-                map = newImmutableMap;
+            if (newImmutableHashMap !== hashMap) {
+                hashMap = newImmutableHashMap;
                 removed += 1;
             }
         }
@@ -2456,7 +2456,7 @@ function Set_remove(_this, values) {
 
     if (removed !== 0) {
         set = new Set(INTERNAL_CREATE);
-        set.__map = map;
+        set.__hashMap = hashMap;
         return freeze(set);
     } else {
         return _this;
@@ -2534,9 +2534,9 @@ function SetIteratorValue(done, value) {
     this.value = value;
 }
 
-function SetIterator(mapIterator) {
+function SetIterator(hashMapIterator) {
     this.next = function next() {
-        var iteratorValue = mapIterator.next();
+        var iteratorValue = hashMapIterator.next();
 
         if (iteratorValue.done) {
             return new SetIteratorValue(true, undefined);
@@ -2547,7 +2547,7 @@ function SetIterator(mapIterator) {
 }
 
 SetPrototype.iterator = function(reverse) {
-    return new SetIterator(this.__map.iterator(reverse));
+    return new SetIterator(this.__hashMap.iterator(reverse));
 };
 
 if (ITERATOR_SYMBOL) {
@@ -2710,7 +2710,7 @@ SetPrototype.some = function(callback, thisArg) {
 };
 
 Set.equal = function(a, b) {
-    return ImmutableMap.equal(a.__map, b.__map);
+    return ImmutableHashMap.equal(a.__hashMap, b.__hashMap);
 };
 
 SetPrototype.equals = function(other) {
@@ -2720,7 +2720,7 @@ SetPrototype.equals = function(other) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-list/node_modules/is_null/src/index.js */
+/* ../node_modules/is_null/src/index.js */
 
 module.exports = isNull;
 
@@ -2732,7 +2732,7 @@ function isNull(value) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-list/node_modules/is_undefined/src/index.js */
+/* ../node_modules/is_undefined/src/index.js */
 
 module.exports = isUndefined;
 
@@ -2744,7 +2744,7 @@ function isUndefined(value) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-list/node_modules/is_array_like/src/index.js */
+/* ../node_modules/is_array_like/src/index.js */
 
 var isLength = require(13),
     isFunction = require(14),
@@ -2761,7 +2761,7 @@ function isArrayLike(value) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-list/node_modules/fast_bind_this/src/index.js */
+/* ../node_modules/fast_bind_this/src/index.js */
 
 var isNumber = require(16);
 
@@ -2801,7 +2801,7 @@ function fastBindThis(callback, thisArg, length) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-list/node_modules/fast_slice/src/index.js */
+/* ../node_modules/fast_slice/src/index.js */
 
 var clamp = require(17),
     isNumber = require(16);
@@ -2831,7 +2831,7 @@ function fastSlice(array, offset) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-list/node_modules/define_property/src/index.js */
+/* ../node_modules/define_property/src/index.js */
 
 var isObject = require(15),
     isFunction = require(14),
@@ -2891,7 +2891,7 @@ if (!isNative(nativeDefineProperty) || !(function() {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-list/node_modules/freeze/src/index.js */
+/* ../node_modules/freeze/src/index.js */
 
 var isNative = require(19),
     emptyFunction = require(26);
@@ -2923,7 +2923,7 @@ if (isNative(nativeFreeze) && (function isValidFreeze() {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-list/node_modules/is_equal/src/index.js */
+/* ../node_modules/is_equal/src/index.js */
 
 module.exports = isEqual;
 
@@ -2935,7 +2935,7 @@ function isEqual(a, b) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-list/node_modules/is_length/src/index.js */
+/* ../node_modules/is_length/src/index.js */
 
 var isNumber = require(16);
 
@@ -2953,7 +2953,7 @@ function isLength(value) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-list/node_modules/is_function/src/index.js */
+/* ../node_modules/is_function/src/index.js */
 
 var objectToString = Object.prototype.toString,
     isFunction;
@@ -2979,7 +2979,7 @@ module.exports = isFunction;
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-list/node_modules/is_object/src/index.js */
+/* ../node_modules/is_object/src/index.js */
 
 var isNull = require(5);
 
@@ -2995,7 +2995,7 @@ function isObject(value) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-list/node_modules/is_number/src/index.js */
+/* ../node_modules/is_number/src/index.js */
 
 module.exports = isNumber;
 
@@ -3007,7 +3007,7 @@ function isNumber(value) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-list/node_modules/clamp/src/index.js */
+/* ../node_modules/clamp/src/index.js */
 
 module.exports = clamp;
 
@@ -3025,7 +3025,7 @@ function clamp(x, min, max) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-list/node_modules/is_primitive/src/index.js */
+/* ../node_modules/is_primitive/src/index.js */
 
 var isNullOrUndefined = require(21);
 
@@ -3041,7 +3041,7 @@ function isPrimitive(obj) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-list/node_modules/is_native/src/index.js */
+/* ../node_modules/is_native/src/index.js */
 
 var isFunction = require(14),
     isNullOrUndefined = require(21),
@@ -3091,7 +3091,7 @@ isHostObject = function isHostObject(value) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-list/node_modules/has/src/index.js */
+/* ../node_modules/has/src/index.js */
 
 var isNative = require(19),
     getPrototypeOf = require(25),
@@ -3132,7 +3132,7 @@ if (isNative(nativeHasOwnProp)) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-list/node_modules/is_null_or_undefined/src/index.js */
+/* ../node_modules/is_null_or_undefined/src/index.js */
 
 var isNull = require(5),
     isUndefined = require(6);
@@ -3160,7 +3160,7 @@ function isNullOrUndefined(value) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-list/node_modules/escape_regexp/src/index.js */
+/* ../node_modules/escape_regexp/src/index.js */
 
 var toString = require(23);
 
@@ -3184,7 +3184,7 @@ function escapeRegExp(string) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-list/node_modules/to_string/src/index.js */
+/* ../node_modules/to_string/src/index.js */
 
 var isString = require(24),
     isNullOrUndefined = require(21);
@@ -3206,7 +3206,7 @@ function toString(value) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-list/node_modules/is_string/src/index.js */
+/* ../node_modules/is_string/src/index.js */
 
 module.exports = isString;
 
@@ -3218,7 +3218,7 @@ function isString(value) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-list/node_modules/get_prototype_of/src/index.js */
+/* ../node_modules/get_prototype_of/src/index.js */
 
 var isObject = require(15),
     isNative = require(19),
@@ -3259,7 +3259,7 @@ if (isNative(nativeGetPrototypeOf)) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-list/node_modules/empty_function/src/index.js */
+/* ../node_modules/empty_function/src/index.js */
 
 module.exports = emptyFunction;
 
@@ -3286,7 +3286,7 @@ emptyFunction.thatReturnsArgument = function(argument) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-map/node_modules/hash_code/src/index.js */
+/* ../node_modules/hash_code/src/index.js */
 
 var WeakMapPolyfill = require(32),
     isNumber = require(16),
@@ -3360,7 +3360,7 @@ function setHashCode(value) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-map/src/Box.js */
+/* ../node_modules/immutable-hash_map/src/Box.js */
 
 module.exports = Box;
 
@@ -3372,7 +3372,7 @@ function Box(value) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-map/src/Iterator.js */
+/* ../node_modules/immutable-hash_map/src/Iterator.js */
 
 module.exports = Iterator;
 
@@ -3385,7 +3385,7 @@ function Iterator(hasNext, next) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-map/src/IteratorValue.js */
+/* ../node_modules/immutable-hash_map/src/IteratorValue.js */
 
 module.exports = IteratorValue;
 
@@ -3398,7 +3398,7 @@ function IteratorValue(done, value) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-map/src/BitmapIndexedNode.js */
+/* ../node_modules/immutable-hash_map/src/BitmapIndexedNode.js */
 
 var isNull = require(5),
     isEqual = require(12),
@@ -3574,7 +3574,7 @@ function getIndex(bitmap, bit) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-map/node_modules/weak_map_polyfill/src/index.js */
+/* ../node_modules/weak_map_polyfill/src/index.js */
 
 var isNative = require(19),
     isPrimitive = require(18),
@@ -3626,7 +3626,7 @@ module.exports = WeakMapPolyfill;
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-map/node_modules/is_boolean/src/index.js */
+/* ../node_modules/is_boolean/src/index.js */
 
 module.exports = isBoolean;
 
@@ -3638,7 +3638,7 @@ function isBoolean(value) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-map/node_modules/number-hash_code/src/index.js */
+/* ../node_modules/number-hash_code/src/index.js */
 
 module.exports = numberHashCode;
 
@@ -3661,7 +3661,7 @@ function numberHashCode(number) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-map/node_modules/boolean-hash_code/src/index.js */
+/* ../node_modules/boolean-hash_code/src/index.js */
 
 module.exports = booleanHashCode;
 
@@ -3677,7 +3677,7 @@ function booleanHashCode(bool) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-map/node_modules/string-hash_code/src/index.js */
+/* ../node_modules/string-hash_code/src/index.js */
 
 var isUndefined = require(6);
 
@@ -3732,7 +3732,7 @@ function hashString(string) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-map/node_modules/create_store/src/index.js */
+/* ../node_modules/create_store/src/index.js */
 
 var has = require(20),
     defineProperty = require(10),
@@ -3850,7 +3850,7 @@ function privateStore(key, privateKey) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-map/src/consts.js */
+/* ../node_modules/immutable-hash_map/src/consts.js */
 
 var consts = exports;
 
@@ -3865,7 +3865,7 @@ consts.MAX_BITMAP_INDEXED_SIZE = consts.SIZE / 2;
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-map/src/bitpos.js */
+/* ../node_modules/immutable-hash_map/src/bitpos.js */
 
 var mask = require(43);
 
@@ -3880,7 +3880,7 @@ function bitpos(hashCode, shift) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-map/src/copyArray.js */
+/* ../node_modules/immutable-hash_map/src/copyArray.js */
 
 module.exports = copyArray;
 
@@ -3897,7 +3897,7 @@ function copyArray(src, srcPos, dest, destPos, length) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-map/src/cloneAndSet.js */
+/* ../node_modules/immutable-hash_map/src/cloneAndSet.js */
 
 var copyArray = require(40);
 
@@ -3922,7 +3922,7 @@ function cloneAndSet(array, index0, value0, index1, value1) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-map/src/removePair.js */
+/* ../node_modules/immutable-hash_map/src/removePair.js */
 
 var copyArray = require(40);
 
@@ -3943,7 +3943,7 @@ function removePair(array, index) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-map/src/mask.js */
+/* ../node_modules/immutable-hash_map/src/mask.js */
 
 var consts = require(38);
 
@@ -3961,7 +3961,7 @@ function mask(hashCode, shift) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-map/src/bitCount.js */
+/* ../node_modules/immutable-hash_map/src/bitCount.js */
 
 module.exports = bitCount;
 
@@ -3978,7 +3978,7 @@ function bitCount(i) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-map/src/nodeIterator.js */
+/* ../node_modules/immutable-hash_map/src/nodeIterator.js */
 
 var isNull = require(5),
     isUndefined = require(6),
@@ -4126,7 +4126,7 @@ function iteratorReverse(_this) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-map/src/ArrayNode.js */
+/* ../node_modules/immutable-hash_map/src/ArrayNode.js */
 
 var isNull = require(5),
     isNullOrUndefined = require(21),
@@ -4341,7 +4341,7 @@ function pack(array, index) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-map/src/createNode.js */
+/* ../node_modules/immutable-hash_map/src/createNode.js */
 
 var hashCode = require(27),
     Box = require(28),
@@ -4372,7 +4372,7 @@ function createNode(shift, key0, value0, keyHash1, key1, value1) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-map/src/HashCollisionNode.js */
+/* ../node_modules/immutable-hash_map/src/HashCollisionNode.js */
 
 var isEqual = require(12),
     bitpos = require(39),

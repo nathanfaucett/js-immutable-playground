@@ -1,4 +1,4 @@
 global.ImmutableList = require("immutable-list");
 global.ImmutableVector = require("immutable-vector");
-global.ImmutableMap = require("immutable-map");
+global.ImmutableHashMap = require("immutable-hash_map");
 global.ImmutableSet = require("immutable-set");

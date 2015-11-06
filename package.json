@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "immutable-list": "git://github.com/nathanfaucett/immutable-list.git",
-    "immutable-map": "git://github.com/nathanfaucett/immutable-map.git",
+    "immutable-hash_map": "git://github.com/nathanfaucett/immutable-hash_map.git",
     "immutable-set": "git://github.com/nathanfaucett/immutable-set.git",
     "immutable-vector": "git://github.com/nathanfaucett/immutable-vector.git",
     "native.less": "git://github.com/nathanfaucett/native.less.git"
