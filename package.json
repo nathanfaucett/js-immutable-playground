@@ -27,9 +27,9 @@
     "grunt-jsbeautifier": "^0.2.7"
   },
   "dependencies": {
-    "immutable-list": "git://github.com/nathanfaucett/immutable-list.git",
     "immutable-hash_map": "git://github.com/nathanfaucett/immutable-hash_map.git",
-    "immutable-map": "git://github.com/nathanfaucett/immutable-map.git",
+    "immutable-list": "git://github.com/nathanfaucett/immutable-list.git",
+    "immutable-record": "git://github.com/nathanfaucett/immutable-record.git",
     "immutable-set": "git://github.com/nathanfaucett/immutable-set.git",
     "immutable-vector": "git://github.com/nathanfaucett/immutable-vector.git",
     "native.less": "git://github.com/nathanfaucett/native.less.git"

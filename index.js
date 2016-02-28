@@ -62,8 +62,8 @@ function(require, exports, module, undefined, global) {
 global.ImmutableList = require(1);
 global.ImmutableVector = require(2);
 global.ImmutableHashMap = require(3);
-global.ImmutableMap = require(4);
-global.ImmutableSet = require(5);
+global.ImmutableSet = require(4);
+global.ImmutableRecord = require(5);
 
 
 },
@@ -73,11 +73,13 @@ function(require, exports, module, undefined, global) {
 var isNull = require(6),
     isUndefined = require(7),
     isArrayLike = require(8),
-    fastBindThis = require(9),
-    fastSlice = require(10),
-    defineProperty = require(11),
-    freeze = require(12),
-    isEqual = require(13);
+    isNumber = require(9),
+    Iterator = require(10),
+    fastBindThis = require(11),
+    fastSlice = require(12),
+    defineProperty = require(13),
+    freeze = require(14),
+    isEqual = require(15);
 
 
 var INTERNAL_CREATE = {},
@@ -85,7 +87,9 @@ var INTERNAL_CREATE = {},
     ITERATOR_SYMBOL = typeof(Symbol) === "function" ? Symbol.iterator : false,
     IS_LIST = "__ImmutableList__",
 
-    EMPTY_LIST = new List(INTERNAL_CREATE),
+    EMPTY_LIST = freeze(new List(INTERNAL_CREATE)),
+
+    IteratorValue = Iterator.Value,
 
     ListPrototype = List.prototype;
 
@@ -109,7 +113,7 @@ function List(value) {
     }
 }
 
-List.EMPTY = freeze(EMPTY_LIST);
+List.EMPTY = EMPTY_LIST;
 
 function List_createList(_this, value, values) {
     var length = values.length;
@@ -148,12 +152,16 @@ function List_fromArray(_this, array) {
     return freeze(_this);
 }
 
-List.of = function(value) {
-    if (arguments.length > 0) {
-        return List_createList(new List(INTERNAL_CREATE), value, arguments);
+List.fromArray = function(array) {
+    if (array.length > 0) {
+        return List_fromArray(new List(INTERNAL_CREATE), array);
     } else {
         return EMPTY_LIST;
     }
+};
+
+List.of = function() {
+    return List_createList(new List(INTERNAL_CREATE), arguments[0], arguments);
 };
 
 function isList(value) {
@@ -195,9 +203,9 @@ function List_get(_this, index) {
     }
 }
 
-ListPrototype.get = function(index) {
-    if (index < 0 || index >= this.__size) {
-        return undefined;
+ListPrototype.get = function(index, notSetValue) {
+    if (!isNumber(index) || index < 0 || index >= this.__size) {
+        return notSetValue;
     } else {
         return List_get(this, index).value;
     }
@@ -205,21 +213,21 @@ ListPrototype.get = function(index) {
 
 ListPrototype.nth = ListPrototype.get;
 
-ListPrototype.first = function() {
+ListPrototype.first = function(notSetValue) {
     var node = this.__root;
 
     if (isNull(node)) {
-        return undefined;
+        return notSetValue;
     } else {
         return node.value;
     }
 };
 
-ListPrototype.last = function() {
+ListPrototype.last = function(notSetValue) {
     var node = this.__tail;
 
     if (isNull(node)) {
-        return undefined;
+        return notSetValue;
     } else {
         return node.value;
     }
@@ -376,10 +384,9 @@ function List_conj(_this, values) {
         size = _this.__size,
         length = values.length,
         il = length - 1,
-        i;
+        i = 0;
 
     if (isNull(tail)) {
-        i = 0;
         root = tail = new Node(values[i], null);
     } else {
         i = -1;
@@ -396,12 +403,16 @@ function List_conj(_this, values) {
     return freeze(list);
 }
 
-ListPrototype.conj = function() {
-    if (arguments.length !== 0) {
-        return List_conj(this, arguments);
+ListPrototype.unshiftArray = function(array) {
+    if (array.length !== 0) {
+        return List_conj(this, array);
     } else {
         return this;
     }
+};
+
+ListPrototype.conj = function() {
+    return this.unshiftArray(arguments);
 };
 
 ListPrototype.unshift = ListPrototype.conj;
@@ -501,14 +512,18 @@ function List_push(_this, values, length) {
     return freeze(list);
 }
 
-ListPrototype.push = function() {
-    var length = arguments.length;
+ListPrototype.pushArray = function(array) {
+    var length = array.length;
 
     if (length !== 0) {
-        return List_push(this, arguments, length);
+        return List_push(this, array, length);
     } else {
         return this;
     }
+};
+
+ListPrototype.push = function() {
+    return this.pushArray(arguments);
 };
 
 function List_concat(a, b) {
@@ -533,8 +548,8 @@ function List_concat(a, b) {
     }
 }
 
-ListPrototype.concat = function() {
-    var length = arguments.length,
+ListPrototype.concatArray = function(array) {
+    var length = array.length,
         i, il, list;
 
     if (length !== 0) {
@@ -543,7 +558,7 @@ ListPrototype.concat = function() {
         list = this;
 
         while (i++ < il) {
-            list = List_concat(list, arguments[i]);
+            list = List_concat(list, array[i]);
         }
 
         return list;
@@ -552,28 +567,23 @@ ListPrototype.concat = function() {
     }
 };
 
-function ListIteratorValue(done, value) {
-    this.done = done;
-    this.value = value;
-}
-
-function ListIterator(next) {
-    this.next = next;
-}
+ListPrototype.concat = function() {
+    return this.concatArray(arguments);
+};
 
 function List_iterator(_this) {
     var node = _this.__root;
 
-    return new ListIterator(function next() {
+    return new Iterator(function next() {
         var value;
 
         if (isNull(node)) {
-            return new ListIteratorValue(true, undefined);
+            return Iterator.createDone();
         } else {
             value = node.value;
             node = node.next;
 
-            return new ListIteratorValue(false, value);
+            return new IteratorValue(value, false);
         }
     });
 }
@@ -582,16 +592,16 @@ function List_iteratorReverse(_this) {
     var root = _this.__root,
         node = _this.__tail;
 
-    return new ListIterator(function next() {
+    return new Iterator(function next() {
         var value;
 
         if (isNull(node)) {
-            return new ListIteratorValue(true, undefined);
+            return Iterator.createDone();
         } else {
             value = node.value;
             node = root !== node ? findParent(root, node) : null;
 
-            return new ListIteratorValue(false, value);
+            return new IteratorValue(value, false);
         }
     });
 }
@@ -799,7 +809,7 @@ ListPrototype.join = function(separator) {
 
     separator = separator || " ";
 
-    while (true) {
+    while (!isNull(node)) {
         value = node.value;
         node = node.next;
 
@@ -867,14 +877,16 @@ function findNode(root, index) {
 function(require, exports, module, undefined, global) {
 /* ../node_modules/immutable-vector/src/index.js */
 
-var freeze = require(12),
+var freeze = require(14),
+    Iterator = require(10),
     isNull = require(6),
     isUndefined = require(7),
+    isNumber = require(9),
     isArrayLike = require(8),
-    fastBindThis = require(9),
-    fastSlice = require(10),
-    defineProperty = require(11),
-    isEqual = require(13);
+    fastBindThis = require(11),
+    fastSlice = require(12),
+    defineProperty = require(13),
+    isEqual = require(15);
 
 
 var INTERNAL_CREATE = {},
@@ -886,9 +898,10 @@ var INTERNAL_CREATE = {},
     SIZE = 1 << SHIFT,
     MASK = SIZE - 1,
 
-    EMPTY_ARRAY = createArray(),
-    EMPTY_NODE = createNode(),
-    EMPTY_VECTOR = new Vector(INTERNAL_CREATE),
+    EMPTY_ARRAY = freeze(createArray()),
+    EMPTY_VECTOR = freeze(new Vector(INTERNAL_CREATE)),
+
+    IteratorValue = Iterator.Value,
 
     VectorPrototype = Vector.prototype;
 
@@ -901,7 +914,7 @@ function Vector(value) {
         throw new Error("Vector() must be called with new");
     }
 
-    this.__root = EMPTY_NODE;
+    this.__root = EMPTY_ARRAY;
     this.__tail = EMPTY_ARRAY;
     this.__size = 0;
     this.__shift = SHIFT;
@@ -913,16 +926,16 @@ function Vector(value) {
     }
 }
 
-Vector.EMPTY = freeze(EMPTY_VECTOR);
+Vector.EMPTY = EMPTY_VECTOR;
 
 function Vector_createVector(_this, value, args) {
     var length = args.length,
         tail;
 
-    if (length > 32) {
+    if (length > SIZE) {
         return Vector_conjArray(_this, args);
     } else if (length > 1) {
-        _this.__tail = copyArray(args, createArray(), length);
+        _this.__tail = cloneArray(args, length);
         _this.__size = length;
         return freeze(_this);
     } else if (length === 1) {
@@ -941,16 +954,20 @@ function Vector_createVector(_this, value, args) {
     }
 }
 
-Vector.of = function(value) {
-    if (arguments.length > 0) {
-        return Vector_createVector(new Vector(INTERNAL_CREATE), value, arguments);
+Vector.fromArray = function(array) {
+    if (array.length > 0) {
+        return Vector_createVector(new Vector(INTERNAL_CREATE), array[0], array);
     } else {
         return EMPTY_VECTOR;
     }
 };
 
+Vector.of = function() {
+    return Vector_createVector(new Vector(INTERNAL_CREATE), arguments[0], arguments);
+};
+
 function isVector(value) {
-    return value && value[IS_VECTOR] === true;
+    return !!(value && value[IS_VECTOR]);
 }
 
 Vector.isVector = isVector;
@@ -979,40 +996,38 @@ VectorPrototype.isEmpty = function() {
 };
 
 function tailOff(size) {
-    if (size < 32) {
+    if (size < SIZE) {
         return 0;
     } else {
         return ((size - 1) >>> SHIFT) << SHIFT;
     }
 }
 
-function Vector_getNode(_this, index) {
-    var node = _this.__root,
-        level = _this.__shift;
+function Vector_getArray(_this, index) {
+    var array, level;
 
-    while (level > 0) {
-        node = node.array[(index >>> level) & MASK];
-        level = level - SHIFT;
-    }
-
-    return node;
-}
-
-function Vector_getArrayFor(_this, index) {
     if (index >= tailOff(_this.__size)) {
         return _this.__tail;
     } else {
-        return Vector_getNode(_this, index).array;
+        array = _this.__root;
+        level = _this.__shift;
+
+        while (level > 0) {
+            array = array[(index >>> level) & MASK];
+            level = level - SHIFT;
+        }
+
+        return array;
     }
 }
 
 function Vector_get(_this, index) {
-    return Vector_getArrayFor(_this, index)[index & MASK];
+    return Vector_getArray(_this, index)[index & MASK];
 }
 
-VectorPrototype.get = function(index) {
-    if (index < 0 || index >= this.__size) {
-        return undefined;
+VectorPrototype.get = function(index, notSetValue) {
+    if (!isNumber(index) || index < 0 || index >= this.__size) {
+        return notSetValue;
     } else {
         return Vector_get(this, index);
     }
@@ -1020,21 +1035,21 @@ VectorPrototype.get = function(index) {
 
 VectorPrototype.nth = VectorPrototype.get;
 
-VectorPrototype.first = function() {
+VectorPrototype.first = function(notSetValue) {
     var size = this.__size;
 
     if (size === 0) {
-        return undefined;
+        return notSetValue;
     } else {
         return Vector_get(this, 0);
     }
 };
 
-VectorPrototype.last = function() {
+VectorPrototype.last = function(notSetValue) {
     var size = this.__size;
 
     if (size === 0) {
-        return undefined;
+        return notSetValue;
     } else {
         return this.__tail[(size - 1) & MASK];
     }
@@ -1054,18 +1069,18 @@ VectorPrototype.indexOf = function(value) {
     return -1;
 };
 
-function newPathSet(node, size, index, value, level) {
-    var newNode = cloneNode(node, ((size - 1) >>> level) & MASK),
+function newPathSet(array, size, index, value, level) {
+    var newArray = cloneArray(array, ((size - 1) >>> level) & MASK),
         subIndex;
 
     if (level === 0) {
-        newNode.array[index & MASK] = value;
+        newArray[index & MASK] = value;
     } else {
         subIndex = (index >>> level) & MASK;
-        newNode.array[subIndex] = newPathSet(node.array[subIndex], size, index, value, level - SHIFT);
+        newArray[subIndex] = newPathSet(array[subIndex], size, index, value, level - SHIFT);
     }
 
-    return newNode;
+    return newArray;
 }
 
 function Vector_set(_this, index, value) {
@@ -1176,59 +1191,59 @@ VectorPrototype.remove = function(index, count) {
     }
 };
 
-function newPath(node, level) {
-    var newNode;
+function newPath(array, level) {
+    var newArray;
 
     if (level === 0) {
-        return node;
+        return array;
     } else {
-        newNode = createNode();
-        newNode.array[0] = newPath(node, level - SHIFT);
-        return newNode;
+        newArray = createArray();
+        newArray[0] = newPath(array, level - SHIFT);
+        return newArray;
     }
 }
 
-function pushTail(parentNode, tailNode, size, level) {
+function pushTail(parentArray, tailArray, size, level) {
     var subIndex = ((size - 1) >>> level) & MASK,
-        newNode = cloneNode(parentNode, subIndex),
-        nodeToInsert;
+        newArray = cloneArray(parentArray, subIndex),
+        arrayToInsert;
 
     if (level === SHIFT) {
-        nodeToInsert = tailNode;
+        arrayToInsert = tailArray;
     } else {
-        child = parentNode.array[subIndex];
+        child = parentArray[subIndex];
 
         if (isUndefined(child)) {
-            nodeToInsert = newPath(tailNode, level - SHIFT);
+            arrayToInsert = newPath(tailArray, level - SHIFT);
         } else {
-            nodeToInsert = pushTail(child, tailNode, size, level - SHIFT);
+            arrayToInsert = pushTail(child, tailArray, size, level - SHIFT);
         }
     }
 
-    newNode.array[subIndex] = nodeToInsert;
+    newArray[subIndex] = arrayToInsert;
 
-    return newNode;
+    return newArray;
 }
 
 function Vector_conj(_this, value) {
     var root = _this.__root,
         size = _this.__size,
         shift = _this.__shift,
-        tailNode, newShift, newRoot, newTail;
+        tailArray, newShift, newRoot, newTail;
 
     if (size - tailOff(size) < SIZE) {
         _this.__tail[size & MASK] = value;
     } else {
-        tailNode = new Node(_this.__tail);
+        tailArray = _this.__tail;
         newShift = shift;
 
         if ((size >>> SHIFT) > (1 << shift)) {
-            newRoot = createNode();
-            newRoot.array[0] = root;
-            newRoot.array[1] = newPath(tailNode, shift);
+            newRoot = createArray();
+            newRoot[0] = root;
+            newRoot[1] = newPath(tailArray, shift);
             newShift += SHIFT;
         } else {
-            newRoot = pushTail(root, tailNode, size, shift);
+            newRoot = pushTail(root, tailArray, size, shift);
         }
 
         newTail = createArray();
@@ -1299,8 +1314,8 @@ function Vector_concat(a, b) {
     }
 }
 
-VectorPrototype.concat = function() {
-    var length = arguments.length,
+VectorPrototype.concatArray = function(array) {
+    var length = array.length,
         i, il, vector;
 
     if (length !== 0) {
@@ -1309,13 +1324,17 @@ VectorPrototype.concat = function() {
         vector = this;
 
         while (i++ < il) {
-            vector = Vector_concat(vector, arguments[i]);
+            vector = Vector_concat(vector, array[i]);
         }
 
         return vector;
     } else {
         return this;
     }
+};
+
+VectorPrototype.concat = function() {
+    return this.concatArray(arguments);
 };
 
 function Vector_unshift(_this, values) {
@@ -1342,32 +1361,36 @@ function Vector_unshift(_this, values) {
     return Vector_conjArray(new Vector(INTERNAL_CREATE), results);
 }
 
-VectorPrototype.unshift = function() {
-    if (arguments.length !== 0) {
-        return Vector_unshift(this, arguments);
+VectorPrototype.unshiftArray = function(array) {
+    if (array.length !== 0) {
+        return Vector_unshift(this, array);
     } else {
         return this;
     }
 };
 
-function popTail(node, size, level) {
+VectorPrototype.unshift = function() {
+    return this.unshiftArray(arguments);
+};
+
+function popTail(array, size, level) {
     var subIndex = ((size - 2) >>> level) & MASK,
-        newChild, newNode;
+        newChild, newArray;
 
     if (level > 5) {
-        newChild = popTail(node.array[subIndex], size, level - SHIFT);
+        newChild = popTail(array[subIndex], size, level - SHIFT);
 
         if (isUndefined(newChild) && subIndex === 0) {
             return null;
         } else {
-            newNode = cloneNode(node, subIndex);
-            newNode.array[subIndex] = newChild;
-            return newNode;
+            newArray = cloneArray(array, subIndex);
+            newArray[subIndex] = newChild;
+            return newArray;
         }
     } else if (subIndex === 0) {
         return null;
     } else {
-        return cloneNode(node, subIndex);
+        return cloneArray(array, subIndex);
     }
 }
 
@@ -1381,16 +1404,16 @@ function Vector_pop(_this) {
         newRoot = _this.__root;
         newShift = _this.__shift;
     } else {
-        newTail = Vector_getArrayFor(_this, size - 2);
+        newTail = Vector_getArray(_this, size - 2);
 
         shift = _this.__shift;
         newRoot = popTail(_this.__root, size, shift);
         newShift = shift;
 
         if (isNull(newRoot)) {
-            newRoot = EMPTY_NODE;
-        } else if (shift > SHIFT && isUndefined(newRoot.array[1])) {
-            newRoot = newRoot.array[0];
+            newRoot = EMPTY_ARRAY;
+        } else if (shift > SHIFT && isUndefined(newRoot[1])) {
+            newRoot = newRoot[0];
             newShift -= SHIFT;
         }
     }
@@ -1442,24 +1465,15 @@ VectorPrototype.shift = function() {
     }
 };
 
-function VectorIteratorValue(done, value) {
-    this.done = done;
-    this.value = value;
-}
-
-function VectorIterator(next) {
-    this.next = next;
-}
-
 function Vector_iterator(_this) {
     var index = 0,
         size = _this.__size;
 
-    return new VectorIterator(function next() {
+    return new Iterator(function next() {
         if (index >= size) {
-            return new VectorIteratorValue(true, undefined);
+            return Iterator.createDone();
         } else {
-            return new VectorIteratorValue(false, Vector_get(_this, index++));
+            return new IteratorValue(Vector_get(_this, index++), false);
         }
     });
 }
@@ -1467,11 +1481,11 @@ function Vector_iterator(_this) {
 function Vector_iteratorReverse(_this) {
     var index = _this.__size - 1;
 
-    return new VectorIterator(function next() {
+    return new Iterator(function next() {
         if (index < 0) {
-            return new VectorIteratorValue(true, undefined);
+            return Iterator.createDone();
         } else {
-            return new VectorIteratorValue(false, Vector_get(_this, index--));
+            return new IteratorValue(Vector_get(_this, index--), false);
         }
     });
 }
@@ -1721,14 +1735,6 @@ VectorPrototype.equals = function(b) {
     return Vector.equal(this, b);
 };
 
-function Node(array) {
-    this.array = array;
-}
-
-function createNode() {
-    return new Node(createArray());
-}
-
 function createArray() {
     return new Array(SIZE);
 }
@@ -1748,33 +1754,23 @@ function cloneArray(a, length) {
     return copyArray(a, createArray(), length);
 }
 
-function copyNode(from, to, length) {
-    copyArray(from.array, to.array, length);
-    return to;
-}
-
-function cloneNode(node, length) {
-    return copyNode(node, createNode(), length);
-}
-
 
 },
 function(require, exports, module, undefined, global) {
 /* ../node_modules/immutable-hash_map/src/index.js */
 
-var has = require(21),
-    freeze = require(12),
+var has = require(22),
+    freeze = require(14),
     isNull = require(6),
     isUndefined = require(7),
-    isObject = require(16),
-    defineProperty = require(11),
-    isEqual = require(13),
-    hashCode = require(28),
+    isObject = require(18),
+    defineProperty = require(13),
+    isEqual = require(15),
+    hashCode = require(29),
     isArrayLike = require(8),
-    fastBindThis = require(9),
-    Box = require(29),
-    Iterator = require(30),
-    IteratorValue = require(31),
+    fastBindThis = require(11),
+    Box = require(30),
+    Iterator = require(31),
     BitmapIndexedNode = require(32);
 
 
@@ -1784,7 +1780,9 @@ var INTERNAL_CREATE = {},
     IS_MAP = "__ImmutableHashMap__",
 
     NOT_SET = {},
-    EMPTY_MAP = new HashMap(INTERNAL_CREATE),
+    EMPTY_MAP = freeze(new HashMap(INTERNAL_CREATE)),
+
+    IteratorValue = Iterator.Value,
 
     HashMapPrototype;
 
@@ -1808,7 +1806,7 @@ function HashMap(value) {
 }
 HashMapPrototype = HashMap.prototype;
 
-HashMap.EMPTY = freeze(EMPTY_MAP);
+HashMap.EMPTY = EMPTY_MAP;
 
 function HashMap_createHashMap(_this, value, args) {
     var length = args.length;
@@ -1890,24 +1888,20 @@ function HashMap_fromArray(_this, array) {
     }
 }
 
-HashMap.of = function(value) {
-    if (arguments.length > 0) {
-        return HashMap_createHashMap(new HashMap(INTERNAL_CREATE), value, arguments);
+HashMap.fromArray = function(array) {
+    if (array.length > 0) {
+        return HashMap_createHashMap(new HashMap(INTERNAL_CREATE), array[0], array);
     } else {
         return EMPTY_MAP;
     }
 };
 
-HashMap.fromArguments = function(args) {
-    if (args.length > 0) {
-        return HashMap_createHashMap(new HashMap(INTERNAL_CREATE), args[0], args);
-    } else {
-        return EMPTY_MAP;
-    }
+HashMap.of = function() {
+    return HashMap.fromArray(arguments);
 };
 
 HashMap.isHashMap = function(value) {
-    return value && value[IS_MAP] === true;
+    return !!(value && value[IS_MAP]);
 };
 
 defineProperty(HashMapPrototype, IS_MAP, {
@@ -1938,9 +1932,9 @@ HashMapPrototype.has = function(key) {
     return isNull(root) ? false : root.get(0, hashCode(key), key, NOT_SET) !== NOT_SET;
 };
 
-HashMapPrototype.get = function(key) {
+HashMapPrototype.get = function(key, notSetValue) {
     var root = this.__root;
-    return isNull(root) ? undefined : root.get(0, hashCode(key), key);
+    return isNull(root) ? notSetValue : root.get(0, hashCode(key), key);
 };
 
 HashMapPrototype.set = function(key, value) {
@@ -1988,7 +1982,7 @@ function hasNext() {
 }
 
 function next() {
-    return new IteratorValue(true, undefined);
+    return new IteratorValue(undefined, true);
 }
 
 HashMapPrototype.iterator = function(reverse) {
@@ -2222,7 +2216,7 @@ HashMapPrototype.join = function(separator, keyValueSeparator) {
     separator = separator || ", ";
     keyValueSeparator = keyValueSeparator || ": ";
 
-    while (true) {
+    while (!next.done) {
         nextValue = next.value;
         next = it.next();
 
@@ -2280,530 +2274,14 @@ HashMapPrototype.equals = function(b) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-map/src/index.js */
-
-var freeze = require(12),
-    ImmutableVector = require(2),
-    has = require(21),
-    isObject = require(16),
-    isUndefined = require(7),
-    isArrayLike = require(8),
-    defineProperty = require(11),
-    fastBindThis = require(9);
-
-
-var INTERNAL_CREATE = {},
-
-    ITERATOR_SYMBOL = typeof(Symbol) === "function" ? Symbol.iterator : false,
-    IS_MAP = "__ImmutableMap__",
-
-    EMPTY_MAP = new Map(INTERNAL_CREATE),
-
-    MapPrototype = Map.prototype;
-
-
-module.exports = Map;
-
-
-function Map(value) {
-    if (!(this instanceof Map)) {
-        throw new Error("Map() must be called with new");
-    }
-
-    this.__keys = ImmutableVector.EMPTY;
-    this.__values = ImmutableVector.EMPTY;
-
-    if (value !== INTERNAL_CREATE) {
-        return Map_createMap(this, value, arguments);
-    } else {
-        return this;
-    }
-}
-
-Map.EMPTY = freeze(EMPTY_MAP);
-
-function Map_createMap(_this, value, values) {
-    var length = values.length;
-
-    if (length === 1) {
-        if (Map.isMap(value)) {
-            return value;
-        } else if (isArrayLike(value)) {
-            return Map_fromArray(_this, value.toArray ? value.toArray() : value);
-        } else if (isObject(value)) {
-            return Map_fromObject(_this, value);
-        } else {
-            return EMPTY_MAP.map(value, void(0));
-        }
-    } else if (length > 1) {
-        return Map_fromArray(_this, values);
-    } else {
-        return EMPTY_MAP;
-    }
-}
-
-function Map_fromArray(_this, array) {
-    var i = 0,
-        il = array.length,
-        keys = _this.__keys,
-        values = _this.__values,
-        newKeys, newValues;
-
-    while (i < il) {
-        newKeys = newKeys || [];
-        newValues = newValues || [];
-
-        newKeys[newKeys.length] = array[i++];
-        newValues[newValues.length] = array[i++];
-    }
-
-    if (il !== 0) {
-        _this.__keys = keys.pushArray(newKeys);
-        _this.__values = values.pushArray(newValues);
-        return freeze(_this);
-    } else {
-        return EMPTY_MAP;
-    }
-}
-
-function Map_fromObject(_this, object) {
-    var localHas = has,
-        keys = _this.__keys,
-        values = _this.__values,
-        added = 0,
-        newKeys, newValues, key, value;
-
-    for (key in object) {
-        if (localHas(object, key)) {
-            value = object[key];
-
-            newKeys = newKeys || [];
-            newValues = newValues || [];
-
-            newKeys[newKeys.length] = key;
-            newValues[newValues.length] = value;
-
-            added += 1;
-        }
-    }
-
-    if (added !== 0) {
-        _this.__keys = keys.pushArray(newKeys);
-        _this.__values = values.pushArray(newValues);
-        return freeze(_this);
-    } else {
-        return EMPTY_MAP;
-    }
-}
-
-Map.of = function(value) {
-    if (arguments.length > 0) {
-        return Map_createMap(new Map(INTERNAL_CREATE), value, arguments);
-    } else {
-        return EMPTY_MAP;
-    }
-};
-
-Map.isMap = function(value) {
-    return value && value[IS_MAP] === true;
-};
-
-defineProperty(MapPrototype, IS_MAP, {
-    configurable: false,
-    enumerable: false,
-    writable: false,
-    value: true
-});
-
-MapPrototype.size = function() {
-    return this.__keys.size();
-};
-
-if (defineProperty.hasGettersMapters) {
-    defineProperty(MapPrototype, "length", {
-        get: MapPrototype.size
-    });
-}
-
-MapPrototype.count = MapPrototype.size;
-
-MapPrototype.isEmpty = function() {
-    return this.__keys.isEmpty();
-};
-
-MapPrototype.has = function(key) {
-    return this.__keys.indexOf(key) !== -1;
-};
-
-MapPrototype.get = function(key) {
-    var index = this.__keys.indexOf(key);
-
-    if (index !== -1) {
-        return this.__values.get(index);
-    } else {
-        return undefined;
-    }
-};
-
-function Map_set(_this, keyValues) {
-    var keys = _this.__keys,
-        values = _this.__values,
-        i = 0,
-        il = keyValues.length,
-        added = 0,
-        map, key, value, index;
-
-    while (i < il) {
-        key = keyValues[i];
-        value = keyValues[i + 1];
-        index = keys.indexOf(key);
-
-        if (index !== -1) {
-            values = values.set(index, value);
-        } else {
-            keys = keys.push(key);
-            values = values.push(value);
-        }
-
-        added += 1;
-        i += 2;
-    }
-
-    if (added !== 0) {
-        map = new Map(INTERNAL_CREATE);
-        map.__keys = keys;
-        map.__values = values;
-        return freeze(map);
-    } else {
-        return _this;
-    }
-}
-
-MapPrototype.set = function() {
-    if (arguments.length > 0) {
-        return Map_set(this, arguments);
-    } else {
-        return this;
-    }
-};
-
-MapPrototype.conj = MapPrototype.cons = MapPrototype.add = MapPrototype.set;
-
-function Map_remove(_this, removeValues) {
-    var keys = _this.__keys,
-        values = _this.__values,
-        i = -1,
-        il = removeValues.length - 1,
-        removed = 0,
-        map, key, index;
-
-    while (i++ < il) {
-        key = removeValues[i];
-        index = keys.indexOf(key);
-
-        if (index !== -1) {
-            removed += 1;
-            keys = keys.remove(index);
-            values = values.remove(index);
-        }
-    }
-
-    if (removed !== 0) {
-        map = new Map(INTERNAL_CREATE);
-        map.__keys = keys;
-        map.__values = values;
-        return freeze(map);
-    } else {
-        return _this;
-    }
-}
-
-MapPrototype.remove = function() {
-    if (arguments.length > 0) {
-        return Map_remove(this, arguments);
-    } else {
-        return this;
-    }
-};
-
-MapPrototype.toArray = function() {
-    var it = this.iterator(),
-        next = it.next(),
-        results = new Array(this.size()),
-        index = 0,
-        nextValue;
-
-    while (next.done === false) {
-        nextValue = next.value;
-        results[index++] = nextValue[0];
-        results[index++] = nextValue[1];
-        next = it.next();
-    }
-
-    return results;
-};
-
-MapPrototype.join = function(separator, keyValueSeparator) {
-    var it = this.iterator(),
-        next = it.next(),
-        result = "",
-        nextValue;
-
-    separator = separator || ", ";
-    keyValueSeparator = keyValueSeparator || ": ";
-
-    while (true) {
-        nextValue = next.value;
-        next = it.next();
-
-        if (next.done) {
-            result += nextValue[0] + keyValueSeparator + nextValue[1];
-            break;
-        } else {
-            result += nextValue[0] + keyValueSeparator + nextValue[1] + separator;
-        }
-    }
-
-    return result;
-};
-
-MapPrototype.toString = function() {
-    return "{" + this.join() + "}";
-};
-
-MapPrototype.inspect = MapPrototype.toString;
-
-function MapIteratorValue(done, value) {
-    this.done = done;
-    this.value = value;
-}
-
-function MapIterator(keys, values, reverse) {
-    var index = reverse ? keys.size() - 1 : 0,
-        keysIterator = keys.iterator(reverse);
-
-    this.next = function next() {
-        var keyIteratorValue = keysIterator.next(),
-            value = values.get(index);
-
-        if (reverse) {
-            index -= 1;
-        } else {
-            index += 1;
-        }
-
-        if (keysIterator.done) {
-            return new MapIteratorValue(true, undefined);
-        } else {
-            return new MapIteratorValue(keyIteratorValue.done, [keyIteratorValue.value, value]);
-        }
-    };
-}
-
-MapPrototype.iterator = function(reverse) {
-    return new MapIterator(this.__keys, this.__values, reverse);
-};
-
-if (ITERATOR_SYMBOL) {
-    MapPrototype[ITERATOR_SYMBOL] = MapPrototype.iterator;
-}
-
-function Map_every(_this, it, callback) {
-    var next = it.next(),
-        nextValue;
-
-    while (next.done === false) {
-        nextValue = next.value;
-        if (!callback(nextValue[1], nextValue[0], _this)) {
-            return false;
-        }
-        next = it.next();
-    }
-
-    return true;
-}
-
-MapPrototype.every = function(callback, thisArg) {
-    return Map_every(this, this.iterator(), isUndefined(thisArg) ? callback : fastBindThis(callback, thisArg, 3));
-};
-
-function Map_filter(_this, it, callback) {
-    var results = [],
-        next = it.next(),
-        j = 0,
-        key, value, nextValue;
-
-    while (next.done === false) {
-        nextValue = next.value;
-        key = nextValue[0];
-        value = nextValue[1];
-
-        if (callback(value, key, _this)) {
-            results[j++] = key;
-            results[j++] = value;
-        }
-
-        next = it.next();
-    }
-
-    return Map.of(results);
-}
-
-MapPrototype.filter = function(callback, thisArg) {
-    return Map_filter(this, this.iterator(), isUndefined(thisArg) ? callback : fastBindThis(callback, thisArg, 3));
-};
-
-function Map_forEach(_this, it, callback) {
-    var next = it.next(),
-        nextValue;
-
-    while (next.done === false) {
-        nextValue = next.value;
-        if (callback(nextValue[1], nextValue[0], _this) === false) {
-            break;
-        }
-        next = it.next();
-    }
-
-    return _this;
-}
-
-MapPrototype.forEach = function(callback, thisArg) {
-    return Map_forEach(this, this.iterator(), isUndefined(thisArg) ? callback : fastBindThis(callback, thisArg, 3));
-};
-
-MapPrototype.each = MapPrototype.forEach;
-
-function Map_forEachRight(_this, it, callback) {
-    var next = it.next(),
-        nextValue;
-
-    while (next.done === false) {
-        nextValue = next.value;
-        if (callback(nextValue[1], nextValue[0], _this) === false) {
-            break;
-        }
-        next = it.next();
-    }
-
-    return _this;
-}
-
-MapPrototype.forEachRight = function(callback, thisArg) {
-    return Map_forEachRight(this, this.iterator(true), isUndefined(thisArg) ? callback : fastBindThis(callback, thisArg, 3));
-};
-
-MapPrototype.eachRight = MapPrototype.forEachRight;
-
-function Map_map(_this, it, callback) {
-    var next = it.next(),
-        results = new Array(_this.size()),
-        index = 0,
-        nextValue, key;
-
-    while (next.done === false) {
-        nextValue = next.value;
-
-        key = nextValue[0];
-        results[index++] = key;
-        results[index++] = callback(nextValue[1], key, _this);
-
-        next = it.next();
-    }
-
-    return Map.of(results);
-}
-
-MapPrototype.map = function(callback, thisArg) {
-    return Map_map(this, this.iterator(), isUndefined(thisArg) ? callback : fastBindThis(callback, thisArg, 3));
-};
-
-function Map_reduce(_this, it, callback, initialValue) {
-    var next = it.next(),
-        value = initialValue,
-        nextValue;
-
-    if (isUndefined(value)) {
-        nextValue = next.value;
-        value = nextValue[1];
-        next = it.next();
-    }
-
-    while (next.done === false) {
-        nextValue = next.value;
-        value = callback(value, nextValue[1], nextValue[0], _this);
-        next = it.next();
-    }
-
-    return value;
-}
-
-MapPrototype.reduce = function(callback, initialValue, thisArg) {
-    return Map_reduce(this, this.iterator(), isUndefined(thisArg) ? callback : fastBindThis(callback, thisArg, 4), initialValue);
-};
-
-function Map_reduceRight(_this, it, callback, initialValue) {
-    var next = it.next(),
-        value = initialValue,
-        nextValue;
-
-    if (isUndefined(value)) {
-        nextValue = next.value;
-        value = nextValue[1];
-        next = it.next();
-    }
-
-    while (next.done === false) {
-        nextValue = next.value;
-        value = callback(value, nextValue[1], nextValue[0], _this);
-        next = it.next();
-    }
-
-    return value;
-}
-
-MapPrototype.reduceRight = function(callback, initialValue, thisArg) {
-    return Map_reduceRight(this, this.iterator(true), isUndefined(thisArg) ? callback : fastBindThis(callback, thisArg, 4), initialValue);
-};
-
-function Map_some(_this, it, callback) {
-    var next = it.next(),
-        nextValue;
-
-    while (next.done === false) {
-        nextValue = next.value;
-
-        if (callback(nextValue[1], nextValue[0], _this)) {
-            return true;
-        }
-        next = it.next();
-    }
-
-    return false;
-}
-
-MapPrototype.some = function(callback, thisArg) {
-    return Map_some(this, this.iterator(), isUndefined(thisArg) ? callback : fastBindThis(callback, thisArg, 3));
-};
-
-Map.equal = function(a, b) {
-    return ImmutableVector.equal(a.__keys, b.__keys) && ImmutableVector.equal(a.__values, b.__values);
-};
-
-MapPrototype.equals = function(other) {
-    return Map.equal(this, other);
-};
-
-
-},
-function(require, exports, module, undefined, global) {
 /* ../node_modules/immutable-set/src/index.js */
 
-var freeze = require(12),
+var freeze = require(14),
+    Iterator = require(10),
     ImmutableHashMap = require(3),
     isUndefined = require(7),
     isArrayLike = require(8),
-    defineProperty = require(11);
+    defineProperty = require(13);
 
 
 var INTERNAL_CREATE = {},
@@ -2811,7 +2289,9 @@ var INTERNAL_CREATE = {},
     ITERATOR_SYMBOL = typeof(Symbol) === "function" ? Symbol.iterator : false,
     IS_SET = "__ImmutableSet__",
 
-    EMPTY_SET = new Set(INTERNAL_CREATE),
+    EMPTY_SET = freeze(new Set(INTERNAL_CREATE)),
+
+    IteratorValue = Iterator.Value,
 
     SetPrototype = Set.prototype;
 
@@ -2833,7 +2313,7 @@ function Set(value) {
     }
 }
 
-Set.EMPTY = freeze(EMPTY_SET);
+Set.EMPTY = EMPTY_SET;
 
 function Set_createSet(_this, value, values) {
     var length = values.length;
@@ -2870,16 +2350,20 @@ function Set_fromArray(_this, array) {
     }
 }
 
-Set.of = function(value) {
-    if (arguments.length > 0) {
-        return Set_createSet(new Set(INTERNAL_CREATE), value, arguments);
+Set.fromArray = function(array) {
+    if (array.length > 0) {
+        return Set_createSet(new Set(INTERNAL_CREATE), array[0], array);
     } else {
         return EMPTY_SET;
     }
 };
 
+Set.of = function() {
+    return Set_createSet(new Set(INTERNAL_CREATE), arguments[0], arguments);
+};
+
 Set.isSet = function(value) {
-    return value && value[IS_SET] === true;
+    return !!(value && value[IS_SET]);
 };
 
 defineProperty(SetPrototype, IS_SET, {
@@ -2909,11 +2393,11 @@ SetPrototype.has = function(value) {
     return this.__hashMap.has(value);
 };
 
-SetPrototype.get = function(value) {
+SetPrototype.get = function(value, notSetValue) {
     if (this.__hashMap.has(value)) {
         return value;
     } else {
-        return undefined;
+        return notSetValue;
     }
 };
 
@@ -3008,10 +2492,12 @@ function Set_toArray(size, iterator) {
 }
 
 SetPrototype.toArray = function() {
-    if (this.size() === 0) {
+    var size = this.size();
+
+    if (size === 0) {
         return [];
     } else {
-        return Set_toArray(this.__size, this.iterator());
+        return Set_toArray(size, this.iterator());
     }
 };
 
@@ -3041,7 +2527,7 @@ SetPrototype.join = function(separator) {
     if (this.size() === 0) {
         return "";
     } else {
-        return Set_join(this.__size, this.iterator(), separator);
+        return Set_join(this.size(), this.iterator(), separator);
     }
 };
 
@@ -3051,25 +2537,18 @@ SetPrototype.toString = function() {
 
 SetPrototype.inspect = SetPrototype.toString;
 
-function SetIteratorValue(done, value) {
-    this.done = done;
-    this.value = value;
-}
+SetPrototype.iterator = function(reverse) {
+    var hashMapIterator = this.__hashMap.iterator(reverse);
 
-function SetIterator(hashMapIterator) {
-    this.next = function next() {
+    return new Iterator(function next() {
         var iteratorValue = hashMapIterator.next();
 
         if (iteratorValue.done) {
-            return new SetIteratorValue(true, undefined);
+            return iteratorValue;
         } else {
-            return new SetIteratorValue(iteratorValue.done, iteratorValue.value[0]);
+            return new IteratorValue(iteratorValue.value[0], iteratorValue.done);
         }
-    };
-}
-
-SetPrototype.iterator = function(reverse) {
-    return new SetIterator(this.__hashMap.iterator(reverse));
+    });
 };
 
 if (ITERATOR_SYMBOL) {
@@ -3156,7 +2635,7 @@ SetPrototype.eachRight = SetPrototype.forEachRight;
 
 function Set_map(_this, it, callback) {
     var next = it.next(),
-        results = new Array(_this.__size),
+        results = new Array(_this.size()),
         index = 0;
 
     while (next.done === false) {
@@ -3242,7 +2721,285 @@ SetPrototype.equals = function(other) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/is_null/src/index.js */
+/* ../node_modules/immutable-record/src/index.js */
+
+var ImmutableHashMap = require(3),
+    defineProperty = require(13),
+    inherits = require(39),
+    keys = require(43),
+    has = require(22),
+    freeze = require(14);
+
+
+var INTERNAL_CREATE = {},
+
+    ITERATOR_SYMBOL = typeof(Symbol) === "function" ? Symbol.iterator : false,
+
+    RECORD_ID = 0,
+    IS_RECORD = "__ImmutableRecord__",
+
+    RecordPrototype;
+
+
+module.exports = Record;
+
+
+function Record(defaultProps, name) {
+    var id = RECORD_ID++,
+
+        defaultName = name || ("RecordType" + id),
+        defaultKeys = freeze(keys(defaultProps)),
+
+        LOCAL_INTERNAL_CREATE = INTERNAL_CREATE,
+        EMPTY_MAP = ImmutableHashMap.of(defaultProps),
+
+        IS_RECORD_TYPE = "__ImmutableRecord-" + defaultName + "__",
+
+        RecordTypePrototype;
+
+
+    freeze(defaultProps);
+
+
+    function RecordType(value) {
+        if (!(this instanceof RecordType)) {
+            throw new Error(defaultName + "() must be called with new");
+        }
+
+        if (value === LOCAL_INTERNAL_CREATE) {
+            return this;
+        } else {
+            if (value) {
+                this.__map = ImmutableHashMap.of(Record_createProps(defaultProps, value, defaultKeys));
+            } else {
+                this.__map = EMPTY_MAP;
+            }
+            return freeze(this);
+        }
+    }
+    inherits(RecordType, Record);
+    RecordTypePrototype = RecordType.prototype;
+
+    RecordType.EMPTY = freeze(new RecordType());
+
+    RecordType.name = RecordType.__name = RecordTypePrototype.name = defaultName;
+    RecordTypePrototype.__keys = defaultKeys;
+    RecordTypePrototype.__defaultProps = defaultProps;
+
+    function isRecordType(value) {
+        return !!(value && value[IS_RECORD_TYPE]);
+    }
+    RecordType["is" + name] = isRecordType;
+
+    defineProperty(RecordTypePrototype, IS_RECORD, {
+        configurable: false,
+        enumerable: false,
+        writable: false,
+        value: true
+    });
+    defineProperty(RecordTypePrototype, IS_RECORD_TYPE, {
+        configurable: false,
+        enumerable: false,
+        writable: false,
+        value: true
+    });
+
+    return RecordType;
+}
+RecordPrototype = Record.prototype;
+
+function isRecord(value) {
+    return !!(value && value[IS_RECORD]);
+}
+
+Record.isRecord = isRecord;
+
+defineProperty(RecordPrototype, IS_RECORD, {
+    configurable: false,
+    enumerable: false,
+    writable: false,
+    value: true
+});
+
+RecordPrototype.has = function(key) {
+    return has(this.__defaultProps, key);
+};
+
+RecordPrototype.get = function(key, notSetValue) {
+    return this.__map.get(key, notSetValue);
+};
+
+RecordPrototype.set = function(key, value) {
+    var map, newMap;
+
+    if (!has(this.__defaultProps, key)) {
+        throw new Error("Cannot set unknown key \"" + key + "\" on " + this.name);
+    } else {
+        map = this.__map;
+        newMap = map.set(key, value);
+
+        if (newMap !== map) {
+            return Record_createRecord(this, newMap);
+        } else {
+            return this;
+        }
+    }
+};
+
+RecordPrototype.remove = function(key) {
+    var map, newMap;
+
+    if (!has(this.__defaultProps, key)) {
+        throw new Error("Cannot remove unknown key \"" + key + "\" from " + this.name);
+    } else {
+        map = this.__map;
+        newMap = map.remove(key);
+
+        if (newMap !== map) {
+            return Record_createRecord(this, newMap);
+        } else {
+            return this;
+        }
+    }
+};
+
+RecordPrototype.join = function(separator, keyValueSeparator) {
+    return this.__map.join(separator, keyValueSeparator);
+};
+
+RecordPrototype.toString = function() {
+    return this.name + " {" + this.join() + "}";
+};
+
+Record.equal = function(a, b) {
+    return ImmutableHashMap.equal(a.__map, b.__map);
+};
+
+RecordPrototype.equal = function(other) {
+    return Record.equal(this, other);
+};
+
+function RecordIteratorValue(done, value) {
+    this.done = done;
+    this.value = value;
+}
+
+function RecordIterator(next) {
+    this.next = next;
+}
+
+function Record_iterator(_this) {
+    var map = _this.__map;
+    keys = _this.__keys,
+        index = 0,
+        length = keys.length;
+
+    return new RecordIterator(function next() {
+        var key;
+
+        if (index < length) {
+            key = keys[index];
+            index += 1;
+            return new RecordIteratorValue(false, [key, map.get(key)]);
+        } else {
+            return new RecordIteratorValue(true, []);
+        }
+    });
+}
+
+function Record_iteratorReverse(_this) {
+    var map = _this.__map;
+    keys = _this.__keys,
+        index = keys.length;
+
+    return new RecordIterator(function next() {
+        var key;
+
+        if (index > 0) {
+            index -= 1;
+            key = keys[index];
+            return new RecordIteratorValue(false, [key, map.get(key)]);
+        } else {
+            return new RecordIteratorValue(true, []);
+        }
+    });
+}
+
+RecordPrototype.iterator = function(reverse) {
+    if (!reverse) {
+        return Record_iterator(this);
+    } else {
+        return Record_iteratorReverse(this);
+    }
+};
+
+if (ITERATOR_SYMBOL) {
+    RecordPrototype[ITERATOR_SYMBOL] = RecordPrototype.iterator;
+}
+
+RecordPrototype.every = function(callback, thisArg) {
+    return this.__map.every(callback, thisArg);
+};
+
+RecordPrototype.filter = function(callback, thisArg) {
+    return this.__map.filter(callback, thisArg);
+};
+
+RecordPrototype.forEach = function(callback, thisArg) {
+    return this.__map.forEach(callback, thisArg);
+};
+RecordPrototype.each = RecordPrototype.forEach;
+
+RecordPrototype.forEachRight = function(callback, thisArg) {
+    return this.__map.forEachRight(callback, thisArg);
+};
+RecordPrototype.eachRight = RecordPrototype.forEachRight;
+
+RecordPrototype.map = function(callback, thisArg) {
+    return this.__map.map(callback, thisArg);
+};
+RecordPrototype.reduce = function(callback, initialValue, thisArg) {
+    return this.__map.reduce(callback, initialValue, thisArg);
+};
+RecordPrototype.reduceRight = function(callback, initialValue, thisArg) {
+    return this.__map.reduceRight(callback, initialValue, thisArg);
+};
+RecordPrototype.some = function(callback, thisArg) {
+    return this.__map.some(callback, thisArg);
+};
+
+RecordPrototype.toArray = function() {
+    return this.__map.toArray();
+};
+RecordPrototype.toObject = function() {
+    return this.__map.toObject();
+};
+
+function Record_createRecord(_this, map) {
+    var record = new _this.constructor(INTERNAL_CREATE);
+    record.__map = map;
+    return freeze(record);
+}
+
+function Record_createProps(defaultProps, props, keys) {
+    var localHas = has,
+        newProps = {},
+        i = -1,
+        il = keys.length - 1,
+        key;
+
+    while (i++ < il) {
+        key = keys[i];
+        newProps[key] = localHas(props, key) ? props[key] : defaultProps[key];
+    }
+
+    return newProps;
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-list/node_modules/is_null/src/index.js */
 
 module.exports = isNull;
 
@@ -3254,7 +3011,7 @@ function isNull(value) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/is_undefined/src/index.js */
+/* ../node_modules/immutable-list/node_modules/is_undefined/src/index.js */
 
 module.exports = isUndefined;
 
@@ -3266,11 +3023,11 @@ function isUndefined(value) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/is_array_like/src/index.js */
+/* ../node_modules/immutable-list/node_modules/is_array_like/src/index.js */
 
-var isLength = require(14),
-    isFunction = require(15),
-    isObject = require(16);
+var isLength = require(16),
+    isFunction = require(17),
+    isObject = require(18);
 
 
 module.exports = isArrayLike;
@@ -3283,9 +3040,112 @@ function isArrayLike(value) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/fast_bind_this/src/index.js */
+/* ../node_modules/immutable-list/node_modules/is_number/src/index.js */
 
-var isNumber = require(17);
+module.exports = isNumber;
+
+
+function isNumber(value) {
+    return typeof(value) === "number" || false;
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-list/node_modules/iterator/src/index.js */
+
+var isFunction = require(17),
+    isUndefined = require(7);
+
+
+var KEYS = 0,
+    VALUES = 1,
+    ENTRIES = 2,
+
+    ITERATOR_SYMBOL = typeof(Symbol) === "function" ? Symbol.iterator : false,
+    EMPTY = new Iterator(createDone),
+
+    IteratorPrototype;
+
+
+module.exports = Iterator;
+
+
+function Iterator(next) {
+    this.next = next;
+}
+IteratorPrototype = Iterator.prototype;
+
+Iterator.EMPTY = EMPTY;
+
+function IteratorValue(value, done) {
+    this.value = value;
+    this.done = done;
+}
+Iterator.Value = IteratorValue;
+
+function createValue(type, key, value, result) {
+    var iteratorValue = (
+        type === KEYS ? key :
+        type === VALUES ? value : [key, value]
+    );
+
+    if (isUndefined(result)) {
+        result = new IteratorValue(iteratorValue, false);
+    } else {
+        result.value = iteratorValue;
+    }
+
+    return result;
+}
+Iterator.createValue = createValue;
+
+function createDone() {
+    return new IteratorValue(undefined, true);
+}
+Iterator.createDone = createDone;
+
+function getIterator(iterable) {
+    var iteratorFn = iterable && (ITERATOR_SYMBOL ? iterable[ITERATOR_SYMBOL] : iterable.iterator);
+
+    if (isFunction(iteratorFn)) {
+        return iteratorFn;
+    } else {
+        return void(0);
+    }
+}
+Iterator.getIterator = getIterator;
+
+function hasIterator(iterable) {
+    return !!getIterator(iterable);
+}
+Iterator.hasIterator = hasIterator;
+
+function isIterator(iterator) {
+    return !!(iterator && isFunction(iterator.next));
+}
+Iterator.isIterator = isIterator;
+
+Iterator.KEYS = KEYS;
+Iterator.VALUES = VALUES;
+Iterator.ENTRIES = ENTRIES;
+
+IteratorPrototype.toString = function() {
+    return "[Iterator]";
+};
+IteratorPrototype.inspect = IteratorPrototype.toSource = IteratorPrototype.toString;
+
+IteratorPrototype.iterator = function() {
+    return this;
+};
+IteratorPrototype[ITERATOR_SYMBOL] = IteratorPrototype.iterator;
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-list/node_modules/fast_bind_this/src/index.js */
+
+var isNumber = require(9);
 
 
 module.exports = fastBindThis;
@@ -3323,10 +3183,10 @@ function fastBindThis(callback, thisArg, length) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/fast_slice/src/index.js */
+/* ../node_modules/immutable-list/node_modules/fast_slice/src/index.js */
 
-var clamp = require(18),
-    isNumber = require(17);
+var clamp = require(19),
+    isNumber = require(9);
 
 
 module.exports = fastSlice;
@@ -3353,13 +3213,13 @@ function fastSlice(array, offset) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/define_property/src/index.js */
+/* ../node_modules/immutable-list/node_modules/define_property/src/index.js */
 
-var isObject = require(16),
-    isFunction = require(15),
-    isPrimitive = require(19),
-    isNative = require(20),
-    has = require(21);
+var isObject = require(18),
+    isFunction = require(17),
+    isPrimitive = require(20),
+    isNative = require(21),
+    has = require(22);
 
 
 var nativeDefineProperty = Object.defineProperty;
@@ -3413,10 +3273,10 @@ if (!isNative(nativeDefineProperty) || !(function() {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/freeze/src/index.js */
+/* ../node_modules/immutable-list/node_modules/freeze/src/index.js */
 
-var isNative = require(20),
-    emptyFunction = require(27);
+var isNative = require(21),
+    emptyFunction = require(28);
 
 
 var nativeFreeze = Object.freeze;
@@ -3445,7 +3305,7 @@ if (isNative(nativeFreeze) && (function isValidFreeze() {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/is_equal/src/index.js */
+/* ../node_modules/immutable-list/node_modules/is_equal/src/index.js */
 
 module.exports = isEqual;
 
@@ -3457,9 +3317,9 @@ function isEqual(a, b) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/is_length/src/index.js */
+/* ../node_modules/immutable-list/node_modules/is_length/src/index.js */
 
-var isNumber = require(17);
+var isNumber = require(9);
 
 
 var MAX_SAFE_INTEGER = Math.pow(2, 53) - 1;
@@ -3475,7 +3335,7 @@ function isLength(value) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/is_function/src/index.js */
+/* ../node_modules/immutable-list/node_modules/is_function/src/index.js */
 
 var objectToString = Object.prototype.toString,
     isFunction;
@@ -3501,7 +3361,7 @@ module.exports = isFunction;
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/is_object/src/index.js */
+/* ../node_modules/immutable-list/node_modules/is_object/src/index.js */
 
 var isNull = require(6);
 
@@ -3517,19 +3377,7 @@ function isObject(value) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/is_number/src/index.js */
-
-module.exports = isNumber;
-
-
-function isNumber(value) {
-    return typeof(value) === "number" || false;
-}
-
-
-},
-function(require, exports, module, undefined, global) {
-/* ../node_modules/clamp/src/index.js */
+/* ../node_modules/immutable-list/node_modules/clamp/src/index.js */
 
 module.exports = clamp;
 
@@ -3547,9 +3395,9 @@ function clamp(x, min, max) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/is_primitive/src/index.js */
+/* ../node_modules/immutable-list/node_modules/is_primitive/src/index.js */
 
-var isNullOrUndefined = require(22);
+var isNullOrUndefined = require(23);
 
 
 module.exports = isPrimitive;
@@ -3563,11 +3411,11 @@ function isPrimitive(obj) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/is_native/src/index.js */
+/* ../node_modules/immutable-list/node_modules/is_native/src/index.js */
 
-var isFunction = require(15),
-    isNullOrUndefined = require(22),
-    escapeRegExp = require(23);
+var isFunction = require(17),
+    isNullOrUndefined = require(23),
+    escapeRegExp = require(24);
 
 
 var reHostCtor = /^\[object .+?Constructor\]$/,
@@ -3613,11 +3461,11 @@ isHostObject = function isHostObject(value) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/has/src/index.js */
+/* ../node_modules/immutable-list/node_modules/has/src/index.js */
 
-var isNative = require(20),
-    getPrototypeOf = require(26),
-    isNullOrUndefined = require(22);
+var isNative = require(21),
+    getPrototypeOf = require(27),
+    isNullOrUndefined = require(23);
 
 
 var nativeHasOwnProp = Object.prototype.hasOwnProperty,
@@ -3654,7 +3502,7 @@ if (isNative(nativeHasOwnProp)) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/is_null_or_undefined/src/index.js */
+/* ../node_modules/immutable-list/node_modules/is_null_or_undefined/src/index.js */
 
 var isNull = require(6),
     isUndefined = require(7);
@@ -3682,9 +3530,9 @@ function isNullOrUndefined(value) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/escape_regexp/src/index.js */
+/* ../node_modules/immutable-list/node_modules/escape_regexp/src/index.js */
 
-var toString = require(24);
+var toString = require(25);
 
 
 var reRegExpChars = /[.*+?\^${}()|\[\]\/\\]/g,
@@ -3706,10 +3554,10 @@ function escapeRegExp(string) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/to_string/src/index.js */
+/* ../node_modules/immutable-list/node_modules/to_string/src/index.js */
 
-var isString = require(25),
-    isNullOrUndefined = require(22);
+var isString = require(26),
+    isNullOrUndefined = require(23);
 
 
 module.exports = toString;
@@ -3728,7 +3576,7 @@ function toString(value) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/is_string/src/index.js */
+/* ../node_modules/immutable-list/node_modules/is_string/src/index.js */
 
 module.exports = isString;
 
@@ -3740,11 +3588,11 @@ function isString(value) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/get_prototype_of/src/index.js */
+/* ../node_modules/immutable-list/node_modules/get_prototype_of/src/index.js */
 
-var isObject = require(16),
-    isNative = require(20),
-    isNullOrUndefined = require(22);
+var isObject = require(18),
+    isNative = require(21),
+    isNullOrUndefined = require(23);
 
 
 var nativeGetPrototypeOf = Object.getPrototypeOf,
@@ -3781,7 +3629,7 @@ if (isNative(nativeGetPrototypeOf)) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/empty_function/src/index.js */
+/* ../node_modules/immutable-list/node_modules/empty_function/src/index.js */
 
 module.exports = emptyFunction;
 
@@ -3808,14 +3656,14 @@ emptyFunction.thatReturnsArgument = function(argument) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/hash_code/src/index.js */
+/* ../node_modules/immutable-hash_map/node_modules/hash_code/src/index.js */
 
 var WeakMapPolyfill = require(33),
-    isNumber = require(17),
-    isString = require(25),
-    isFunction = require(15),
+    isNumber = require(9),
+    isString = require(26),
+    isFunction = require(17),
     isBoolean = require(34),
-    isNullOrUndefined = require(22),
+    isNullOrUndefined = require(23),
     numberHashCode = require(35),
     booleanHashCode = require(36),
     stringHashCode = require(37);
@@ -3896,6 +3744,10 @@ function Box(value) {
 function(require, exports, module, undefined, global) {
 /* ../node_modules/immutable-hash_map/src/Iterator.js */
 
+var inherits = require(39),
+    BaseIterator = require(10);
+
+
 module.exports = Iterator;
 
 
@@ -3903,19 +3755,7 @@ function Iterator(hasNext, next) {
     this.hasNext = hasNext;
     this.next = next;
 }
-
-
-},
-function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-hash_map/src/IteratorValue.js */
-
-module.exports = IteratorValue;
-
-
-function IteratorValue(done, value) {
-    this.done = done;
-    this.value = value;
-}
+inherits(Iterator, BaseIterator);
 
 
 },
@@ -3923,20 +3763,21 @@ function(require, exports, module, undefined, global) {
 /* ../node_modules/immutable-hash_map/src/BitmapIndexedNode.js */
 
 var isNull = require(6),
-    isEqual = require(13),
-    hashCode = require(28),
-    consts = require(39),
-    bitpos = require(40),
-    copyArray = require(41),
-    cloneAndSet = require(42),
-    removePair = require(43),
-    mask = require(44),
-    bitCount = require(45),
-    nodeIterator = require(46),
+    isEqual = require(15),
+    hashCode = require(29),
+    bitCount = require(44),
+    consts = require(45),
+    bitpos = require(46),
+    arrayCopy = require(47),
+    cloneAndSet = require(48),
+    removePair = require(49),
+    mask = require(50),
+    nodeIterator = require(51),
     ArrayNode, createNode;
 
 
-var SHIFT = consts.SHIFT,
+var baseArrayCopy = arrayCopy.base,
+    SHIFT = consts.SHIFT,
     MAX_BITMAP_INDEXED_SIZE = consts.MAX_BITMAP_INDEXED_SIZE,
     EMPTY = new BitmapIndexedNode(0, []),
     BitmapIndexedNodePrototype = BitmapIndexedNode.prototype;
@@ -3945,8 +3786,8 @@ var SHIFT = consts.SHIFT,
 module.exports = BitmapIndexedNode;
 
 
-ArrayNode = require(47);
-createNode = require(48);
+ArrayNode = require(52);
+createNode = require(53);
 
 
 function BitmapIndexedNode(bitmap, array) {
@@ -4038,13 +3879,13 @@ BitmapIndexedNodePrototype.set = function(shift, keyHash, key, value, addedLeaf)
             return new ArrayNode(newNode + 1, nodes);
         } else {
             newArray = new Array(2 * (newNode + 1));
-            copyArray(array, 0, newArray, 0, 2 * index);
+            baseArrayCopy(array, 0, newArray, 0, 2 * index);
 
             newArray[2 * index] = key;
             addedLeaf.value = addedLeaf;
             newArray[2 * index + 1] = value;
 
-            copyArray(array, 2 * index, newArray, 2 * (index + 1), 2 * (newNode - index));
+            baseArrayCopy(array, 2 * index, newArray, 2 * (index + 1), 2 * (newNode - index));
 
             return new BitmapIndexedNode(bitmap | bit, newArray);
         }
@@ -4096,10 +3937,10 @@ function getIndex(bitmap, bit) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/weak_map_polyfill/src/index.js */
+/* ../node_modules/immutable-hash_map/node_modules/weak_map_polyfill/src/index.js */
 
-var isNative = require(20),
-    isPrimitive = require(19),
+var isNative = require(21),
+    isPrimitive = require(20),
     createStore = require(38);
 
 
@@ -4148,7 +3989,7 @@ module.exports = WeakMapPolyfill;
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/is_boolean/src/index.js */
+/* ../node_modules/immutable-hash_map/node_modules/is_boolean/src/index.js */
 
 module.exports = isBoolean;
 
@@ -4160,7 +4001,7 @@ function isBoolean(value) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/number-hash_code/src/index.js */
+/* ../node_modules/immutable-hash_map/node_modules/number-hash_code/src/index.js */
 
 module.exports = numberHashCode;
 
@@ -4183,7 +4024,7 @@ function numberHashCode(number) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/boolean-hash_code/src/index.js */
+/* ../node_modules/immutable-hash_map/node_modules/boolean-hash_code/src/index.js */
 
 module.exports = booleanHashCode;
 
@@ -4199,7 +4040,7 @@ function booleanHashCode(bool) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/string-hash_code/src/index.js */
+/* ../node_modules/immutable-hash_map/node_modules/string-hash_code/src/index.js */
 
 var isUndefined = require(7);
 
@@ -4254,11 +4095,11 @@ function hashString(string) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/create_store/src/index.js */
+/* ../node_modules/immutable-hash_map/node_modules/create_store/src/index.js */
 
-var has = require(21),
-    defineProperty = require(11),
-    isPrimitive = require(19);
+var has = require(22),
+    defineProperty = require(13),
+    isPrimitive = require(20);
 
 
 var emptyStore = {
@@ -4372,6 +4213,232 @@ function privateStore(key, privateKey) {
 
 },
 function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-hash_map/node_modules/inherits/src/index.js */
+
+var create = require(40),
+    extend = require(41),
+    mixin = require(42),
+    defineProperty = require(13);
+
+
+var descriptor = {
+    configurable: true,
+    enumerable: false,
+    writable: true,
+    value: null
+};
+
+
+module.exports = inherits;
+
+
+function inherits(child, parent) {
+
+    mixin(child, parent);
+
+    if (child.__super) {
+        child.prototype = extend(create(parent.prototype), child.__super, child.prototype);
+    } else {
+        child.prototype = extend(create(parent.prototype), child.prototype);
+    }
+
+    defineNonEnumerableProperty(child, "__super", parent.prototype);
+    defineNonEnumerableProperty(child.prototype, "constructor", child);
+
+    child.defineStatic = defineStatic;
+    child.super_ = parent;
+
+    return child;
+}
+inherits.defineProperty = defineNonEnumerableProperty;
+
+function defineNonEnumerableProperty(object, name, value) {
+    descriptor.value = value;
+    defineProperty(object, name, descriptor);
+    descriptor.value = null;
+}
+
+function defineStatic(name, value) {
+    defineNonEnumerableProperty(this, name, value);
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-hash_map/node_modules/create/src/index.js */
+
+var isNull = require(6),
+    isNative = require(21),
+    isPrimitive = require(20);
+
+
+var nativeCreate = Object.create;
+
+
+module.exports = create;
+
+
+function create(object) {
+    return nativeCreate(isPrimitive(object) ? null : object);
+}
+
+if (!isNative(nativeCreate)) {
+    nativeCreate = function nativeCreate(object) {
+        var newObject;
+
+        function F() {
+            this.constructor = F;
+        }
+
+        if (isNull(object)) {
+            newObject = new F();
+            newObject.constructor = newObject.__proto__ = null;
+            delete newObject.__proto__;
+            return newObject;
+        } else {
+            F.prototype = object;
+            return new F();
+        }
+    };
+}
+
+
+module.exports = create;
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-hash_map/node_modules/extend/src/index.js */
+
+var keys = require(43);
+
+
+module.exports = extend;
+
+
+function extend(out) {
+    var i = 0,
+        il = arguments.length - 1;
+
+    while (i++ < il) {
+        baseExtend(out, arguments[i]);
+    }
+
+    return out;
+}
+
+function baseExtend(a, b) {
+    var objectKeys = keys(b),
+        i = -1,
+        il = objectKeys.length - 1,
+        key;
+
+    while (i++ < il) {
+        key = objectKeys[i];
+        a[key] = b[key];
+    }
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-hash_map/node_modules/mixin/src/index.js */
+
+var keys = require(43),
+    isNullOrUndefined = require(23);
+
+
+module.exports = mixin;
+
+
+function mixin(out) {
+    var i = 0,
+        il = arguments.length - 1;
+
+    while (i++ < il) {
+        baseMixin(out, arguments[i]);
+    }
+
+    return out;
+}
+
+function baseMixin(a, b) {
+    var objectKeys = keys(b),
+        i = -1,
+        il = objectKeys.length - 1,
+        key, value;
+
+    while (i++ < il) {
+        key = objectKeys[i];
+
+        if (isNullOrUndefined(a[key]) && !isNullOrUndefined((value = b[key]))) {
+            a[key] = value;
+        }
+    }
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-hash_map/node_modules/keys/src/index.js */
+
+var has = require(22),
+    isNative = require(21),
+    isNullOrUndefined = require(23),
+    isObject = require(18);
+
+
+var nativeKeys = Object.keys;
+
+
+module.exports = keys;
+
+
+function keys(value) {
+    if (isNullOrUndefined(value)) {
+        return [];
+    } else {
+        return nativeKeys(isObject(value) ? value : Object(value));
+    }
+}
+
+if (!isNative(nativeKeys)) {
+    nativeKeys = function(value) {
+        var localHas = has,
+            out = [],
+            i = 0,
+            key;
+
+        for (key in value) {
+            if (localHas(value, key)) {
+                out[i++] = key;
+            }
+        }
+
+        return out;
+    };
+}
+
+
+},
+function(require, exports, module, undefined, global) {
+/* ../node_modules/immutable-hash_map/node_modules/bit_count/src/index.js */
+
+module.exports = bitCount;
+
+
+function bitCount(i) {
+    i = i - ((i >>> 1) & 0x55555555);
+    i = (i & 0x33333333) + ((i >>> 2) & 0x33333333);
+    i = (i + (i >>> 4)) & 0x0f0f0f0f;
+    i = i + (i >>> 8);
+    i = i + (i >>> 16);
+    return i & 0x3f;
+}
+
+
+},
+function(require, exports, module, undefined, global) {
 /* ../node_modules/immutable-hash_map/src/consts.js */
 
 var consts = exports;
@@ -4389,7 +4456,7 @@ consts.MAX_BITMAP_INDEXED_SIZE = consts.SIZE / 2;
 function(require, exports, module, undefined, global) {
 /* ../node_modules/immutable-hash_map/src/bitpos.js */
 
-var mask = require(44);
+var mask = require(50);
 
 
 module.exports = bitpos;
@@ -4402,18 +4469,35 @@ function bitpos(hashCode, shift) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-hash_map/src/copyArray.js */
+/* ../node_modules/immutable-hash_map/node_modules/array_copy/src/index.js */
+
+var clamp = require(19),
+    isUndefined = require(7);
+
 
 module.exports = copyArray;
 
 
 function copyArray(src, srcPos, dest, destPos, length) {
+    var srcLength = src.length;
+
+    srcPos = clamp(srcPos, 0, srcLength);
+    length = isUndefined(length) ? (srcLength - srcPos) : length;
+    destPos = clamp(destPos, 0, length);
+
+    return baseArrayCopy(src, srcPos, dest, destPos, length);
+}
+copyArray.base = baseArrayCopy;
+
+function baseArrayCopy(src, srcPos, dest, destPos, length) {
     var i = srcPos - 1,
         il = srcPos + length - 1;
 
     while (i++ < il) {
         dest[destPos++] = src[i];
     }
+
+    return dest;
 }
 
 
@@ -4421,7 +4505,11 @@ function copyArray(src, srcPos, dest, destPos, length) {
 function(require, exports, module, undefined, global) {
 /* ../node_modules/immutable-hash_map/src/cloneAndSet.js */
 
-var copyArray = require(41);
+var isUndefined = require(7),
+    arrayCopy = require(47);
+
+
+var baseArrayCopy = arrayCopy.base;
 
 
 module.exports = cloneAndSet;
@@ -4431,10 +4519,10 @@ function cloneAndSet(array, index0, value0, index1, value1) {
     var length = array.length,
         results = new Array(length);
 
-    copyArray(array, 0, results, 0, length);
+    baseArrayCopy(array, 0, results, 0, length);
 
     results[index0] = value0;
-    if (index1 !== undefined) {
+    if (!isUndefined(index1)) {
         results[index1] = value1;
     }
 
@@ -4446,7 +4534,10 @@ function cloneAndSet(array, index0, value0, index1, value1) {
 function(require, exports, module, undefined, global) {
 /* ../node_modules/immutable-hash_map/src/removePair.js */
 
-var copyArray = require(41);
+var arrayCopy = require(47);
+
+
+var baseArrayCopy = arrayCopy.base;
 
 
 module.exports = removePair;
@@ -4456,8 +4547,8 @@ function removePair(array, index) {
     var length = array.length,
         newArray = new Array(length - 2);
 
-    copyArray(array, 0, newArray, 0, 2 * index);
-    copyArray(array, 2 * (index + 1), newArray, 2 * index, length - 2 * index);
+    baseArrayCopy(array, 0, newArray, 0, 2 * index);
+    baseArrayCopy(array, 2 * (index + 1), newArray, 2 * index, length - 2 * index);
 
     return newArray;
 }
@@ -4467,7 +4558,7 @@ function removePair(array, index) {
 function(require, exports, module, undefined, global) {
 /* ../node_modules/immutable-hash_map/src/mask.js */
 
-var consts = require(39);
+var consts = require(45);
 
 
 var MASK = consts.MASK;
@@ -4483,29 +4574,14 @@ function mask(hashCode, shift) {
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/immutable-hash_map/src/bitCount.js */
-
-module.exports = bitCount;
-
-
-function bitCount(i) {
-    i = i - ((i >>> 1) & 0x55555555);
-    i = (i & 0x33333333) + ((i >>> 2) & 0x33333333);
-    i = (i + (i >>> 4)) & 0x0f0f0f0f;
-    i = i + (i >>> 8);
-    i = i + (i >>> 16);
-    return i & 0x3f;
-}
-
-
-},
-function(require, exports, module, undefined, global) {
 /* ../node_modules/immutable-hash_map/src/nodeIterator.js */
 
 var isNull = require(6),
     isUndefined = require(7),
-    Iterator = require(30),
-    IteratorValue = require(31);
+    Iterator = require(31);
+
+
+var IteratorValue = Iterator.Value;
 
 
 module.exports = nodeIterator;
@@ -4563,7 +4639,7 @@ function iterator(_this) {
 
         if (!isNull(entry)) {
             nextEntry = null;
-            return new IteratorValue(false, entry);
+            return new IteratorValue(entry, false);
         } else if (!isNull(nextIter)) {
             entry = nextIter.next();
 
@@ -4571,11 +4647,11 @@ function iterator(_this) {
                 nextIter = null;
             }
 
-            return new IteratorValue(false, entry);
+            return new IteratorValue(entry, false);
         } else if (advance()) {
             return next();
         } else {
-            return new IteratorValue(true, undefined);
+            return new IteratorValue(undefined, true);
         }
     }
 
@@ -4626,7 +4702,7 @@ function iteratorReverse(_this) {
 
         if (!isNull(entry)) {
             nextEntry = null;
-            return new IteratorValue(false, entry);
+            return new IteratorValue(entry, false);
         } else if (!isNull(nextIter)) {
             entry = nextIter.next();
 
@@ -4634,11 +4710,11 @@ function iteratorReverse(_this) {
                 nextIter = null;
             }
 
-            return new IteratorValue(false, entry);
+            return new IteratorValue(entry, false);
         } else if (advance()) {
             return next();
         } else {
-            return new IteratorValue(true, undefined);
+            return new IteratorValue(undefined, true);
         }
     }
 
@@ -4651,18 +4727,18 @@ function(require, exports, module, undefined, global) {
 /* ../node_modules/immutable-hash_map/src/ArrayNode.js */
 
 var isNull = require(6),
-    isNullOrUndefined = require(22),
-    consts = require(39),
-    mask = require(44),
-    cloneAndSet = require(42),
-    Iterator = require(30),
-    IteratorValue = require(31),
+    isNullOrUndefined = require(23),
+    consts = require(45),
+    mask = require(50),
+    cloneAndSet = require(48),
+    Iterator = require(31),
     BitmapIndexedNode;
 
 
 var SHIFT = consts.SHIFT,
     MAX_ARRAY_MAP_SIZE = consts.MAX_ARRAY_MAP_SIZE,
     EMPTY = new ArrayNode(0, []),
+    IteratorValue = Iterator.Value,
     ArrayNodePrototype = ArrayNode.prototype;
 
 
@@ -4775,7 +4851,7 @@ function ArrayNode_iterator(_this) {
         if (hasNext()) {
             return nestedIter.next();
         } else {
-            return new IteratorValue(true, undefined);
+            return new IteratorValue(undefined, true);
         }
     }
 
@@ -4817,7 +4893,7 @@ function ArrayNode_iteratorReverse(_this) {
         if (hasNext()) {
             return nestedIter.next();
         } else {
-            return new IteratorValue(true, undefined);
+            return new IteratorValue(undefined, true);
         }
     }
 
@@ -4865,15 +4941,15 @@ function pack(array, index) {
 function(require, exports, module, undefined, global) {
 /* ../node_modules/immutable-hash_map/src/createNode.js */
 
-var hashCode = require(28),
-    Box = require(29),
+var hashCode = require(29),
+    Box = require(30),
     HashCollisionNode, BitmapIndexedNode;
 
 
 module.exports = createNode;
 
 
-HashCollisionNode = require(49);
+HashCollisionNode = require(54);
 BitmapIndexedNode = require(32);
 
 
@@ -4896,16 +4972,17 @@ function createNode(shift, key0, value0, keyHash1, key1, value1) {
 function(require, exports, module, undefined, global) {
 /* ../node_modules/immutable-hash_map/src/HashCollisionNode.js */
 
-var isEqual = require(13),
-    bitpos = require(40),
-    copyArray = require(41),
-    cloneAndSet = require(42),
-    removePair = require(43),
-    nodeIterator = require(46),
+var isEqual = require(15),
+    bitpos = require(46),
+    arrayCopy = require(47),
+    cloneAndSet = require(48),
+    removePair = require(49),
+    nodeIterator = require(51),
     BitmapIndexedNode;
 
 
-var EMPTY = new HashCollisionNode(0, []),
+var baseArrayCopy = arrayCopy.base,
+    EMPTY = new HashCollisionNode(0, []),
     HashCollisionNodePrototype = HashCollisionNode.prototype;
 
 
@@ -4954,7 +5031,7 @@ HashCollisionNodePrototype.set = function(shift, keyHash, key, value, addedLeaf)
             }
         } else {
             newArray = new Array(2 * (count + 1));
-            copyArray(array, 0, newArray, 0, 2 * count);
+            baseArrayCopy(array, 0, newArray, 0, 2 * count);
             newArray[2 * count] = key;
             newArray[2 * count + 1] = value;
             addedLeaf.value = addedLeaf;
