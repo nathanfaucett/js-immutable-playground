@@ -2090,14 +2090,13 @@ function HashMap_map(_this, it, callback) {
     var next = it.next(),
         results = new Array(_this.__size * 2),
         index = 0,
-        nextValue, key, resultValue;
+        nextValue, key;
 
     while (next.done === false) {
         nextValue = next.value;
         key = nextValue[0];
-        resultValue = callback(nextValue[1], key, _this);
-        results[index++] = resultValue[0];
-        results[index++] = resultValue[1];
+        results[index++] = key;
+        results[index++] = callback(nextValue[1], key, _this);
         next = it.next();
     }
 
@@ -2758,9 +2757,6 @@ function Record(defaultProps, name) {
         RecordTypePrototype;
 
 
-    freeze(defaultProps);
-
-
     function RecordType(value) {
         if (!(this instanceof RecordType)) {
             throw new Error(defaultName + "() must be called with new");
@@ -2779,6 +2775,8 @@ function Record(defaultProps, name) {
     }
     inherits(RecordType, Record);
     RecordTypePrototype = RecordType.prototype;
+
+    freeze(defaultProps);
 
     RecordType.EMPTY = freeze(new RecordType());
 
@@ -2942,21 +2940,23 @@ RecordPrototype.every = function(callback, thisArg) {
 };
 
 RecordPrototype.filter = function(callback, thisArg) {
-    return this.__map.filter(callback, thisArg);
+    return Record_createRecord(this, this.__map.filter(callback, thisArg));
 };
 
 RecordPrototype.forEach = function(callback, thisArg) {
-    return this.__map.forEach(callback, thisArg);
+    this.__map.forEach(callback, thisArg);
+    return this;
 };
 RecordPrototype.each = RecordPrototype.forEach;
 
 RecordPrototype.forEachRight = function(callback, thisArg) {
-    return this.__map.forEachRight(callback, thisArg);
+    this.__map.forEachRight(callback, thisArg);
+    return this;
 };
 RecordPrototype.eachRight = RecordPrototype.forEachRight;
 
 RecordPrototype.map = function(callback, thisArg) {
-    return this.__map.map(callback, thisArg);
+    return Record_createRecord(this, this.__map.map(callback, thisArg));
 };
 RecordPrototype.reduce = function(callback, initialValue, thisArg) {
     return this.__map.reduce(callback, initialValue, thisArg);
@@ -3106,7 +3106,7 @@ function createDone() {
 Iterator.createDone = createDone;
 
 function getIterator(iterable) {
-    var iteratorFn = iterable && (ITERATOR_SYMBOL ? iterable[ITERATOR_SYMBOL] : iterable.iterator);
+    var iteratorFn = iterable && (ITERATOR_SYMBOL && iterable[ITERATOR_SYMBOL] || iterable.iterator);
 
     if (isFunction(iteratorFn)) {
         return iteratorFn;
