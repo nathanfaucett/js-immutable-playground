@@ -1,5 +1,5 @@
 {
-  "name": "immutable-playground",
+  "name": "@nathanfaucett/immutable-playground",
   "version": "0.0.1",
   "description": "immutable persistent data structure playground for the browser",
   "repository": {
@@ -20,18 +20,18 @@
   "license": "MIT",
   "readmeFilename": "README.md",
   "devDependencies": {
-    "comn": "git://github.com/nathanfaucett/comn.git",
-    "comn_css": "git://github.com/nathanfaucett/comn_css.git",
-    "grunt": "^0.4.5",
-    "grunt-contrib-jshint": "^0.10.0",
-    "grunt-jsbeautifier": "^0.2.7"
+    "@nathanfaucett/comn": "^0.0.1",
+    "@nathanfaucett/comn_css": "^0.0.2",
+    "grunt": "^1.0.1",
+    "grunt-contrib-jshint": "^1.0.0",
+    "grunt-jsbeautifier": "^0.2.13"
   },
   "dependencies": {
-    "immutable-hash_map": "git://github.com/nathanfaucett/immutable-hash_map.git",
-    "immutable-list": "git://github.com/nathanfaucett/immutable-list.git",
-    "immutable-record": "git://github.com/nathanfaucett/immutable-record.git",
-    "immutable-set": "git://github.com/nathanfaucett/immutable-set.git",
-    "immutable-vector": "git://github.com/nathanfaucett/immutable-vector.git",
-    "native.less": "git://github.com/nathanfaucett/native.less.git"
+    "@nathanfaucett/immutable-hash_map": "^0.0.1",
+    "@nathanfaucett/immutable-list": "^0.0.1",
+    "@nathanfaucett/immutable-record": "^0.0.1",
+    "@nathanfaucett/immutable-set": "^0.0.1",
+    "@nathanfaucett/immutable-vector": "^0.0.1",
+    "@nathanfaucett/native.less": "^0.0.2"
   }
 }

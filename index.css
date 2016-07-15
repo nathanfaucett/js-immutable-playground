@@ -466,14 +466,14 @@ th {
 }
 
 a{
-	display: inline-block;
-	*{
-		cursor: pointer;
+  display: inline-block;
+  *{
+	  cursor: pointer;
   }
 }
 
 a, input[type=submit]{
-	outline: 0;
+  outline: 0;
   text-decoration: none;
   cursor: pointer;
 	&:hover, &:active, &:focus{
@@ -503,56 +503,55 @@ li{
 
 input, textarea{
   .select();
-  cursor: auto;
-	width: 100%;
-	display: block;
-	border: none;
-	background: none;
-	margin: 0;
-	padding: 0;
+  width: 100%;
+  display: block;
+  border: none;
+  background: none;
+  margin: 0;
+  padding: 0;
 }
 
 p {
-    font-size: 1em;
-    display: block;
-    margin-top: 1em;
-    margin-bottom: 1em;
+  font-size: 1em;
+  display: block;
+  margin-top: 1em;
+  margin-bottom: 1em;
 }
 
 h1, h2, h3, h4, h5, h6 {
-    display: block;
-    font-weight: bold;
+  display: block;
+  font-weight: bold;
 }
 
 h1 {
-    font-size: 2em;
-    margin-top: 0.67em;
-    margin-bottom: 0.67em;
+  font-size: 2em;
+  margin-top: 0.67em;
+  margin-bottom: 0.67em;
 }
 h2 {
-    font-size: 1.5em;
-    margin-top: 0.83em;
-    margin-bottom: 0.83em;
+  font-size: 1.5em;
+  margin-top: 0.83em;
+  margin-bottom: 0.83em;
 }
 h3 {
-    font-size: 1.17em;
-    margin-top: 1em;
-    margin-bottom: 1em;
+  font-size: 1.17em;
+  margin-top: 1em;
+  margin-bottom: 1em;
 }
 h4 {
-    font-size: 1em;
-    margin-top: 1.33em;
-    margin-bottom: 1.33em;
+  font-size: 1em;
+  margin-top: 1.33em;
+  margin-bottom: 1.33em;
 }
 h5 {
-    font-size: 0.83em;
-    margin-top: 1.67em;
-    margin-bottom: 1.67em;
+  font-size: 0.83em;
+  margin-top: 1.67em;
+  margin-bottom: 1.67em;
 }
 h6 {
-    font-size: 0.67em;
-    margin-top: 2.33em;
-    margin-bottom: 2.33em;
+  font-size: 0.67em;
+  margin-top: 2.33em;
+  margin-bottom: 2.33em;
 }
 
 
