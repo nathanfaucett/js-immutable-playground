@@ -1,6 +1,7 @@
 (function(dependencies, chunks, undefined, global) {
     
-    var cache = [];
+    var cache = [],
+        cacheCallbacks = {};
     
 
     function Module() {
@@ -37,9 +38,57 @@
     };
 
     
-
     require.async = function async(index, callback) {
-        callback(require(index));
+        var module = cache[index],
+            callbacks, node;
+
+        if (module) {
+            callback(module.exports);
+        } else if ((callbacks = cacheCallbacks[index])) {
+            callbacks[callbacks.length] = callback;
+        } else {
+            node = document.createElement("script");
+            callbacks = cacheCallbacks[index] = [callback];
+
+            node.type = "text/javascript";
+            node.charset = "utf-8";
+            node.async = true;
+
+            function onLoad() {
+                var i = -1,
+                    il = callbacks.length - 1;
+
+                while (i++ < il) {
+                    callbacks[i](require(index));
+                }
+                delete cacheCallbacks[index];
+            }
+
+            if (node.attachEvent && !(node.attachEvent.toString && node.attachEvent.toString().indexOf("[native code") < 0)) {
+                node.attachEvent("onreadystatechange", onLoad);
+            } else {
+                node.addEventListener("load", onLoad, false);
+            }
+
+            node.src = chunks[index];
+
+            document.head.appendChild(node);
+        }
+    };
+
+    global["crIl2q6B-y9Ok-47os-XdK6-nxkIgVNsOuEej"] = function(asyncDependencies) {
+        var i = -1,
+            il = asyncDependencies.length - 1,
+            dependency, index;
+
+        while (i++ < il) {
+            dependency = asyncDependencies[i];
+            index = dependency[0];
+
+            if (dependencies[index] === null) {
+                dependencies[index] = dependency[1];
+            }
+        }
     };
 
     
@@ -57,19 +106,16 @@
     }
 }([
 function(require, exports, module, undefined, global) {
-/* index.js */
-
+/*@=-/var/www/html/node/_immutable/immutable-playground/src/index.js-=@*/
 global.ImmutableList = require(1);
 global.ImmutableVector = require(2);
 global.ImmutableHashMap = require(3);
 global.ImmutableSet = require(4);
 global.ImmutableRecord = require(5);
 
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/immutable-list/src/index.js */
-
+/*@=-@nathanfaucett/immutable-list@0.0.2/src/index.js-=@*/
 var isNull = require(6),
     isUndefined = require(7),
     isArrayLike = require(8),
@@ -871,12 +917,9 @@ function findNode(root, index) {
 
     return node;
 }
-
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/immutable-vector/src/index.js */
-
+/*@=-@nathanfaucett/immutable-vector@0.0.2/src/index.js-=@*/
 var freeze = require(14),
     Iterator = require(10),
     isNull = require(6),
@@ -1753,25 +1796,22 @@ function copyArray(a, b, length) {
 function cloneArray(a, length) {
     return copyArray(a, createArray(), length);
 }
-
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/immutable-hash_map/src/index.js */
-
-var has = require(22),
+/*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/index.js-=@*/
+var has = require(24),
     freeze = require(14),
     isNull = require(6),
     isUndefined = require(7),
     isObject = require(18),
     defineProperty = require(13),
     isEqual = require(15),
-    hashCode = require(29),
+    hashCode = require(30),
     isArrayLike = require(8),
     fastBindThis = require(11),
-    Box = require(30),
-    Iterator = require(31),
-    BitmapIndexedNode = require(32);
+    Box = require(31),
+    Iterator = require(32),
+    BitmapIndexedNode = require(33);
 
 
 var INTERNAL_CREATE = {},
@@ -2195,13 +2235,12 @@ HashMapPrototype.toArray = function() {
 
 HashMapPrototype.toObject = function() {
     var it = this.iterator(),
-        next = it.next(),
-        results = {};
+        results = {},
+        step;
 
-    while (next.done === false) {
-        nextValue = next.value;
+    while ((step = it.next()).done === false) {
+        nextValue = step.value;
         results[nextValue[0]] = nextValue[1];
-        next = it.next();
     }
 
     return results;
@@ -2269,12 +2308,9 @@ HashMap.equal = function(a, b) {
 HashMapPrototype.equals = function(b) {
     return HashMap.equal(this, b);
 };
-
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/immutable-set/src/index.js */
-
+/*@=-@nathanfaucett/immutable-set@0.0.2/src/index.js-=@*/
 var freeze = require(14),
     Iterator = require(10),
     ImmutableHashMap = require(3),
@@ -2716,17 +2752,14 @@ Set.equal = function(a, b) {
 SetPrototype.equals = function(other) {
     return Set.equal(this, other);
 };
-
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/immutable-record/src/index.js */
-
+/*@=-@nathanfaucett/immutable-record@0.0.2/src/index.js-=@*/
 var ImmutableHashMap = require(3),
     defineProperty = require(13),
-    inherits = require(39),
-    keys = require(43),
-    has = require(22),
+    inherits = require(40),
+    keys = require(47),
+    has = require(24),
     freeze = require(14);
 
 
@@ -2995,12 +3028,9 @@ function Record_createProps(defaultProps, props, keys) {
 
     return newProps;
 }
-
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/is_null/src/index.js */
-
+/*@=-@nathanfaucett/is_null@0.0.1/src/index.js-=@*/
 module.exports = isNull;
 
 
@@ -3008,11 +3038,9 @@ function isNull(value) {
     return value === null;
 }
 
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/is_undefined/src/index.js */
-
+/*@=-@nathanfaucett/is_undefined@0.0.1/src/index.js-=@*/
 module.exports = isUndefined;
 
 
@@ -3020,11 +3048,9 @@ function isUndefined(value) {
     return value === void(0);
 }
 
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/is_array_like/src/index.js */
-
+/*@=-@nathanfaucett/is_array_like@0.0.2/src/index.js-=@*/
 var isLength = require(16),
     isFunction = require(17),
     isObject = require(18);
@@ -3037,11 +3063,9 @@ function isArrayLike(value) {
     return !isFunction(value) && isObject(value) && isLength(value.length);
 }
 
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/is_number/src/index.js */
-
+/*@=-@nathanfaucett/is_number@0.0.1/src/index.js-=@*/
 module.exports = isNumber;
 
 
@@ -3049,12 +3073,11 @@ function isNumber(value) {
     return typeof(value) === "number" || false;
 }
 
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/iterator/src/index.js */
-
-var isFunction = require(17),
+/*@=-@nathanfaucett/iterator@0.0.2/src/index.js-=@*/
+var apply = require(19),
+    isFunction = require(17),
     isUndefined = require(7);
 
 
@@ -3114,7 +3137,17 @@ function getIterator(iterable) {
         return void(0);
     }
 }
-Iterator.getIterator = getIterator;
+Iterator.getIterator = function(iterable) {
+    var iteratorFn = getIterator(iterable);
+
+    if (iteratorFn) {
+        return function fn() {
+            return apply(iteratorFn, arguments, iterable);
+        };
+    } else {
+        return void(0);
+    }
+};
 
 function hasIterator(iterable) {
     return !!getIterator(iterable);
@@ -3140,11 +3173,9 @@ IteratorPrototype.iterator = function() {
 };
 IteratorPrototype[ITERATOR_SYMBOL] = IteratorPrototype.iterator;
 
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/fast_bind_this/src/index.js */
-
+/*@=-@nathanfaucett/fast_bind_this@0.0.1/src/index.js-=@*/
 var isNumber = require(9);
 
 
@@ -3180,12 +3211,10 @@ function fastBindThis(callback, thisArg, length) {
     }
 }
 
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/fast_slice/src/index.js */
-
-var clamp = require(19),
+/*@=-@nathanfaucett/fast_slice@0.0.1/src/index.js-=@*/
+var clamp = require(21),
     isNumber = require(9);
 
 
@@ -3210,16 +3239,14 @@ function fastSlice(array, offset) {
     return result;
 }
 
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/define_property/src/index.js */
-
+/*@=-@nathanfaucett/define_property@0.0.3/src/index.js-=@*/
 var isObject = require(18),
     isFunction = require(17),
-    isPrimitive = require(20),
-    isNative = require(21),
-    has = require(22);
+    isPrimitive = require(22),
+    isNative = require(23),
+    has = require(24);
 
 
 var nativeDefineProperty = Object.defineProperty;
@@ -3270,13 +3297,11 @@ if (!isNative(nativeDefineProperty) || !(function() {
     };
 }
 
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/freeze/src/index.js */
-
-var isNative = require(21),
-    emptyFunction = require(28);
+/*@=-@nathanfaucett/freeze@0.0.1/src/index.js-=@*/
+var isNative = require(23),
+    emptyFunction = require(29);
 
 
 var nativeFreeze = Object.freeze;
@@ -3302,11 +3327,9 @@ if (isNative(nativeFreeze) && (function isValidFreeze() {
     module.exports = emptyFunction.thatReturnsArgument;
 }
 
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/is_equal/src/index.js */
-
+/*@=-@nathanfaucett/is_equal@0.0.1/src/index.js-=@*/
 module.exports = isEqual;
 
 
@@ -3314,11 +3337,9 @@ function isEqual(a, b) {
     return !(a !== b && !(a !== a && b !== b));
 }
 
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/is_length/src/index.js */
-
+/*@=-@nathanfaucett/is_length@0.0.1/src/index.js-=@*/
 var isNumber = require(9);
 
 
@@ -3332,11 +3353,9 @@ function isLength(value) {
     return isNumber(value) && value > -1 && value % 1 === 0 && value <= MAX_SAFE_INTEGER;
 }
 
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/is_function/src/index.js */
-
+/*@=-@nathanfaucett/is_function@0.0.1/src/index.js-=@*/
 var objectToString = Object.prototype.toString,
     isFunction;
 
@@ -3358,11 +3377,9 @@ if (objectToString.call(function() {}) === "[object Object]") {
 
 module.exports = isFunction;
 
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/is_object/src/index.js */
-
+/*@=-@nathanfaucett/is_object@0.0.1/src/index.js-=@*/
 var isNull = require(6);
 
 
@@ -3374,11 +3391,90 @@ function isObject(value) {
     return type === "function" || (!isNull(value) && type === "object") || false;
 }
 
+},
+function(require, exports, module, undefined, global) {
+/*@=-@nathanfaucett/apply@0.0.1/src/index.js-=@*/
+var isNullOrUndefined = require(20);
+
+
+module.exports = apply;
+
+
+function apply(fn, args, thisArg) {
+    if (isNullOrUndefined(thisArg)) {
+        return applyNoThisArg(fn, args);
+    } else {
+        return applyThisArg(fn, args, thisArg);
+    }
+}
+
+function applyNoThisArg(fn, args) {
+    switch (args.length) {
+        case 0:
+            return fn();
+        case 1:
+            return fn(args[0]);
+        case 2:
+            return fn(args[0], args[1]);
+        case 3:
+            return fn(args[0], args[1], args[2]);
+        case 4:
+            return fn(args[0], args[1], args[2], args[3]);
+        case 5:
+            return fn(args[0], args[1], args[2], args[3], args[4]);
+        default:
+            return fn.apply(null, args);
+    }
+}
+
+function applyThisArg(fn, args, thisArg) {
+    switch (args.length) {
+        case 0:
+            return fn.call(thisArg);
+        case 1:
+            return fn.call(thisArg, args[0]);
+        case 2:
+            return fn.call(thisArg, args[0], args[1]);
+        case 3:
+            return fn.call(thisArg, args[0], args[1], args[2]);
+        case 4:
+            return fn.call(thisArg, args[0], args[1], args[2], args[3]);
+        case 5:
+            return fn.call(thisArg, args[0], args[1], args[2], args[3], args[4]);
+        default:
+            return fn.apply(thisArg, args);
+    }
+}
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/clamp/src/index.js */
+/*@=-@nathanfaucett/is_null_or_undefined@0.0.1/src/index.js-=@*/
+var isNull = require(6),
+    isUndefined = require(7);
 
+
+module.exports = isNullOrUndefined;
+
+/**
+  isNullOrUndefined accepts any value and returns true
+  if the value is null or undefined. For all other values
+  false is returned.
+  
+  @param {Any}        any value to test
+  @returns {Boolean}  the boolean result of testing value
+
+  @example
+    isNullOrUndefined(null);   // returns true
+    isNullOrUndefined(undefined);   // returns true
+    isNullOrUndefined("string");    // returns false
+**/
+function isNullOrUndefined(value) {
+    return isNull(value) || isUndefined(value);
+}
+
+},
+function(require, exports, module, undefined, global) {
+/*@=-@nathanfaucett/clamp@0.0.1/src/index.js-=@*/
 module.exports = clamp;
 
 
@@ -3392,12 +3488,10 @@ function clamp(x, min, max) {
     }
 }
 
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/is_primitive/src/index.js */
-
-var isNullOrUndefined = require(23);
+/*@=-@nathanfaucett/is_primitive@0.0.2/src/index.js-=@*/
+var isNullOrUndefined = require(20);
 
 
 module.exports = isPrimitive;
@@ -3408,14 +3502,12 @@ function isPrimitive(obj) {
     return isNullOrUndefined(obj) || ((typeStr = typeof(obj)) !== "object" && typeStr !== "function") || false;
 }
 
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/is_native/src/index.js */
-
+/*@=-@nathanfaucett/is_native@0.0.2/src/index.js-=@*/
 var isFunction = require(17),
-    isNullOrUndefined = require(23),
-    escapeRegExp = require(24);
+    isNullOrUndefined = require(20),
+    escapeRegExp = require(25);
 
 
 var reHostCtor = /^\[object .+?Constructor\]$/,
@@ -3458,14 +3550,12 @@ isHostObject = function isHostObject(value) {
     return !isFunction(value.toString) && typeof(value + "") === "string";
 };
 
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/has/src/index.js */
-
-var isNative = require(21),
-    getPrototypeOf = require(27),
-    isNullOrUndefined = require(23);
+/*@=-@nathanfaucett/has@0.0.2/src/index.js-=@*/
+var isNative = require(23),
+    getPrototypeOf = require(28),
+    isNullOrUndefined = require(20);
 
 
 var nativeHasOwnProp = Object.prototype.hasOwnProperty,
@@ -3503,40 +3593,10 @@ if (isNative(nativeHasOwnProp)) {
     };
 }
 
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/is_primitive/node_modules/@nathanfaucett/is_null_or_undefined/src/index.js */
-
-var isNull = require(6),
-    isUndefined = require(7);
-
-
-module.exports = isNullOrUndefined;
-
-/**
-  isNullOrUndefined accepts any value and returns true
-  if the value is null or undefined. For all other values
-  false is returned.
-  
-  @param {Any}        any value to test
-  @returns {Boolean}  the boolean result of testing value
-
-  @example
-    isNullOrUndefined(null);   // returns true
-    isNullOrUndefined(undefined);   // returns true
-    isNullOrUndefined("string");    // returns false
-**/
-function isNullOrUndefined(value) {
-    return isNull(value) || isUndefined(value);
-}
-
-
-},
-function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/escape_regexp/src/index.js */
-
-var toString = require(25);
+/*@=-@nathanfaucett/escape_regexp@0.0.1/src/index.js-=@*/
+var toString = require(26);
 
 
 var reRegExpChars = /[.*+?\^${}()|\[\]\/\\]/g,
@@ -3555,13 +3615,11 @@ function escapeRegExp(string) {
     );
 }
 
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/to_string/src/index.js */
-
-var isString = require(26),
-    isNullOrUndefined = require(23);
+/*@=-@nathanfaucett/to_string@0.0.1/src/index.js-=@*/
+var isString = require(27),
+    isNullOrUndefined = require(20);
 
 
 module.exports = toString;
@@ -3577,11 +3635,9 @@ function toString(value) {
     }
 }
 
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/is_string/src/index.js */
-
+/*@=-@nathanfaucett/is_string@0.0.1/src/index.js-=@*/
 module.exports = isString;
 
 
@@ -3589,14 +3645,12 @@ function isString(value) {
     return typeof(value) === "string" || false;
 }
 
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/get_prototype_of/src/index.js */
-
+/*@=-@nathanfaucett/get_prototype_of@0.0.1/src/index.js-=@*/
 var isObject = require(18),
-    isNative = require(21),
-    isNullOrUndefined = require(23);
+    isNative = require(23),
+    isNullOrUndefined = require(20);
 
 
 var nativeGetPrototypeOf = Object.getPrototypeOf,
@@ -3630,11 +3684,9 @@ if (isNative(nativeGetPrototypeOf)) {
     }
 }
 
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/empty_function/src/index.js */
-
+/*@=-@nathanfaucett/empty_function@0.0.1/src/index.js-=@*/
 module.exports = emptyFunction;
 
 
@@ -3657,20 +3709,18 @@ emptyFunction.thatReturnsArgument = function(argument) {
     return argument;
 };
 
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/hash_code/src/index.js */
-
-var WeakMapPolyfill = require(33),
+/*@=-@nathanfaucett/hash_code@0.0.2/src/index.js-=@*/
+var WeakMapPolyfill = require(34),
     isNumber = require(9),
-    isString = require(26),
+    isString = require(27),
     isFunction = require(17),
-    isBoolean = require(34),
-    isNullOrUndefined = require(23),
-    numberHashCode = require(35),
-    booleanHashCode = require(36),
-    stringHashCode = require(37);
+    isBoolean = require(35),
+    isNullOrUndefined = require(20),
+    numberHashCode = require(36),
+    booleanHashCode = require(37),
+    stringHashCode = require(38);
 
 
 var WEAK_MAP = new WeakMapPolyfill(),
@@ -3731,24 +3781,19 @@ function setHashCode(value) {
     return hashCode;
 }
 
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/immutable-hash_map/src/Box.js */
-
+/*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/Box.js-=@*/
 module.exports = Box;
 
 
 function Box(value) {
     this.value = value;
 }
-
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/immutable-hash_map/src/Iterator.js */
-
-var inherits = require(39),
+/*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/Iterator.js-=@*/
+var inherits = require(40),
     BaseIterator = require(10);
 
 
@@ -3760,23 +3805,20 @@ function Iterator(hasNext, next) {
     this.next = next;
 }
 inherits(Iterator, BaseIterator);
-
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/immutable-hash_map/src/BitmapIndexedNode.js */
-
+/*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/BitmapIndexedNode.js-=@*/
 var isNull = require(6),
     isEqual = require(15),
-    hashCode = require(29),
-    bitCount = require(44),
-    consts = require(45),
-    bitpos = require(46),
-    arrayCopy = require(47),
-    cloneAndSet = require(48),
-    removePair = require(49),
-    mask = require(50),
-    nodeIterator = require(51),
+    hashCode = require(30),
+    bitCount = require(48),
+    consts = require(49),
+    bitpos = require(50),
+    arrayCopy = require(51),
+    cloneAndSet = require(52),
+    removePair = require(53),
+    mask = require(54),
+    nodeIterator = require(55),
     ArrayNode, createNode;
 
 
@@ -3790,8 +3832,8 @@ var baseArrayCopy = arrayCopy.base,
 module.exports = BitmapIndexedNode;
 
 
-ArrayNode = require(52);
-createNode = require(53);
+ArrayNode = require(56);
+createNode = require(57);
 
 
 function BitmapIndexedNode(bitmap, array) {
@@ -3937,15 +3979,12 @@ BitmapIndexedNodePrototype.iterator = nodeIterator;
 function getIndex(bitmap, bit) {
     return bitCount(bitmap & (bit - 1));
 }
-
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/weak_map_polyfill/src/index.js */
-
-var isNative = require(21),
-    isPrimitive = require(20),
-    createStore = require(38);
+/*@=-@nathanfaucett/weak_map_polyfill@0.0.2/src/index.js-=@*/
+var isNative = require(23),
+    isPrimitive = require(22),
+    createStore = require(39);
 
 
 var NativeWeakMap = typeof(WeakMap) !== "undefined" ? WeakMap : null,
@@ -3990,11 +4029,9 @@ WeakMapPolyfillPrototype.remove = WeakMapPolyfillPrototype["delete"];
 
 module.exports = WeakMapPolyfill;
 
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/is_boolean/src/index.js */
-
+/*@=-@nathanfaucett/is_boolean@0.0.1/src/index.js-=@*/
 module.exports = isBoolean;
 
 
@@ -4002,11 +4039,9 @@ function isBoolean(value) {
     return typeof(value) === "boolean" || false;
 }
 
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/number-hash_code/src/index.js */
-
+/*@=-@nathanfaucett/number-hash_code@0.0.1/src/index.js-=@*/
 module.exports = numberHashCode;
 
 
@@ -4025,11 +4060,9 @@ function numberHashCode(number) {
     return ((hash >>> 1) & 0x40000000) | (hash & 0xBFFFFFFF);
 }
 
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/boolean-hash_code/src/index.js */
-
+/*@=-@nathanfaucett/boolean-hash_code@0.0.1/src/index.js-=@*/
 module.exports = booleanHashCode;
 
 
@@ -4041,11 +4074,9 @@ function booleanHashCode(bool) {
     }
 }
 
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/string-hash_code/src/index.js */
-
+/*@=-@nathanfaucett/string-hash_code@0.0.1/src/index.js-=@*/
 var isUndefined = require(7);
 
 
@@ -4096,14 +4127,12 @@ function hashString(string) {
     return ((hash >>> 1) & 0x40000000) | (hash & 0xBFFFFFFF);
 }
 
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/create_store/src/index.js */
-
-var has = require(22),
+/*@=-@nathanfaucett/create_store@0.0.2/src/index.js-=@*/
+var has = require(24),
     defineProperty = require(13),
-    isPrimitive = require(20);
+    isPrimitive = require(22);
 
 
 var emptyStore = {
@@ -4214,15 +4243,13 @@ function privateStore(key, privateKey) {
     return store;
 }
 
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/inherits/src/index.js */
-
-var create = require(40),
-    extend = require(41),
-    mixin = require(42),
-    defineProperty = require(13);
+/*@=-@nathanfaucett/inherits@0.0.3/src/index.js-=@*/
+var create = require(41),
+    extend = require(42),
+    mixin = require(43),
+    defineProperty = require(44);
 
 
 var descriptor = {
@@ -4266,14 +4293,12 @@ function defineStatic(name, value) {
     defineNonEnumerableProperty(this, name, value);
 }
 
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/create/src/index.js */
-
+/*@=-@nathanfaucett/create@0.0.2/src/index.js-=@*/
 var isNull = require(6),
-    isNative = require(21),
-    isPrimitive = require(20);
+    isNative = require(23),
+    isPrimitive = require(22);
 
 
 var nativeCreate = Object.create;
@@ -4307,50 +4332,51 @@ if (!isNative(nativeCreate)) {
     };
 }
 
-
-module.exports = create;
-
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/extend/src/index.js */
+/*@=-@nathanfaucett/extend@0.0.2/src/index.js-=@*/
+var keys = require(45),
+    isNative = require(23);
 
-var keys = require(43);
+
+var nativeAssign = Object.assign,
+    extend, baseExtend;
+
+
+if (isNative(nativeAssign)) {
+    extend = nativeAssign;
+} else {
+    extend = function extend(out) {
+        var i = 0,
+            il = arguments.length - 1;
+
+        while (i++ < il) {
+            baseExtend(out, arguments[i]);
+        }
+
+        return out;
+    };
+    baseExtend = function baseExtend(a, b) {
+        var objectKeys = keys(b),
+            i = -1,
+            il = objectKeys.length - 1,
+            key;
+
+        while (i++ < il) {
+            key = objectKeys[i];
+            a[key] = b[key];
+        }
+    };
+}
 
 
 module.exports = extend;
 
-
-function extend(out) {
-    var i = 0,
-        il = arguments.length - 1;
-
-    while (i++ < il) {
-        baseExtend(out, arguments[i]);
-    }
-
-    return out;
-}
-
-function baseExtend(a, b) {
-    var objectKeys = keys(b),
-        i = -1,
-        il = objectKeys.length - 1,
-        key;
-
-    while (i++ < il) {
-        key = objectKeys[i];
-        a[key] = b[key];
-    }
-}
-
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/mixin/src/index.js */
-
-var keys = require(43),
-    isNullOrUndefined = require(23);
+/*@=-@nathanfaucett/mixin@0.0.2/src/index.js-=@*/
+var keys = require(47),
+    isNullOrUndefined = require(20);
 
 
 module.exports = mixin;
@@ -4382,14 +4408,70 @@ function baseMixin(a, b) {
     }
 }
 
+},
+function(require, exports, module, undefined, global) {
+/*@=-@nathanfaucett/define_property@0.0.2/src/index.js-=@*/
+var isObject = require(18),
+    isFunction = require(17),
+    isPrimitive = require(22),
+    isNative = require(23),
+    has = require(46);
+
+
+var nativeDefineProperty = Object.defineProperty;
+
+
+module.exports = defineProperty;
+
+
+function defineProperty(object, name, descriptor) {
+    if (isPrimitive(descriptor) || isFunction(descriptor)) {
+        descriptor = {
+            value: descriptor
+        };
+    }
+    return nativeDefineProperty(object, name, descriptor);
+}
+
+defineProperty.hasGettersSetters = true;
+
+if (!isNative(nativeDefineProperty) || !(function() {
+        var object = {},
+            value = {};
+
+        try {
+            nativeDefineProperty(object, "key", {
+                value: value
+            });
+            if (has(object, "key") && object.key === value) {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (e) {}
+
+        return false;
+    }())) {
+
+    defineProperty.hasGettersSetters = false;
+
+    nativeDefineProperty = function defineProperty(object, name, descriptor) {
+        if (!isObject(object)) {
+            throw new TypeError("defineProperty(object, name, descriptor) called on non-object");
+        }
+        if (has(descriptor, "get") || has(descriptor, "set")) {
+            throw new TypeError("defineProperty(object, name, descriptor) this environment does not support getters or setters");
+        }
+        object[name] = descriptor.value;
+    };
+}
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/keys/src/index.js */
-
-var has = require(22),
-    isNative = require(21),
-    isNullOrUndefined = require(23),
+/*@=-@nathanfaucett/keys@0.0.1/src/index.js-=@*/
+var has = require(46),
+    isNative = require(23),
+    isNullOrUndefined = require(20),
     isObject = require(18);
 
 
@@ -4424,11 +4506,92 @@ if (!isNative(nativeKeys)) {
     };
 }
 
+},
+function(require, exports, module, undefined, global) {
+/*@=-@nathanfaucett/has@0.0.1/src/index.js-=@*/
+var isNative = require(23),
+    getPrototypeOf = require(28),
+    isNullOrUndefined = require(20);
+
+
+var nativeHasOwnProp = Object.prototype.hasOwnProperty,
+    baseHas;
+
+
+module.exports = has;
+
+
+function has(object, key) {
+    if (isNullOrUndefined(object)) {
+        return false;
+    } else {
+        return baseHas(object, key);
+    }
+}
+
+if (isNative(nativeHasOwnProp)) {
+    baseHas = function baseHas(object, key) {
+        if (object.hasOwnProperty) {
+            return object.hasOwnProperty(key);
+        } else {
+            return nativeHasOwnProp.call(object, key);
+        }
+    };
+} else {
+    baseHas = function baseHas(object, key) {
+        var proto = getPrototypeOf(object);
+
+        if (isNullOrUndefined(proto)) {
+            return key in object;
+        } else {
+            return (key in object) && (!(key in proto) || proto[key] !== object[key]);
+        }
+    };
+}
 
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/bit_count/src/index.js */
+/*@=-@nathanfaucett/keys@0.0.2/src/index.js-=@*/
+var has = require(24),
+    isNative = require(23),
+    isNullOrUndefined = require(20),
+    isObject = require(18);
 
+
+var nativeKeys = Object.keys;
+
+
+module.exports = keys;
+
+
+function keys(value) {
+    if (isNullOrUndefined(value)) {
+        return [];
+    } else {
+        return nativeKeys(isObject(value) ? value : Object(value));
+    }
+}
+
+if (!isNative(nativeKeys)) {
+    nativeKeys = function keys(value) {
+        var localHas = has,
+            out = [],
+            i = 0,
+            key;
+
+        for (key in value) {
+            if (localHas(value, key)) {
+                out[i++] = key;
+            }
+        }
+
+        return out;
+    };
+}
+
+},
+function(require, exports, module, undefined, global) {
+/*@=-@nathanfaucett/bit_count@0.0.2/src/index.js-=@*/
 module.exports = bitCount;
 
 
@@ -4441,11 +4604,9 @@ function bitCount(i) {
     return i & 0x3f;
 }
 
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/immutable-hash_map/src/consts.js */
-
+/*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/consts.js-=@*/
 var consts = exports;
 
 
@@ -4455,13 +4616,10 @@ consts.MASK = consts.SIZE - 1;
 
 consts.MAX_ARRAY_MAP_SIZE = consts.SIZE / 4;
 consts.MAX_BITMAP_INDEXED_SIZE = consts.SIZE / 2;
-
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/immutable-hash_map/src/bitpos.js */
-
-var mask = require(50);
+/*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/bitpos.js-=@*/
+var mask = require(54);
 
 
 module.exports = bitpos;
@@ -4470,13 +4628,10 @@ module.exports = bitpos;
 function bitpos(hashCode, shift) {
     return 1 << mask(hashCode, shift);
 }
-
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/array_copy/src/index.js */
-
-var clamp = require(19),
+/*@=-@nathanfaucett/array_copy@0.0.1/src/index.js-=@*/
+var clamp = require(21),
     isUndefined = require(7);
 
 
@@ -4505,13 +4660,11 @@ function baseArrayCopy(src, srcPos, dest, destPos, length) {
     return dest;
 }
 
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/immutable-hash_map/src/cloneAndSet.js */
-
+/*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/cloneAndSet.js-=@*/
 var isUndefined = require(7),
-    arrayCopy = require(47);
+    arrayCopy = require(51);
 
 
 var baseArrayCopy = arrayCopy.base;
@@ -4533,13 +4686,10 @@ function cloneAndSet(array, index0, value0, index1, value1) {
 
     return results;
 }
-
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/immutable-hash_map/src/removePair.js */
-
-var arrayCopy = require(47);
+/*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/removePair.js-=@*/
+var arrayCopy = require(51);
 
 
 var baseArrayCopy = arrayCopy.base;
@@ -4557,13 +4707,10 @@ function removePair(array, index) {
 
     return newArray;
 }
-
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/immutable-hash_map/src/mask.js */
-
-var consts = require(45);
+/*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/mask.js-=@*/
+var consts = require(49);
 
 
 var MASK = consts.MASK;
@@ -4575,15 +4722,12 @@ module.exports = mask;
 function mask(hashCode, shift) {
     return (hashCode >>> shift) & MASK;
 }
-
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/immutable-hash_map/src/nodeIterator.js */
-
+/*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/nodeIterator.js-=@*/
 var isNull = require(6),
     isUndefined = require(7),
-    Iterator = require(31);
+    Iterator = require(32);
 
 
 var IteratorValue = Iterator.Value;
@@ -4725,18 +4869,15 @@ function iteratorReverse(_this) {
 
     return new Iterator(hasNext, next);
 }
-
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/immutable-hash_map/src/ArrayNode.js */
-
+/*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/ArrayNode.js-=@*/
 var isNull = require(6),
-    isNullOrUndefined = require(23),
-    consts = require(45),
-    mask = require(50),
-    cloneAndSet = require(48),
-    Iterator = require(31),
+    isNullOrUndefined = require(20),
+    consts = require(49),
+    mask = require(54),
+    cloneAndSet = require(52),
+    Iterator = require(32),
     BitmapIndexedNode;
 
 
@@ -4750,7 +4891,7 @@ var SHIFT = consts.SHIFT,
 module.exports = ArrayNode;
 
 
-BitmapIndexedNode = require(32);
+BitmapIndexedNode = require(33);
 
 
 function ArrayNode(count, array) {
@@ -4940,22 +5081,19 @@ function pack(array, index) {
 
     return new BitmapIndexedNode(bitmap, newArray);
 }
-
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/immutable-hash_map/src/createNode.js */
-
-var hashCode = require(29),
-    Box = require(30),
+/*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/createNode.js-=@*/
+var hashCode = require(30),
+    Box = require(31),
     HashCollisionNode, BitmapIndexedNode;
 
 
 module.exports = createNode;
 
 
-HashCollisionNode = require(54);
-BitmapIndexedNode = require(32);
+HashCollisionNode = require(58);
+BitmapIndexedNode = require(33);
 
 
 function createNode(shift, key0, value0, keyHash1, key1, value1) {
@@ -4971,18 +5109,15 @@ function createNode(shift, key0, value0, keyHash1, key1, value1) {
             .set(shift, keyHash1, key1, value1, addedLeaf);
     }
 }
-
-
 },
 function(require, exports, module, undefined, global) {
-/* ../node_modules/@nathanfaucett/immutable-hash_map/src/HashCollisionNode.js */
-
+/*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/HashCollisionNode.js-=@*/
 var isEqual = require(15),
-    bitpos = require(46),
-    arrayCopy = require(47),
-    cloneAndSet = require(48),
-    removePair = require(49),
-    nodeIterator = require(51),
+    bitpos = require(50),
+    arrayCopy = require(51),
+    cloneAndSet = require(52),
+    removePair = require(53),
+    nodeIterator = require(55),
     BitmapIndexedNode;
 
 
@@ -4994,7 +5129,7 @@ var baseArrayCopy = arrayCopy.base,
 module.exports = HashCollisionNode;
 
 
-BitmapIndexedNode = require(32);
+BitmapIndexedNode = require(33);
 
 
 function HashCollisionNode(keyHash, count, array) {
@@ -5076,6 +5211,4 @@ function getIndex(array, key) {
 
     return -1;
 }
-
-
-}], null, void(0), (new Function("return this;"))()));
+}], {}, void(0), (new Function("return this;"))()));

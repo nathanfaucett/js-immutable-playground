@@ -20,18 +20,18 @@
   "license": "MIT",
   "readmeFilename": "README.md",
   "devDependencies": {
-    "@nathanfaucett/comn": "^0.0.1",
+    "@nathanfaucett/comn": "^0.0.13",
     "@nathanfaucett/comn_css": "^0.0.2",
     "grunt": "^1.0.1",
     "grunt-contrib-jshint": "^1.0.0",
     "grunt-jsbeautifier": "^0.2.13"
   },
   "dependencies": {
-    "@nathanfaucett/immutable-hash_map": "^0.0.1",
-    "@nathanfaucett/immutable-list": "^0.0.1",
-    "@nathanfaucett/immutable-record": "^0.0.1",
-    "@nathanfaucett/immutable-set": "^0.0.1",
-    "@nathanfaucett/immutable-vector": "^0.0.1",
+    "@nathanfaucett/immutable-hash_map": "^0.0.2",
+    "@nathanfaucett/immutable-list": "^0.0.2",
+    "@nathanfaucett/immutable-record": "^0.0.2",
+    "@nathanfaucett/immutable-set": "^0.0.2",
+    "@nathanfaucett/immutable-vector": "^0.0.2",
     "@nathanfaucett/native.less": "^0.0.2"
   }
 }
