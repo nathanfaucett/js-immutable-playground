@@ -76,7 +76,7 @@
         }
     };
 
-    global["crIl2q6B-y9Ok-47os-XdK6-nxkIgVNsOuEej"] = function(asyncDependencies) {
+    global["BeuPiJp3-4Aw6-4pNn-2YQ4-lajwC4PVAnvng"] = function(asyncDependencies) {
         var i = -1,
             il = asyncDependencies.length - 1,
             dependency, index;
@@ -115,7 +115,7 @@ global.ImmutableRecord = require(5);
 
 },
 function(require, exports, module, undefined, global) {
-/*@=-@nathanfaucett/immutable-list@0.0.2/src/index.js-=@*/
+/*@=-@nathanfaucett/immutable-list@0.0.3/src/index.js-=@*/
 var isNull = require(6),
     isUndefined = require(7),
     isArrayLike = require(8),
@@ -148,9 +148,9 @@ function List(value) {
         throw new Error("List() must be called with new");
     }
 
-    this.__size = 0;
-    this.__root = null;
-    this.__tail = null;
+    this._size = 0;
+    this._root = null;
+    this._tail = null;
 
     if (value !== INTERNAL_CREATE) {
         return List_createList(this, value, arguments);
@@ -172,8 +172,8 @@ function List_createList(_this, value, values) {
         } else if (isArrayLike(value)) {
             return List_fromArray(_this, value.toArray ? value.toArray() : value);
         } else {
-            _this.__root = _this.__tail = new Node(value, null);
-            _this.__size = 1;
+            _this._root = _this._tail = new Node(value, null);
+            _this._size = 1;
             return freeze(_this);
         }
     } else {
@@ -191,9 +191,9 @@ function List_fromArray(_this, array) {
         root = new Node(array[i], root);
     }
 
-    _this.__size = length;
-    _this.__root = root;
-    _this.__tail = tail;
+    _this._size = length;
+    _this._root = root;
+    _this._tail = tail;
 
     return freeze(_this);
 }
@@ -224,7 +224,7 @@ defineProperty(ListPrototype, IS_LIST, {
 });
 
 ListPrototype.size = function() {
-    return this.__size;
+    return this._size;
 };
 
 if (defineProperty.hasGettersSetters) {
@@ -236,21 +236,21 @@ if (defineProperty.hasGettersSetters) {
 ListPrototype.count = ListPrototype.size;
 
 ListPrototype.isEmpty = function() {
-    return this.__size === 0;
+    return this._size === 0;
 };
 
 function List_get(_this, index) {
     if (index === 0) {
-        return _this.__root;
-    } else if (index === _this.__size - 1) {
-        return _this.__tail;
+        return _this._root;
+    } else if (index === _this._size - 1) {
+        return _this._tail;
     } else {
-        return findNode(_this.__root, index);
+        return findNode(_this._root, index);
     }
 }
 
 ListPrototype.get = function(index, notSetValue) {
-    if (!isNumber(index) || index < 0 || index >= this.__size) {
+    if (!isNumber(index) || index < 0 || index >= this._size) {
         return notSetValue;
     } else {
         return List_get(this, index).value;
@@ -260,7 +260,7 @@ ListPrototype.get = function(index, notSetValue) {
 ListPrototype.nth = ListPrototype.get;
 
 ListPrototype.first = function(notSetValue) {
-    var node = this.__root;
+    var node = this._root;
 
     if (isNull(node)) {
         return notSetValue;
@@ -270,7 +270,7 @@ ListPrototype.first = function(notSetValue) {
 };
 
 ListPrototype.last = function(notSetValue) {
-    var node = this.__tail;
+    var node = this._tail;
 
     if (isNull(node)) {
         return notSetValue;
@@ -280,7 +280,7 @@ ListPrototype.last = function(notSetValue) {
 };
 
 ListPrototype.indexOf = function(value) {
-    var node = this.__root,
+    var node = this._root,
         i = 0;
 
     while (!isNull(node)) {
@@ -305,12 +305,12 @@ function copyFromTo(from, to, newNode) {
 function List_set(_this, node, index, value) {
     var list = new List(INTERNAL_CREATE),
         newNode = new Node(value, node.next),
-        root = copyFromTo(_this.__root, node, newNode),
-        tail = isNull(node.next) ? newNode : _this.__tail;
+        root = copyFromTo(_this._root, node, newNode),
+        tail = isNull(node.next) ? newNode : _this._tail;
 
-    list.__size = _this.__size;
-    list.__root = root;
-    list.__tail = tail;
+    list._size = _this._size;
+    list._root = root;
+    list._tail = tail;
 
     return freeze(list);
 }
@@ -318,7 +318,7 @@ function List_set(_this, node, index, value) {
 ListPrototype.set = function(index, value) {
     var node;
 
-    if (index < 0 || index >= this.__size) {
+    if (index < 0 || index >= this._size) {
         throw new Error("List set(index, value) index out of bounds");
     } else {
         node = List_get(this, index);
@@ -355,7 +355,7 @@ function insertCreateNodes(values, index, length, root) {
 function List_insert(_this, node, index, values) {
     var list = new List(INTERNAL_CREATE),
 
-        oldRoot = _this.__root,
+        oldRoot = _this._root,
         parent = oldRoot !== node ? findParent(oldRoot, node) : null,
 
         length = values.length,
@@ -365,15 +365,15 @@ function List_insert(_this, node, index, values) {
 
         root = isNull(parent) ? first : copyFromTo(oldRoot, node, first);
 
-    list.__size = _this.__size + length;
-    list.__root = root;
-    list.__tail = tail;
+    list._size = _this._size + length;
+    list._root = root;
+    list._tail = tail;
 
     return freeze(list);
 }
 
 ListPrototype.insert = function(index) {
-    if (index < 0 || index >= this.__size) {
+    if (index < 0 || index >= this._size) {
         throw new Error("List insert(index, value) index out of bounds");
     } else {
         return List_insert(this, List_get(this, index), index, fastSlice(arguments, 1));
@@ -392,18 +392,18 @@ function findNext(node, count) {
 function List_remove(_this, node, count) {
     var list = new List(INTERNAL_CREATE),
         next = findNext(node, count),
-        root = copyFromTo(_this.__root, node, next),
-        tail = isNull(next) ? _this.__tail : next;
+        root = copyFromTo(_this._root, node, next),
+        tail = isNull(next) ? _this._tail : next;
 
-    list.__size = _this.__size - count;
-    list.__root = root;
-    list.__tail = tail;
+    list._size = _this._size - count;
+    list._root = root;
+    list._tail = tail;
 
     return freeze(list);
 }
 
 ListPrototype.remove = function(index, count) {
-    var size = this.__size,
+    var size = this._size,
         node;
 
     count = count || 1;
@@ -413,7 +413,7 @@ ListPrototype.remove = function(index, count) {
     } else if (count > 0) {
         node = List_get(this, index);
 
-        if (node === this.__root && count === size) {
+        if (node === this._root && count === size) {
             return EMPTY_LIST;
         } else {
             return List_remove(this, node, count);
@@ -425,9 +425,9 @@ ListPrototype.remove = function(index, count) {
 
 function List_conj(_this, values) {
     var list = new List(INTERNAL_CREATE),
-        root = _this.__root,
-        tail = _this.__tail,
-        size = _this.__size,
+        root = _this._root,
+        tail = _this._tail,
+        size = _this._size,
         length = values.length,
         il = length - 1,
         i = 0;
@@ -442,9 +442,9 @@ function List_conj(_this, values) {
         root = new Node(values[i], root);
     }
 
-    list.__size = length + size;
-    list.__root = root;
-    list.__tail = tail;
+    list._size = length + size;
+    list._root = root;
+    list._tail = tail;
 
     return freeze(list);
 }
@@ -465,8 +465,8 @@ ListPrototype.unshift = ListPrototype.conj;
 
 function List_pop(_this) {
     var list = new List(INTERNAL_CREATE),
-        root = _this.__root,
-        tail = _this.__tail,
+        root = _this._root,
+        tail = _this._tail,
         newRoot = new Node(root.value, null),
         newTail = newRoot;
 
@@ -480,15 +480,15 @@ function List_pop(_this) {
         }
     }
 
-    list.__size = _this.__size - 1;
-    list.__root = newRoot;
-    list.__tail = newTail;
+    list._size = _this._size - 1;
+    list._root = newRoot;
+    list._tail = newTail;
 
     return freeze(list);
 }
 
 ListPrototype.pop = function() {
-    var size = this.__size;
+    var size = this._size;
 
     if (size === 0) {
         return this;
@@ -502,15 +502,15 @@ ListPrototype.pop = function() {
 function List_shift(_this) {
     var list = new List(INTERNAL_CREATE);
 
-    list.__size = _this.__size - 1;
-    list.__root = _this.__root.next;
-    list.__tail = _this.__tail;
+    list._size = _this._size - 1;
+    list._root = _this._root.next;
+    list._tail = _this._tail;
 
     return freeze(list);
 }
 
 ListPrototype.shift = function() {
-    var size = this.__size;
+    var size = this._size;
 
     if (size === 0) {
         return this;
@@ -544,16 +544,16 @@ function copyNodes(node, last) {
 function List_push(_this, values, length) {
     var list = new List(INTERNAL_CREATE),
 
-        oldRoot = _this.__root,
+        oldRoot = _this._root,
 
         tail = new Node(values[length - 1], null),
         first = length !== 1 ? pushCreateNodes(values, length - 1, tail) : tail,
 
         root = isNull(oldRoot) ? first : copyNodes(oldRoot, first);
 
-    list.__size = _this.__size + length;
-    list.__root = root;
-    list.__tail = tail;
+    list._size = _this._size + length;
+    list._root = root;
+    list._tail = tail;
 
     return freeze(list);
 }
@@ -573,8 +573,8 @@ ListPrototype.push = function() {
 };
 
 function List_concat(a, b) {
-    var asize = a.__size,
-        bsize = b.__size,
+    var asize = a._size,
+        bsize = b._size,
         root, tail, list;
 
     if (asize === 0) {
@@ -582,13 +582,13 @@ function List_concat(a, b) {
     } else if (bsize === 0) {
         return a;
     } else {
-        root = copyNodes(a.__root, b.__root);
-        tail = b.__tail;
+        root = copyNodes(a._root, b._root);
+        tail = b._tail;
 
         list = new List(INTERNAL_CREATE);
-        list.__size = asize + bsize;
-        list.__root = root;
-        list.__tail = tail;
+        list._size = asize + bsize;
+        list._root = root;
+        list._tail = tail;
 
         return freeze(list);
     }
@@ -618,7 +618,7 @@ ListPrototype.concat = function() {
 };
 
 function List_iterator(_this) {
-    var node = _this.__root;
+    var node = _this._root;
 
     return new Iterator(function next() {
         var value;
@@ -635,8 +635,8 @@ function List_iterator(_this) {
 }
 
 function List_iteratorReverse(_this) {
-    var root = _this.__root,
-        node = _this.__tail;
+    var root = _this._root,
+        node = _this._tail;
 
     return new Iterator(function next() {
         var value;
@@ -731,7 +731,7 @@ ListPrototype.each = ListPrototype.forEach;
 
 function List_forEachRight(_this, it, callback) {
     var next = it.next(),
-        index = _this.__size;
+        index = _this._size;
 
     while (next.done === false) {
         index -= 1;
@@ -752,7 +752,7 @@ ListPrototype.eachRight = ListPrototype.forEachRight;
 
 function List_map(_this, it, callback) {
     var next = it.next(),
-        results = new Array(_this.__size),
+        results = new Array(_this._size),
         index = 0;
 
     while (next.done === false) {
@@ -795,7 +795,7 @@ ListPrototype.reduce = function(callback, initialValue, thisArg) {
 function List_reduceRight(_this, it, callback, initialValue) {
     var next = it.next(),
         value = initialValue,
-        index = _this.__size;
+        index = _this._size;
 
     if (isUndefined(value)) {
         value = next.value;
@@ -836,8 +836,8 @@ ListPrototype.some = function(callback, thisArg) {
 };
 
 ListPrototype.toArray = function() {
-    var array = new Array(this.__size),
-        node = this.__root,
+    var array = new Array(this._size),
+        node = this._root,
         i = 0;
 
     while (!isNull(node)) {
@@ -848,9 +848,12 @@ ListPrototype.toArray = function() {
     return array;
 };
 
+ListPrototype.toJSON = ListPrototype.toArray;
+List.fromJSON = List.fromArray;
+
 ListPrototype.join = function(separator) {
     var result = "",
-        node = this.__root,
+        node = this._root,
         value;
 
     separator = separator || " ";
@@ -879,11 +882,11 @@ ListPrototype.inspect = ListPrototype.toString;
 List.equal = function(a, b) {
     if (a === b) {
         return true;
-    } else if (!a || !b || a.__size !== b.__size) {
+    } else if (!a || !b || a._size !== b._size) {
         return false;
     } else {
-        a = a.__root;
-        b = b.__root;
+        a = a._root;
+        b = b._root;
 
         while (!(isNull(a) || isNull(b))) {
             if (isEqual(a.value, b.value)) {
@@ -919,7 +922,7 @@ function findNode(root, index) {
 }
 },
 function(require, exports, module, undefined, global) {
-/*@=-@nathanfaucett/immutable-vector@0.0.2/src/index.js-=@*/
+/*@=-@nathanfaucett/immutable-vector@0.0.3/src/index.js-=@*/
 var freeze = require(14),
     Iterator = require(10),
     isNull = require(6),
@@ -935,7 +938,7 @@ var freeze = require(14),
 var INTERNAL_CREATE = {},
 
     ITERATOR_SYMBOL = typeof(Symbol) === "function" ? Symbol.iterator : false,
-    IS_VECTOR = "__ImmutableVector__",
+    IS_VECTOR = "_ImmutableVector_",
 
     SHIFT = 5,
     SIZE = 1 << SHIFT,
@@ -957,10 +960,10 @@ function Vector(value) {
         throw new Error("Vector() must be called with new");
     }
 
-    this.__root = EMPTY_ARRAY;
-    this.__tail = EMPTY_ARRAY;
-    this.__size = 0;
-    this.__shift = SHIFT;
+    this._root = EMPTY_ARRAY;
+    this._tail = EMPTY_ARRAY;
+    this._size = 0;
+    this._shift = SHIFT;
 
     if (value !== INTERNAL_CREATE) {
         return Vector_createVector(this, value, arguments);
@@ -978,8 +981,8 @@ function Vector_createVector(_this, value, args) {
     if (length > SIZE) {
         return Vector_conjArray(_this, args);
     } else if (length > 1) {
-        _this.__tail = cloneArray(args, length);
-        _this.__size = length;
+        _this._tail = cloneArray(args, length);
+        _this._size = length;
         return freeze(_this);
     } else if (length === 1) {
         if (isVector(value)) {
@@ -987,9 +990,9 @@ function Vector_createVector(_this, value, args) {
         } else if (isArrayLike(value)) {
             return Vector_conjArray(_this, value.toArray ? value.toArray() : value);
         } else {
-            tail = _this.__tail = createArray();
+            tail = _this._tail = createArray();
             tail[0] = value;
-            _this.__size = 1;
+            _this._size = 1;
             return freeze(_this);
         }
     } else {
@@ -1023,7 +1026,7 @@ defineProperty(VectorPrototype, IS_VECTOR, {
 });
 
 VectorPrototype.size = function() {
-    return this.__size;
+    return this._size;
 };
 
 if (defineProperty.hasGettersSetters) {
@@ -1035,7 +1038,7 @@ if (defineProperty.hasGettersSetters) {
 VectorPrototype.count = VectorPrototype.size;
 
 VectorPrototype.isEmpty = function() {
-    return this.__size === 0;
+    return this._size === 0;
 };
 
 function tailOff(size) {
@@ -1049,11 +1052,11 @@ function tailOff(size) {
 function Vector_getArray(_this, index) {
     var array, level;
 
-    if (index >= tailOff(_this.__size)) {
-        return _this.__tail;
+    if (index >= tailOff(_this._size)) {
+        return _this._tail;
     } else {
-        array = _this.__root;
-        level = _this.__shift;
+        array = _this._root;
+        level = _this._shift;
 
         while (level > 0) {
             array = array[(index >>> level) & MASK];
@@ -1069,7 +1072,7 @@ function Vector_get(_this, index) {
 }
 
 VectorPrototype.get = function(index, notSetValue) {
-    if (!isNumber(index) || index < 0 || index >= this.__size) {
+    if (!isNumber(index) || index < 0 || index >= this._size) {
         return notSetValue;
     } else {
         return Vector_get(this, index);
@@ -1079,7 +1082,7 @@ VectorPrototype.get = function(index, notSetValue) {
 VectorPrototype.nth = VectorPrototype.get;
 
 VectorPrototype.first = function(notSetValue) {
-    var size = this.__size;
+    var size = this._size;
 
     if (size === 0) {
         return notSetValue;
@@ -1089,17 +1092,17 @@ VectorPrototype.first = function(notSetValue) {
 };
 
 VectorPrototype.last = function(notSetValue) {
-    var size = this.__size;
+    var size = this._size;
 
     if (size === 0) {
         return notSetValue;
     } else {
-        return this.__tail[(size - 1) & MASK];
+        return this._tail[(size - 1) & MASK];
     }
 };
 
 VectorPrototype.indexOf = function(value) {
-    var size = this.__size,
+    var size = this._size,
         i = -1,
         il = size - 1;
 
@@ -1127,11 +1130,11 @@ function newPathSet(array, size, index, value, level) {
 }
 
 function Vector_set(_this, index, value) {
-    var size = _this.__size,
+    var size = _this._size,
         tail, maskedIndex, vector;
 
     if (index >= tailOff(size)) {
-        tail = _this.__tail;
+        tail = _this._tail;
         maskedIndex = index & MASK;
 
         if (isEqual(tail[maskedIndex], value)) {
@@ -1140,20 +1143,20 @@ function Vector_set(_this, index, value) {
             tail = cloneArray(tail, (size + 1) & MASK);
             tail[maskedIndex] = value;
             vector = Vector_clone(_this);
-            vector.__tail = tail;
+            vector._tail = tail;
             return freeze(vector);
         }
     } else if (isEqual(Vector_get(_this, index), value)) {
         return _this;
     } else {
         vector = Vector_clone(_this);
-        vector.__root = newPathSet(_this.__root, size, index, value, _this.__shift);
+        vector._root = newPathSet(_this._root, size, index, value, _this._shift);
         return freeze(vector);
     }
 }
 
 VectorPrototype.set = function(index, value) {
-    if (index < 0 || index >= this.__size) {
+    if (index < 0 || index >= this._size) {
         throw new Error("Vector set(index, value) index out of bounds");
     } else {
         return Vector_set(this, index, value);
@@ -1162,7 +1165,7 @@ VectorPrototype.set = function(index, value) {
 
 
 function Vector_insert(_this, index, values) {
-    var size = _this.__size,
+    var size = _this._size,
         length = values.length,
         newSize = size + length,
         results = new Array(newSize),
@@ -1192,7 +1195,7 @@ function Vector_insert(_this, index, values) {
 }
 
 VectorPrototype.insert = function(index) {
-    if (index < 0 || index >= this.__size) {
+    if (index < 0 || index >= this._size) {
         throw new Error("Vector set(index, value) index out of bounds");
     } else {
         return Vector_insert(this, index, fastSlice(arguments, 1));
@@ -1200,7 +1203,7 @@ VectorPrototype.insert = function(index) {
 };
 
 function Vector_remove(_this, index, count) {
-    var size = _this.__size,
+    var size = _this._size,
         results = new Array(size - count),
         j = 0,
         i, il;
@@ -1221,7 +1224,7 @@ function Vector_remove(_this, index, count) {
 }
 
 VectorPrototype.remove = function(index, count) {
-    var size = this.__size;
+    var size = this._size;
 
     count = count || 1;
 
@@ -1269,15 +1272,15 @@ function pushTail(parentArray, tailArray, size, level) {
 }
 
 function Vector_conj(_this, value) {
-    var root = _this.__root,
-        size = _this.__size,
-        shift = _this.__shift,
+    var root = _this._root,
+        size = _this._size,
+        shift = _this._shift,
         tailArray, newShift, newRoot, newTail;
 
     if (size - tailOff(size) < SIZE) {
-        _this.__tail[size & MASK] = value;
+        _this._tail[size & MASK] = value;
     } else {
-        tailArray = _this.__tail;
+        tailArray = _this._tail;
         newShift = shift;
 
         if ((size >>> SHIFT) > (1 << shift)) {
@@ -1291,27 +1294,27 @@ function Vector_conj(_this, value) {
 
         newTail = createArray();
         newTail[0] = value;
-        _this.__tail = newTail;
+        _this._tail = newTail;
 
-        _this.__root = newRoot;
-        _this.__shift = newShift;
+        _this._root = newRoot;
+        _this._shift = newShift;
     }
 
-    _this.__size = size + 1;
+    _this._size = size + 1;
 
     return _this;
 }
 
 function Vector_conjArray(_this, values) {
-    var tail = _this.__tail,
-        size = _this.__size,
+    var tail = _this._tail,
+        size = _this._size,
         i = -1,
         il = values.length - 1;
 
     if (tail === EMPTY_ARRAY) {
-        _this.__tail = createArray();
+        _this._tail = createArray();
     } else if (size - tailOff(size) < SIZE) {
-        _this.__tail = cloneArray(tail, (size + 1) & MASK);
+        _this._tail = cloneArray(tail, (size + 1) & MASK);
     }
 
     while (i++ < il) {
@@ -1323,10 +1326,10 @@ function Vector_conjArray(_this, values) {
 
 function Vector_clone(_this) {
     var vector = new Vector(INTERNAL_CREATE);
-    vector.__root = _this.__root;
-    vector.__tail = _this.__tail;
-    vector.__size = _this.__size;
-    vector.__shift = _this.__shift;
+    vector._root = _this._root;
+    vector._tail = _this._tail;
+    vector._size = _this._size;
+    vector._shift = _this._shift;
     return vector;
 }
 
@@ -1345,8 +1348,8 @@ VectorPrototype.pushArray = function(array) {
 VectorPrototype.push = VectorPrototype.conj;
 
 function Vector_concat(a, b) {
-    var asize = a.__size,
-        bsize = b.__size;
+    var asize = a._size,
+        bsize = b._size;
 
     if (asize === 0) {
         return b;
@@ -1381,7 +1384,7 @@ VectorPrototype.concat = function() {
 };
 
 function Vector_unshift(_this, values) {
-    var size = _this.__size,
+    var size = _this._size,
         length = values.length,
         newSize = size + length,
         results = new Array(newSize),
@@ -1439,18 +1442,18 @@ function popTail(array, size, level) {
 
 function Vector_pop(_this) {
     var vector = new Vector(INTERNAL_CREATE),
-        size = _this.__size,
+        size = _this._size,
         shift, newTail, newRoot, newShift;
 
     if (size - tailOff(size) > 1) {
-        newTail = _this.__tail.slice(0, (size - 1) & MASK);
-        newRoot = _this.__root;
-        newShift = _this.__shift;
+        newTail = _this._tail.slice(0, (size - 1) & MASK);
+        newRoot = _this._root;
+        newShift = _this._shift;
     } else {
         newTail = Vector_getArray(_this, size - 2);
 
-        shift = _this.__shift;
-        newRoot = popTail(_this.__root, size, shift);
+        shift = _this._shift;
+        newRoot = popTail(_this._root, size, shift);
         newShift = shift;
 
         if (isNull(newRoot)) {
@@ -1461,16 +1464,16 @@ function Vector_pop(_this) {
         }
     }
 
-    vector.__root = newRoot;
-    vector.__tail = newTail;
-    vector.__size = size - 1;
-    vector.__shift = newShift;
+    vector._root = newRoot;
+    vector._tail = newTail;
+    vector._size = size - 1;
+    vector._shift = newShift;
 
     return freeze(vector);
 }
 
 VectorPrototype.pop = function() {
-    var size = this.__size;
+    var size = this._size;
 
     if (size === 0) {
         return this;
@@ -1482,7 +1485,7 @@ VectorPrototype.pop = function() {
 };
 
 function Vector_shift(_this) {
-    var size = _this.__size,
+    var size = _this._size,
         newSize = size - 1,
         results = new Array(newSize),
         j = 0,
@@ -1497,7 +1500,7 @@ function Vector_shift(_this) {
 }
 
 VectorPrototype.shift = function() {
-    var size = this.__size;
+    var size = this._size;
 
     if (size === 0) {
         return this;
@@ -1510,7 +1513,7 @@ VectorPrototype.shift = function() {
 
 function Vector_iterator(_this) {
     var index = 0,
-        size = _this.__size;
+        size = _this._size;
 
     return new Iterator(function next() {
         if (index >= size) {
@@ -1522,7 +1525,7 @@ function Vector_iterator(_this) {
 }
 
 function Vector_iteratorReverse(_this) {
-    var index = _this.__size - 1;
+    var index = _this._size - 1;
 
     return new Iterator(function next() {
         if (index < 0) {
@@ -1612,7 +1615,7 @@ VectorPrototype.each = VectorPrototype.forEach;
 
 function Vector_forEachRight(_this, it, callback) {
     var next = it.next(),
-        index = _this.__size;
+        index = _this._size;
 
     while (next.done === false) {
         index -= 1;
@@ -1633,7 +1636,7 @@ VectorPrototype.eachRight = VectorPrototype.forEachRight;
 
 function Vector_map(_this, it, callback) {
     var next = it.next(),
-        results = new Array(_this.__size),
+        results = new Array(_this._size),
         index = 0;
 
     while (next.done === false) {
@@ -1676,7 +1679,7 @@ VectorPrototype.reduce = function(callback, initialValue, thisArg) {
 function Vector_reduceRight(_this, it, callback, initialValue) {
     var next = it.next(),
         value = initialValue,
-        index = _this.__size;
+        index = _this._size;
 
     if (isUndefined(value)) {
         value = next.value;
@@ -1717,7 +1720,7 @@ VectorPrototype.some = function(callback, thisArg) {
 };
 
 VectorPrototype.toArray = function() {
-    var size = this.__size,
+    var size = this._size,
         array = new Array(size),
         i = -1,
         il = size - 1;
@@ -1730,7 +1733,7 @@ VectorPrototype.toArray = function() {
 };
 
 VectorPrototype.join = function(separator) {
-    var size = this.__size,
+    var size = this._size,
         result = "",
         i = -1,
         il = size - 1;
@@ -1754,15 +1757,18 @@ VectorPrototype.toString = function() {
 
 VectorPrototype.inspect = VectorPrototype.toString;
 
+VectorPrototype.toJSON = VectorPrototype.toArray;
+Vector.fromJSON = Vector.fromArray;
+
 Vector.equal = function(a, b) {
     var i;
 
     if (a === b) {
         return true;
-    } else if (!a || !b || a.__size !== b.__size) {
+    } else if (!a || !b || a._size !== b._size) {
         return false;
     } else {
-        i = a.__size;
+        i = a._size;
 
         while (i--) {
             if (!isEqual(Vector_get(a, i), Vector_get(b, i))) {
@@ -1798,7 +1804,7 @@ function cloneArray(a, length) {
 }
 },
 function(require, exports, module, undefined, global) {
-/*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/index.js-=@*/
+/*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/index.js-=@*/
 var has = require(24),
     freeze = require(14),
     isNull = require(6),
@@ -1835,8 +1841,8 @@ function HashMap(value) {
         throw new Error("HashMap() must be called with new");
     }
 
-    this.__size = 0;
-    this.__root = null;
+    this._size = 0;
+    this._root = null;
 
     if (value !== INTERNAL_CREATE) {
         return HashMap_createHashMap(this, value, arguments);
@@ -1888,8 +1894,8 @@ function HashMap_fromObject(_this, object) {
     }
 
     if (size !== 0) {
-        _this.__size = size;
-        _this.__root = newRoot;
+        _this._size = size;
+        _this._root = newRoot;
         return freeze(_this);
     } else {
         return EMPTY_MAP;
@@ -1920,8 +1926,8 @@ function HashMap_fromArray(_this, array) {
     }
 
     if (size !== 0) {
-        _this.__root = root;
-        _this.__size = size;
+        _this._root = root;
+        _this._size = size;
         return freeze(_this);
     } else {
         return EMPTY_MAP;
@@ -1934,6 +1940,10 @@ HashMap.fromArray = function(array) {
     } else {
         return EMPTY_MAP;
     }
+};
+
+HashMap.fromObject = function(object) {
+    return HashMap_fromObject(new HashMap(INTERNAL_CREATE), object);
 };
 
 HashMap.of = function() {
@@ -1952,7 +1962,7 @@ defineProperty(HashMapPrototype, IS_MAP, {
 });
 
 HashMapPrototype.size = function() {
-    return this.__size;
+    return this._size;
 };
 
 if (defineProperty.hasGettersSetters) {
@@ -1964,22 +1974,22 @@ if (defineProperty.hasGettersSetters) {
 HashMapPrototype.count = HashMapPrototype.size;
 
 HashMapPrototype.isEmpty = function() {
-    return this.__size === 0;
+    return this._size === 0;
 };
 
 HashMapPrototype.has = function(key) {
-    var root = this.__root;
+    var root = this._root;
     return isNull(root) ? false : root.get(0, hashCode(key), key, NOT_SET) !== NOT_SET;
 };
 
 HashMapPrototype.get = function(key, notSetValue) {
-    var root = this.__root;
+    var root = this._root;
     return isNull(root) ? notSetValue : root.get(0, hashCode(key), key);
 };
 
 HashMapPrototype.set = function(key, value) {
-    var root = this.__root,
-        size = this.__size,
+    var root = this._root,
+        size = this._size,
         addedLeaf = new Box(null),
         newRoot = (isNull(root) ? BitmapIndexedNode.EMPTY : root).set(0, hashCode(key), key, value, addedLeaf),
         map;
@@ -1988,15 +1998,15 @@ HashMapPrototype.set = function(key, value) {
         return this;
     } else {
         map = new HashMap(INTERNAL_CREATE);
-        map.__size = isNull(addedLeaf.value) ? size : size + 1;
-        map.__root = newRoot;
+        map._size = isNull(addedLeaf.value) ? size : size + 1;
+        map._root = newRoot;
         return freeze(map);
     }
 };
 
 HashMapPrototype.remove = function(key) {
-    var root = this.__root,
-        size = this.__size,
+    var root = this._root,
+        size = this._size,
         newRoot;
 
     if (isNull(root)) {
@@ -2010,8 +2020,8 @@ HashMapPrototype.remove = function(key) {
             return this;
         } else {
             map = new HashMap(INTERNAL_CREATE);
-            map.__size = size - 1;
-            map.__root = newRoot;
+            map._size = size - 1;
+            map._root = newRoot;
             return freeze(map);
         }
     }
@@ -2026,7 +2036,7 @@ function next() {
 }
 
 HashMapPrototype.iterator = function(reverse) {
-    var root = this.__root;
+    var root = this._root;
 
     if (isNull(root)) {
         return new Iterator(hasNext, next);
@@ -2128,7 +2138,7 @@ HashMapPrototype.eachRight = HashMapPrototype.forEachRight;
 
 function HashMap_map(_this, it, callback) {
     var next = it.next(),
-        results = new Array(_this.__size * 2),
+        results = new Array(_this._size * 2),
         index = 0,
         nextValue, key;
 
@@ -2220,7 +2230,7 @@ HashMapPrototype.some = function(callback, thisArg) {
 HashMapPrototype.toArray = function() {
     var it = this.iterator(),
         next = it.next(),
-        results = new Array(this.__size * 2),
+        results = new Array(this._size * 2),
         index = 0;
 
     while (next.done === false) {
@@ -2245,6 +2255,9 @@ HashMapPrototype.toObject = function() {
 
     return results;
 };
+
+HashMap.fromJSON = HashMap.fromObject;
+HashMapPrototype.toJSON = HashMapPrototype.toObject;
 
 HashMapPrototype.join = function(separator, keyValueSeparator) {
     var it = this.iterator(),
@@ -2298,7 +2311,7 @@ function HashMap_equal(ait, bit) {
 HashMap.equal = function(a, b) {
     if (a === b) {
         return true;
-    } else if (!a || !b || a.__size !== b.__size) {
+    } else if (!a || !b || a._size !== b._size) {
         return false;
     } else {
         return HashMap_equal(a.iterator(), b.iterator());
@@ -2310,10 +2323,10 @@ HashMapPrototype.equals = function(b) {
 };
 },
 function(require, exports, module, undefined, global) {
-/*@=-@nathanfaucett/immutable-set@0.0.2/src/index.js-=@*/
+/*@=-@nathanfaucett/immutable-set@0.0.3/src/index.js-=@*/
 var freeze = require(14),
     Iterator = require(10),
-    ImmutableHashMap = require(3),
+    ImmutableHashMap = require(59),
     isUndefined = require(7),
     isArrayLike = require(8),
     defineProperty = require(13);
@@ -2322,7 +2335,7 @@ var freeze = require(14),
 var INTERNAL_CREATE = {},
 
     ITERATOR_SYMBOL = typeof(Symbol) === "function" ? Symbol.iterator : false,
-    IS_SET = "__ImmutableSet__",
+    IS_SET = "_ImmutableSet_",
 
     EMPTY_SET = freeze(new Set(INTERNAL_CREATE)),
 
@@ -2339,7 +2352,7 @@ function Set(value) {
         throw new Error("Set() must be called with new");
     }
 
-    this.__hashMap = ImmutableHashMap.EMPTY;
+    this._hashMap = ImmutableHashMap.EMPTY;
 
     if (value !== INTERNAL_CREATE) {
         return Set_createSet(this, value, arguments);
@@ -2369,7 +2382,7 @@ function Set_createSet(_this, value, values) {
 function Set_fromArray(_this, array) {
     var i = -1,
         il = array.length - 1,
-        hashMap = _this.__hashMap,
+        hashMap = _this._hashMap,
         value;
 
     while (i++ < il) {
@@ -2378,7 +2391,7 @@ function Set_fromArray(_this, array) {
     }
 
     if (hashMap.size() !== 0) {
-        _this.__hashMap = hashMap;
+        _this._hashMap = hashMap;
         return freeze(_this);
     } else {
         return EMPTY_SET;
@@ -2409,7 +2422,7 @@ defineProperty(SetPrototype, IS_SET, {
 });
 
 SetPrototype.size = function() {
-    return this.__hashMap.size();
+    return this._hashMap.size();
 };
 
 if (defineProperty.hasGettersSetters) {
@@ -2421,15 +2434,15 @@ if (defineProperty.hasGettersSetters) {
 SetPrototype.count = SetPrototype.size;
 
 SetPrototype.isEmpty = function() {
-    return this.__hashMap.isEmpty();
+    return this._hashMap.isEmpty();
 };
 
 SetPrototype.has = function(value) {
-    return this.__hashMap.has(value);
+    return this._hashMap.has(value);
 };
 
 SetPrototype.get = function(value, notSetValue) {
-    if (this.__hashMap.has(value)) {
+    if (this._hashMap.has(value)) {
         return value;
     } else {
         return notSetValue;
@@ -2437,7 +2450,7 @@ SetPrototype.get = function(value, notSetValue) {
 };
 
 function Set_set(_this, values) {
-    var hashMap = _this.__hashMap,
+    var hashMap = _this._hashMap,
         i = -1,
         il = values.length - 1,
         added = 0,
@@ -2458,7 +2471,7 @@ function Set_set(_this, values) {
 
     if (added !== 0) {
         set = new Set(INTERNAL_CREATE);
-        set.__hashMap = hashMap;
+        set._hashMap = hashMap;
         return freeze(set);
     } else {
         return _this;
@@ -2476,7 +2489,7 @@ SetPrototype.set = function() {
 SetPrototype.conj = SetPrototype.cons = SetPrototype.add = SetPrototype.set;
 
 function Set_remove(_this, values) {
-    var hashMap = _this.__hashMap,
+    var hashMap = _this._hashMap,
         i = -1,
         il = values.length - 1,
         removed = 0,
@@ -2497,7 +2510,7 @@ function Set_remove(_this, values) {
 
     if (removed !== 0) {
         set = new Set(INTERNAL_CREATE);
-        set.__hashMap = hashMap;
+        set._hashMap = hashMap;
         return freeze(set);
     } else {
         return _this;
@@ -2570,10 +2583,13 @@ SetPrototype.toString = function() {
     return "#{" + this.join() + "}";
 };
 
+SetPrototype.toJSON = SetPrototype.toArray;
+Set.fromJSON = Set.fromArray;
+
 SetPrototype.inspect = SetPrototype.toString;
 
 SetPrototype.iterator = function(reverse) {
-    var hashMapIterator = this.__hashMap.iterator(reverse);
+    var hashMapIterator = this._hashMap.iterator(reverse);
 
     return new Iterator(function next() {
         var iteratorValue = hashMapIterator.next();
@@ -2746,7 +2762,7 @@ SetPrototype.some = function(callback, thisArg) {
 };
 
 Set.equal = function(a, b) {
-    return ImmutableHashMap.equal(a.__hashMap, b.__hashMap);
+    return ImmutableHashMap.equal(a._hashMap, b._hashMap);
 };
 
 SetPrototype.equals = function(other) {
@@ -2754,7 +2770,7 @@ SetPrototype.equals = function(other) {
 };
 },
 function(require, exports, module, undefined, global) {
-/*@=-@nathanfaucett/immutable-record@0.0.2/src/index.js-=@*/
+/*@=-@nathanfaucett/immutable-record@0.0.3/src/index.js-=@*/
 var ImmutableHashMap = require(3),
     defineProperty = require(13),
     inherits = require(40),
@@ -2799,9 +2815,9 @@ function Record(defaultProps, name) {
             return this;
         } else {
             if (value) {
-                this.__map = ImmutableHashMap.of(Record_createProps(defaultProps, value, defaultKeys));
+                this._map = ImmutableHashMap.of(Record_createProps(defaultProps, value, defaultKeys));
             } else {
-                this.__map = EMPTY_MAP;
+                this._map = EMPTY_MAP;
             }
             return freeze(this);
         }
@@ -2813,9 +2829,14 @@ function Record(defaultProps, name) {
 
     RecordType.EMPTY = freeze(new RecordType());
 
-    RecordType.name = RecordType.__name = RecordTypePrototype.name = defaultName;
-    RecordTypePrototype.__keys = defaultKeys;
-    RecordTypePrototype.__defaultProps = defaultProps;
+    RecordType.name = RecordType._name = RecordTypePrototype.name = defaultName;
+    RecordTypePrototype._keys = defaultKeys;
+    RecordTypePrototype._defaultProps = defaultProps;
+
+    RecordType.fromObject = function(object) {
+        return new RecordType(object);
+    };
+    RecordType.fromJSON = RecordType.fromObject;
 
     function isRecordType(value) {
         return !!(value && value[IS_RECORD_TYPE]);
@@ -2853,20 +2874,20 @@ defineProperty(RecordPrototype, IS_RECORD, {
 });
 
 RecordPrototype.has = function(key) {
-    return has(this.__defaultProps, key);
+    return has(this._defaultProps, key);
 };
 
 RecordPrototype.get = function(key, notSetValue) {
-    return this.__map.get(key, notSetValue);
+    return this._map.get(key, notSetValue);
 };
 
 RecordPrototype.set = function(key, value) {
     var map, newMap;
 
-    if (!has(this.__defaultProps, key)) {
+    if (!has(this._defaultProps, key)) {
         throw new Error("Cannot set unknown key \"" + key + "\" on " + this.name);
     } else {
-        map = this.__map;
+        map = this._map;
         newMap = map.set(key, value);
 
         if (newMap !== map) {
@@ -2880,10 +2901,10 @@ RecordPrototype.set = function(key, value) {
 RecordPrototype.remove = function(key) {
     var map, newMap;
 
-    if (!has(this.__defaultProps, key)) {
+    if (!has(this._defaultProps, key)) {
         throw new Error("Cannot remove unknown key \"" + key + "\" from " + this.name);
     } else {
-        map = this.__map;
+        map = this._map;
         newMap = map.remove(key);
 
         if (newMap !== map) {
@@ -2895,7 +2916,7 @@ RecordPrototype.remove = function(key) {
 };
 
 RecordPrototype.join = function(separator, keyValueSeparator) {
-    return this.__map.join(separator, keyValueSeparator);
+    return this._map.join(separator, keyValueSeparator);
 };
 
 RecordPrototype.toString = function() {
@@ -2903,7 +2924,7 @@ RecordPrototype.toString = function() {
 };
 
 Record.equal = function(a, b) {
-    return ImmutableHashMap.equal(a.__map, b.__map);
+    return ImmutableHashMap.equal(a._map, b._map);
 };
 
 RecordPrototype.equal = function(other) {
@@ -2920,8 +2941,8 @@ function RecordIterator(next) {
 }
 
 function Record_iterator(_this) {
-    var map = _this.__map;
-    keys = _this.__keys,
+    var map = _this._map;
+    keys = _this._keys,
         index = 0,
         length = keys.length;
 
@@ -2939,8 +2960,8 @@ function Record_iterator(_this) {
 }
 
 function Record_iteratorReverse(_this) {
-    var map = _this.__map;
-    keys = _this.__keys,
+    var map = _this._map;
+    keys = _this._keys,
         index = keys.length;
 
     return new RecordIterator(function next() {
@@ -2969,48 +2990,50 @@ if (ITERATOR_SYMBOL) {
 }
 
 RecordPrototype.every = function(callback, thisArg) {
-    return this.__map.every(callback, thisArg);
+    return this._map.every(callback, thisArg);
 };
 
 RecordPrototype.filter = function(callback, thisArg) {
-    return Record_createRecord(this, this.__map.filter(callback, thisArg));
+    return Record_createRecord(this, this._map.filter(callback, thisArg));
 };
 
 RecordPrototype.forEach = function(callback, thisArg) {
-    this.__map.forEach(callback, thisArg);
+    this._map.forEach(callback, thisArg);
     return this;
 };
 RecordPrototype.each = RecordPrototype.forEach;
 
 RecordPrototype.forEachRight = function(callback, thisArg) {
-    this.__map.forEachRight(callback, thisArg);
+    this._map.forEachRight(callback, thisArg);
     return this;
 };
 RecordPrototype.eachRight = RecordPrototype.forEachRight;
 
 RecordPrototype.map = function(callback, thisArg) {
-    return Record_createRecord(this, this.__map.map(callback, thisArg));
+    return Record_createRecord(this, this._map.map(callback, thisArg));
 };
 RecordPrototype.reduce = function(callback, initialValue, thisArg) {
-    return this.__map.reduce(callback, initialValue, thisArg);
+    return this._map.reduce(callback, initialValue, thisArg);
 };
 RecordPrototype.reduceRight = function(callback, initialValue, thisArg) {
-    return this.__map.reduceRight(callback, initialValue, thisArg);
+    return this._map.reduceRight(callback, initialValue, thisArg);
 };
 RecordPrototype.some = function(callback, thisArg) {
-    return this.__map.some(callback, thisArg);
+    return this._map.some(callback, thisArg);
 };
 
 RecordPrototype.toArray = function() {
-    return this.__map.toArray();
+    return this._map.toArray();
 };
 RecordPrototype.toObject = function() {
-    return this.__map.toObject();
+    return this._map.toObject();
 };
+
+RecordPrototype.toJSON = RecordPrototype.toObject;
 
 function Record_createRecord(_this, map) {
     var record = new _this.constructor(INTERNAL_CREATE);
-    record.__map = map;
+    record._map = map;
     return freeze(record);
 }
 
@@ -3783,7 +3806,7 @@ function setHashCode(value) {
 
 },
 function(require, exports, module, undefined, global) {
-/*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/Box.js-=@*/
+/*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/Box.js-=@*/
 module.exports = Box;
 
 
@@ -3792,7 +3815,7 @@ function Box(value) {
 }
 },
 function(require, exports, module, undefined, global) {
-/*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/Iterator.js-=@*/
+/*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/Iterator.js-=@*/
 var inherits = require(40),
     BaseIterator = require(10);
 
@@ -3807,7 +3830,7 @@ function Iterator(hasNext, next) {
 inherits(Iterator, BaseIterator);
 },
 function(require, exports, module, undefined, global) {
-/*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/BitmapIndexedNode.js-=@*/
+/*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/BitmapIndexedNode.js-=@*/
 var isNull = require(6),
     isEqual = require(15),
     hashCode = require(30),
@@ -4606,7 +4629,7 @@ function bitCount(i) {
 
 },
 function(require, exports, module, undefined, global) {
-/*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/consts.js-=@*/
+/*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/consts.js-=@*/
 var consts = exports;
 
 
@@ -4618,7 +4641,7 @@ consts.MAX_ARRAY_MAP_SIZE = consts.SIZE / 4;
 consts.MAX_BITMAP_INDEXED_SIZE = consts.SIZE / 2;
 },
 function(require, exports, module, undefined, global) {
-/*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/bitpos.js-=@*/
+/*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/bitpos.js-=@*/
 var mask = require(54);
 
 
@@ -4662,7 +4685,7 @@ function baseArrayCopy(src, srcPos, dest, destPos, length) {
 
 },
 function(require, exports, module, undefined, global) {
-/*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/cloneAndSet.js-=@*/
+/*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/cloneAndSet.js-=@*/
 var isUndefined = require(7),
     arrayCopy = require(51);
 
@@ -4688,7 +4711,7 @@ function cloneAndSet(array, index0, value0, index1, value1) {
 }
 },
 function(require, exports, module, undefined, global) {
-/*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/removePair.js-=@*/
+/*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/removePair.js-=@*/
 var arrayCopy = require(51);
 
 
@@ -4709,7 +4732,7 @@ function removePair(array, index) {
 }
 },
 function(require, exports, module, undefined, global) {
-/*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/mask.js-=@*/
+/*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/mask.js-=@*/
 var consts = require(49);
 
 
@@ -4724,7 +4747,7 @@ function mask(hashCode, shift) {
 }
 },
 function(require, exports, module, undefined, global) {
-/*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/nodeIterator.js-=@*/
+/*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/nodeIterator.js-=@*/
 var isNull = require(6),
     isUndefined = require(7),
     Iterator = require(32);
@@ -4871,7 +4894,7 @@ function iteratorReverse(_this) {
 }
 },
 function(require, exports, module, undefined, global) {
-/*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/ArrayNode.js-=@*/
+/*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/ArrayNode.js-=@*/
 var isNull = require(6),
     isNullOrUndefined = require(20),
     consts = require(49),
@@ -5083,7 +5106,7 @@ function pack(array, index) {
 }
 },
 function(require, exports, module, undefined, global) {
-/*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/createNode.js-=@*/
+/*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/createNode.js-=@*/
 var hashCode = require(30),
     Box = require(31),
     HashCollisionNode, BitmapIndexedNode;
@@ -5111,7 +5134,7 @@ function createNode(shift, key0, value0, keyHash1, key1, value1) {
 }
 },
 function(require, exports, module, undefined, global) {
-/*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/HashCollisionNode.js-=@*/
+/*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/HashCollisionNode.js-=@*/
 var isEqual = require(15),
     bitpos = require(50),
     arrayCopy = require(51),
@@ -5130,6 +5153,1291 @@ module.exports = HashCollisionNode;
 
 
 BitmapIndexedNode = require(33);
+
+
+function HashCollisionNode(keyHash, count, array) {
+    this.keyHash = keyHash;
+    this.count = count;
+    this.array = array;
+}
+
+HashCollisionNode.EMPTY = EMPTY;
+
+HashCollisionNodePrototype.get = function(shift, keyHash, key, notSetValue) {
+    var array = this.array,
+        index = getIndex(array, key);
+
+    if (index === -1) {
+        return notFound;
+    } else {
+        if (isEqual(key, array[index])) {
+            return array[index + 1];
+        } else {
+            return notSetValue;
+        }
+    }
+};
+
+HashCollisionNodePrototype.set = function(shift, keyHash, key, value, addedLeaf) {
+    var index, count, array, newArray;
+
+    if (keyHash === this.keyHash) {
+        array = this.array;
+        count = this.count,
+            index = getIndex(array, key);
+
+        if (index !== -1) {
+            if (array[index + 1] === value) {
+                return this;
+            } else {
+                return new HashCollisionNode(keyHash, count, cloneAndSet(array, index + 1, value));
+            }
+        } else {
+            newArray = new Array(2 * (count + 1));
+            baseArrayCopy(array, 0, newArray, 0, 2 * count);
+            newArray[2 * count] = key;
+            newArray[2 * count + 1] = value;
+            addedLeaf.value = addedLeaf;
+            return new HashCollisionNode(keyHash, count + 1, newArray);
+        }
+    } else {
+        return new BitmapIndexedNode(bitpos(this.keyHash, shift), [null, this]).set(shift, keyHash, key, value, addedLeaf);
+    }
+};
+
+HashCollisionNodePrototype.remove = function(shift, keyHash, key) {
+    var array = this.array,
+        index = getIndex(array, key);
+
+    if (index === -1) {
+        return this;
+    } else {
+        if (array.length === 1) {
+            return null;
+        } else {
+            return new HashCollisionNode(hash, count - 1, removePair(array, index / 2));
+        }
+    }
+};
+
+HashCollisionNodePrototype.iterator = nodeIterator;
+
+function getIndex(array, key) {
+    var i = -1,
+        il = array.length - 1;
+
+    while (i++ < il) {
+        if (isEqual(array[i], key)) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+},
+function(require, exports, module, undefined, global) {
+/*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/index.js-=@*/
+var has = require(24),
+    freeze = require(14),
+    isNull = require(6),
+    isUndefined = require(7),
+    isObject = require(18),
+    defineProperty = require(13),
+    isEqual = require(15),
+    hashCode = require(30),
+    isArrayLike = require(8),
+    fastBindThis = require(11),
+    Box = require(60),
+    Iterator = require(61),
+    BitmapIndexedNode = require(62);
+
+
+var INTERNAL_CREATE = {},
+
+    ITERATOR_SYMBOL = typeof(Symbol) === "function" ? Symbol.iterator : false,
+    IS_MAP = "__ImmutableHashMap__",
+
+    NOT_SET = {},
+    EMPTY_MAP = freeze(new HashMap(INTERNAL_CREATE)),
+
+    IteratorValue = Iterator.Value,
+
+    HashMapPrototype;
+
+
+module.exports = HashMap;
+
+
+function HashMap(value) {
+    if (!(this instanceof HashMap)) {
+        throw new Error("HashMap() must be called with new");
+    }
+
+    this.__size = 0;
+    this.__root = null;
+
+    if (value !== INTERNAL_CREATE) {
+        return HashMap_createHashMap(this, value, arguments);
+    } else {
+        return this;
+    }
+}
+HashMapPrototype = HashMap.prototype;
+
+HashMap.EMPTY = EMPTY_MAP;
+
+function HashMap_createHashMap(_this, value, args) {
+    var length = args.length;
+
+    if (length === 1) {
+        if (isArrayLike(value)) {
+            return HashMap_fromArray(_this, value.toArray ? value.toArray() : value);
+        } else if (isObject(value)) {
+            return HashMap_fromObject(_this, value);
+        } else {
+            return EMPTY_MAP;
+        }
+    } else if (length > 1) {
+        return HashMap_fromArray(_this, args);
+    } else {
+        return EMPTY_MAP;
+    }
+}
+
+function HashMap_fromObject(_this, object) {
+    var size = 0,
+        root = BitmapIndexedNode.EMPTY,
+        key, value, newRoot, addedLeaf;
+
+    for (key in object) {
+        if (has(object, key)) {
+            value = object[key];
+
+            addedLeaf = new Box(null);
+            newRoot = root.set(0, hashCode(key), key, value, addedLeaf);
+
+            if (newRoot !== root) {
+                root = newRoot;
+                if (!isNull(addedLeaf.value)) {
+                    size += 1;
+                }
+            }
+        }
+    }
+
+    if (size !== 0) {
+        _this.__size = size;
+        _this.__root = newRoot;
+        return freeze(_this);
+    } else {
+        return EMPTY_MAP;
+    }
+}
+
+function HashMap_fromArray(_this, array) {
+    var i = 0,
+        il = array.length,
+        root = BitmapIndexedNode.EMPTY,
+        size = 0,
+        newRoot, key, value, addedLeaf;
+
+    while (i < il) {
+        key = array[i];
+        value = array[i + 1];
+        addedLeaf = new Box(null);
+
+        newRoot = root.set(0, hashCode(key), key, value, addedLeaf);
+        if (newRoot !== root) {
+            root = newRoot;
+            if (!isNull(addedLeaf.value)) {
+                size += 1;
+            }
+        }
+
+        i += 2;
+    }
+
+    if (size !== 0) {
+        _this.__root = root;
+        _this.__size = size;
+        return freeze(_this);
+    } else {
+        return EMPTY_MAP;
+    }
+}
+
+HashMap.fromArray = function(array) {
+    if (array.length > 0) {
+        return HashMap_createHashMap(new HashMap(INTERNAL_CREATE), array[0], array);
+    } else {
+        return EMPTY_MAP;
+    }
+};
+
+HashMap.of = function() {
+    return HashMap.fromArray(arguments);
+};
+
+HashMap.isHashMap = function(value) {
+    return !!(value && value[IS_MAP]);
+};
+
+defineProperty(HashMapPrototype, IS_MAP, {
+    configurable: false,
+    enumerable: false,
+    writable: false,
+    value: true
+});
+
+HashMapPrototype.size = function() {
+    return this.__size;
+};
+
+if (defineProperty.hasGettersSetters) {
+    defineProperty(HashMapPrototype, "length", {
+        get: HashMapPrototype.size
+    });
+}
+
+HashMapPrototype.count = HashMapPrototype.size;
+
+HashMapPrototype.isEmpty = function() {
+    return this.__size === 0;
+};
+
+HashMapPrototype.has = function(key) {
+    var root = this.__root;
+    return isNull(root) ? false : root.get(0, hashCode(key), key, NOT_SET) !== NOT_SET;
+};
+
+HashMapPrototype.get = function(key, notSetValue) {
+    var root = this.__root;
+    return isNull(root) ? notSetValue : root.get(0, hashCode(key), key);
+};
+
+HashMapPrototype.set = function(key, value) {
+    var root = this.__root,
+        size = this.__size,
+        addedLeaf = new Box(null),
+        newRoot = (isNull(root) ? BitmapIndexedNode.EMPTY : root).set(0, hashCode(key), key, value, addedLeaf),
+        map;
+
+    if (newRoot === root) {
+        return this;
+    } else {
+        map = new HashMap(INTERNAL_CREATE);
+        map.__size = isNull(addedLeaf.value) ? size : size + 1;
+        map.__root = newRoot;
+        return freeze(map);
+    }
+};
+
+HashMapPrototype.remove = function(key) {
+    var root = this.__root,
+        size = this.__size,
+        newRoot;
+
+    if (isNull(root)) {
+        return this;
+    } else if (size === 1) {
+        return EMPTY_MAP;
+    } else {
+        newRoot = root.remove(0, hashCode(key), key);
+
+        if (newRoot === root) {
+            return this;
+        } else {
+            map = new HashMap(INTERNAL_CREATE);
+            map.__size = size - 1;
+            map.__root = newRoot;
+            return freeze(map);
+        }
+    }
+};
+
+function hasNext() {
+    return false;
+}
+
+function next() {
+    return new IteratorValue(undefined, true);
+}
+
+HashMapPrototype.iterator = function(reverse) {
+    var root = this.__root;
+
+    if (isNull(root)) {
+        return new Iterator(hasNext, next);
+    } else {
+        return root.iterator(reverse);
+    }
+};
+
+if (ITERATOR_SYMBOL) {
+    HashMapPrototype[ITERATOR_SYMBOL] = HashMapPrototype.iterator;
+}
+
+function HashMap_every(_this, it, callback) {
+    var next = it.next(),
+        nextValue;
+
+    while (next.done === false) {
+        nextValue = next.value;
+        if (!callback(nextValue[1], nextValue[0], _this)) {
+            return false;
+        }
+        next = it.next();
+    }
+
+    return true;
+}
+
+HashMapPrototype.every = function(callback, thisArg) {
+    return HashMap_every(this, this.iterator(), isUndefined(thisArg) ? callback : fastBindThis(callback, thisArg, 3));
+};
+
+function HashMap_filter(_this, it, callback) {
+    var results = [],
+        next = it.next(),
+        index = 0,
+        nextValue, key, value;
+
+    while (next.done === false) {
+        nextValue = next.value;
+        key = nextValue[0];
+        value = nextValue[1];
+
+        if (callback(value, key, _this)) {
+            results[index++] = key;
+            results[index++] = value;
+        }
+
+        next = it.next();
+    }
+
+    return HashMap.of(results);
+}
+
+HashMapPrototype.filter = function(callback, thisArg) {
+    return HashMap_filter(this, this.iterator(), isUndefined(thisArg) ? callback : fastBindThis(callback, thisArg, 3));
+};
+
+function HashMap_forEach(_this, it, callback) {
+    var next = it.next(),
+        nextValue;
+
+    while (next.done === false) {
+        nextValue = next.value;
+        if (callback(nextValue[1], nextValue[0], _this) === false) {
+            break;
+        }
+        next = it.next();
+    }
+
+    return _this;
+}
+
+HashMapPrototype.forEach = function(callback, thisArg) {
+    return HashMap_forEach(this, this.iterator(), isUndefined(thisArg) ? callback : fastBindThis(callback, thisArg, 3));
+};
+
+HashMapPrototype.each = HashMapPrototype.forEach;
+
+function HashMap_forEachRight(_this, it, callback) {
+    var next = it.next(),
+        nextValue;
+
+    while (next.done === false) {
+        nextValue = next.value;
+        if (callback(nextValue[1], nextValue[0], _this) === false) {
+            break;
+        }
+        next = it.next();
+    }
+
+    return _this;
+}
+
+HashMapPrototype.forEachRight = function(callback, thisArg) {
+    return HashMap_forEachRight(this, this.iterator(true), isUndefined(thisArg) ? callback : fastBindThis(callback, thisArg, 3));
+};
+
+HashMapPrototype.eachRight = HashMapPrototype.forEachRight;
+
+function HashMap_map(_this, it, callback) {
+    var next = it.next(),
+        results = new Array(_this.__size * 2),
+        index = 0,
+        nextValue, key;
+
+    while (next.done === false) {
+        nextValue = next.value;
+        key = nextValue[0];
+        results[index++] = key;
+        results[index++] = callback(nextValue[1], key, _this);
+        next = it.next();
+    }
+
+    return HashMap.of(results);
+}
+
+HashMapPrototype.map = function(callback, thisArg) {
+    return HashMap_map(this, this.iterator(), isUndefined(thisArg) ? callback : fastBindThis(callback, thisArg, 3));
+};
+
+function HashMap_reduce(_this, it, callback, initialValue) {
+    var next = it.next(),
+        value = initialValue,
+        nextValue, key;
+
+    if (isUndefined(value)) {
+        nextValue = next.value;
+        key = nextValue[0];
+        value = nextValue[1];
+        next = it.next();
+    }
+
+    while (next.done === false) {
+        nextValue = next.value;
+        value = callback(value, nextValue[1], key, _this);
+        next = it.next();
+    }
+
+    return value;
+}
+
+HashMapPrototype.reduce = function(callback, initialValue, thisArg) {
+    return HashMap_reduce(this, this.iterator(), isUndefined(thisArg) ? callback : fastBindThis(callback, thisArg, 4), initialValue);
+};
+
+function HashMap_reduceRight(_this, it, callback, initialValue) {
+    var next = it.next(),
+        value = initialValue,
+        nextValue, key;
+
+    if (isUndefined(value)) {
+        nextValue = next.value;
+        key = nextValue[0];
+        value = nextValue[1];
+        next = it.next();
+    }
+
+    while (next.done === false) {
+        nextValue = next.value;
+        value = callback(value, nextValue[1], key, _this);
+        next = it.next();
+    }
+
+    return value;
+}
+
+HashMapPrototype.reduceRight = function(callback, initialValue, thisArg) {
+    return HashMap_reduceRight(this, this.iterator(true), isUndefined(thisArg) ? callback : fastBindThis(callback, thisArg, 4), initialValue);
+};
+
+function HashMap_some(_this, it, callback) {
+    var next = it.next(),
+        nextValue;
+
+    while (next.done === false) {
+        nextValue = next.value;
+
+        if (callback(nextValue[1], nextValue[0], _this)) {
+            return true;
+        }
+        next = it.next();
+    }
+
+    return false;
+}
+
+HashMapPrototype.some = function(callback, thisArg) {
+    return HashMap_some(this, this.iterator(), isUndefined(thisArg) ? callback : fastBindThis(callback, thisArg, 3));
+};
+
+HashMapPrototype.toArray = function() {
+    var it = this.iterator(),
+        next = it.next(),
+        results = new Array(this.__size * 2),
+        index = 0;
+
+    while (next.done === false) {
+        nextValue = next.value;
+        results[index++] = nextValue[0];
+        results[index++] = nextValue[1];
+        next = it.next();
+    }
+
+    return results;
+};
+
+HashMapPrototype.toObject = function() {
+    var it = this.iterator(),
+        results = {},
+        step;
+
+    while ((step = it.next()).done === false) {
+        nextValue = step.value;
+        results[nextValue[0]] = nextValue[1];
+    }
+
+    return results;
+};
+
+HashMapPrototype.join = function(separator, keyValueSeparator) {
+    var it = this.iterator(),
+        next = it.next(),
+        result = "";
+
+    separator = separator || ", ";
+    keyValueSeparator = keyValueSeparator || ": ";
+
+    while (!next.done) {
+        nextValue = next.value;
+        next = it.next();
+
+        if (next.done) {
+            result += nextValue[0] + keyValueSeparator + nextValue[1];
+            break;
+        } else {
+            result += nextValue[0] + keyValueSeparator + nextValue[1] + separator;
+        }
+    }
+
+    return result;
+};
+
+HashMapPrototype.toString = function() {
+    return "{" + this.join() + "}";
+};
+
+HashMapPrototype.inspect = HashMapPrototype.toString;
+
+function HashMap_equal(ait, bit) {
+    var anext = ait.next(),
+        bnext = bit.next(),
+        anextValue, bnextValue;
+
+    while (anext.done === false) {
+        anextValue = anext.value;
+        bnextValue = bnext.value;
+
+        if (!isEqual(anextValue[0], bnextValue[0]) || !isEqual(anextValue[1], bnextValue[1])) {
+            return false;
+        }
+
+        anext = ait.next();
+        bnext = bit.next();
+    }
+
+    return true;
+}
+
+HashMap.equal = function(a, b) {
+    if (a === b) {
+        return true;
+    } else if (!a || !b || a.__size !== b.__size) {
+        return false;
+    } else {
+        return HashMap_equal(a.iterator(), b.iterator());
+    }
+};
+
+HashMapPrototype.equals = function(b) {
+    return HashMap.equal(this, b);
+};
+},
+function(require, exports, module, undefined, global) {
+/*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/Box.js-=@*/
+module.exports = Box;
+
+
+function Box(value) {
+    this.value = value;
+}
+},
+function(require, exports, module, undefined, global) {
+/*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/Iterator.js-=@*/
+var inherits = require(40),
+    BaseIterator = require(10);
+
+
+module.exports = Iterator;
+
+
+function Iterator(hasNext, next) {
+    this.hasNext = hasNext;
+    this.next = next;
+}
+inherits(Iterator, BaseIterator);
+},
+function(require, exports, module, undefined, global) {
+/*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/BitmapIndexedNode.js-=@*/
+var isNull = require(6),
+    isEqual = require(15),
+    hashCode = require(30),
+    bitCount = require(48),
+    consts = require(63),
+    bitpos = require(64),
+    arrayCopy = require(51),
+    cloneAndSet = require(65),
+    removePair = require(66),
+    mask = require(67),
+    nodeIterator = require(68),
+    ArrayNode, createNode;
+
+
+var baseArrayCopy = arrayCopy.base,
+    SHIFT = consts.SHIFT,
+    MAX_BITMAP_INDEXED_SIZE = consts.MAX_BITMAP_INDEXED_SIZE,
+    EMPTY = new BitmapIndexedNode(0, []),
+    BitmapIndexedNodePrototype = BitmapIndexedNode.prototype;
+
+
+module.exports = BitmapIndexedNode;
+
+
+ArrayNode = require(69);
+createNode = require(70);
+
+
+function BitmapIndexedNode(bitmap, array) {
+    this.bitmap = bitmap;
+    this.array = array;
+}
+
+BitmapIndexedNode.EMPTY = EMPTY;
+
+BitmapIndexedNodePrototype.get = function(shift, keyHash, key, notSetValue) {
+    var bitmap = this.bitmap,
+        bit = bitpos(keyHash, shift),
+        array, index, keyOrNull, valueOrNode;
+
+    if ((bitmap & bit) === 0) {
+        return notSetValue;
+    } else {
+        array = this.array;
+        index = getIndex(bitmap, bit);
+
+        keyOrNull = array[2 * index];
+        valueOrNode = array[2 * index + 1];
+
+        if (isNull(keyOrNull)) {
+            return valueOrNode.get(shift + SHIFT, keyHash, key, notSetValue);
+        } else {
+            if (isEqual(key, keyOrNull)) {
+                return valueOrNode;
+            } else {
+                return notSetValue;
+            }
+        }
+    }
+};
+
+BitmapIndexedNodePrototype.set = function(shift, keyHash, key, value, addedLeaf) {
+    var array = this.array,
+        bitmap = this.bitmap,
+        bit = bitpos(keyHash, shift),
+        index = getIndex(bitmap, bit),
+        keyOrNull, valueOrNode, newNode, nodes, jIndex, i, j, newArray;
+
+    if ((bitmap & bit) !== 0) {
+        keyOrNull = array[2 * index];
+        valueOrNode = array[2 * index + 1];
+
+        if (isNull(keyOrNull)) {
+            newNode = valueOrNode.set(shift + SHIFT, keyHash, key, value, addedLeaf);
+
+            if (newNode === valueOrNode) {
+                return this;
+            } else {
+                return new BitmapIndexedNode(bitmap, cloneAndSet(array, 2 * index + 1, newNode));
+            }
+        }
+        if (isEqual(key, keyOrNull)) {
+            if (value === valueOrNode) {
+                return this;
+            } else {
+                return new BitmapIndexedNode(bitmap, cloneAndSet(array, 2 * index + 1, value));
+            }
+        }
+        addedLeaf.value = addedLeaf;
+        return new BitmapIndexedNode(bitmap,
+            cloneAndSet(array,
+                2 * index, null,
+                2 * index + 1, createNode(shift + SHIFT, keyOrNull, valueOrNode, keyHash, key, value)));
+    } else {
+        newNode = bitCount(bitmap);
+
+        if (newNode >= MAX_BITMAP_INDEXED_SIZE) {
+            nodes = new Array(32);
+            jIndex = mask(keyHash, shift);
+            nodes[jIndex] = EMPTY.set(shift + SHIFT, keyHash, key, value, addedLeaf);
+
+            i = -1;
+            j = 0;
+            while (i++ < 31) {
+                if (((bitmap >>> i) & 1) !== 0) {
+                    if (array[j] == null) {
+                        nodes[i] = array[j + 1];
+                    } else {
+                        nodes[i] = EMPTY.set(shift + SHIFT, hashCode(array[j]), array[j], array[j + 1], addedLeaf);
+                    }
+                    j += 2;
+                }
+            }
+
+            return new ArrayNode(newNode + 1, nodes);
+        } else {
+            newArray = new Array(2 * (newNode + 1));
+            baseArrayCopy(array, 0, newArray, 0, 2 * index);
+
+            newArray[2 * index] = key;
+            addedLeaf.value = addedLeaf;
+            newArray[2 * index + 1] = value;
+
+            baseArrayCopy(array, 2 * index, newArray, 2 * (index + 1), 2 * (newNode - index));
+
+            return new BitmapIndexedNode(bitmap | bit, newArray);
+        }
+    }
+};
+
+BitmapIndexedNodePrototype.remove = function(shift, keyHash, key) {
+    var bitmap = this.bitmap,
+        bit = bitpos(keyHash, shift),
+        index, array, newNode;
+
+    if ((bitmap & bit) === 0) {
+        return this;
+    } else {
+        index = getIndex(bitmap, bit);
+        array = this.array;
+
+        keyOrNull = array[2 * index];
+        valueOrNode = array[2 * index + 1];
+
+        if (isNull(keyOrNull)) {
+            newNode = valueOrNode.remove(shift + SHIFT, keyHash, key);
+
+            if (newNode === valueOrNode) {
+                return this;
+            } else if (!isNull(newNode)) {
+                return new BitmapIndexedNode(bitmap, cloneAndSet(array, 2 * index + 1, newNode));
+            } else if (bitmap === bit) {
+                return null;
+            } else {
+                return new BitmapIndexedNode(bitmap ^ bit, removePair(array, index));
+            }
+        } else {
+            if (isEqual(key, keyOrNull)) {
+                return new BitmapIndexedNode(bitmap ^ bit, removePair(array, index));
+            } else {
+                return this;
+            }
+        }
+    }
+};
+
+BitmapIndexedNodePrototype.iterator = nodeIterator;
+
+function getIndex(bitmap, bit) {
+    return bitCount(bitmap & (bit - 1));
+}
+},
+function(require, exports, module, undefined, global) {
+/*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/consts.js-=@*/
+var consts = exports;
+
+
+consts.SHIFT = 5;
+consts.SIZE = 1 << consts.SHIFT;
+consts.MASK = consts.SIZE - 1;
+
+consts.MAX_ARRAY_MAP_SIZE = consts.SIZE / 4;
+consts.MAX_BITMAP_INDEXED_SIZE = consts.SIZE / 2;
+},
+function(require, exports, module, undefined, global) {
+/*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/bitpos.js-=@*/
+var mask = require(67);
+
+
+module.exports = bitpos;
+
+
+function bitpos(hashCode, shift) {
+    return 1 << mask(hashCode, shift);
+}
+},
+function(require, exports, module, undefined, global) {
+/*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/cloneAndSet.js-=@*/
+var isUndefined = require(7),
+    arrayCopy = require(51);
+
+
+var baseArrayCopy = arrayCopy.base;
+
+
+module.exports = cloneAndSet;
+
+
+function cloneAndSet(array, index0, value0, index1, value1) {
+    var length = array.length,
+        results = new Array(length);
+
+    baseArrayCopy(array, 0, results, 0, length);
+
+    results[index0] = value0;
+    if (!isUndefined(index1)) {
+        results[index1] = value1;
+    }
+
+    return results;
+}
+},
+function(require, exports, module, undefined, global) {
+/*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/removePair.js-=@*/
+var arrayCopy = require(51);
+
+
+var baseArrayCopy = arrayCopy.base;
+
+
+module.exports = removePair;
+
+
+function removePair(array, index) {
+    var length = array.length,
+        newArray = new Array(length - 2);
+
+    baseArrayCopy(array, 0, newArray, 0, 2 * index);
+    baseArrayCopy(array, 2 * (index + 1), newArray, 2 * index, length - 2 * index);
+
+    return newArray;
+}
+},
+function(require, exports, module, undefined, global) {
+/*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/mask.js-=@*/
+var consts = require(63);
+
+
+var MASK = consts.MASK;
+
+
+module.exports = mask;
+
+
+function mask(hashCode, shift) {
+    return (hashCode >>> shift) & MASK;
+}
+},
+function(require, exports, module, undefined, global) {
+/*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/nodeIterator.js-=@*/
+var isNull = require(6),
+    isUndefined = require(7),
+    Iterator = require(61);
+
+
+var IteratorValue = Iterator.Value;
+
+
+module.exports = nodeIterator;
+
+
+function nodeIterator(reverse) {
+    if (reverse !== true) {
+        return iterator(this);
+    } else {
+        return iteratorReverse(this);
+    }
+}
+
+function iterator(_this) {
+    var array = _this.array,
+        index = 0,
+        length = array.length,
+        nextIter = null,
+        nextEntry = null;
+
+    function advance() {
+        var key, iter;
+
+        while (index < length) {
+            key = array[index];
+            valueOrNode = array[index + 1];
+            index += 2;
+
+            if (!isUndefined(key)) {
+                nextEntry = [key, valueOrNode];
+                return true;
+            } else if (!isUndefined(valueOrNode)) {
+                iter = valueOrNode.iterator();
+
+                if (!isNull(iter) && iter.hasNext()) {
+                    nextIter = iter;
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    function hasNext() {
+        if (!isNull(nextEntry) || !isNull(nextIter)) {
+            return true;
+        } else {
+            return advance();
+        }
+    }
+
+    function next() {
+        var entry = nextEntry;
+
+        if (!isNull(entry)) {
+            nextEntry = null;
+            return new IteratorValue(entry, false);
+        } else if (!isNull(nextIter)) {
+            entry = nextIter.next();
+
+            if (!nextIter.hasNext()) {
+                nextIter = null;
+            }
+
+            return new IteratorValue(entry, false);
+        } else if (advance()) {
+            return next();
+        } else {
+            return new IteratorValue(undefined, true);
+        }
+    }
+
+    return new Iterator(hasNext, next);
+}
+
+function iteratorReverse(_this) {
+    var array = _this.array,
+        length = array.length,
+        index = length - 1,
+        nextIter = null,
+        nextEntry = null;
+
+    function advance() {
+        var key, iter;
+
+        while (index > -1) {
+            key = array[index - 1];
+            valueOrNode = array[index];
+            index -= 2;
+
+            if (!isUndefined(key)) {
+                nextEntry = [key, valueOrNode];
+                return true;
+            } else if (!isUndefined(valueOrNode)) {
+                iter = valueOrNode.iterator();
+
+                if (!isNull(iter) && iter.hasNext()) {
+                    nextIter = iter;
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    function hasNext() {
+        if (!isNull(nextEntry) || !isNull(nextIter)) {
+            return true;
+        } else {
+            return advance();
+        }
+    }
+
+    function next() {
+        var entry = nextEntry;
+
+        if (!isNull(entry)) {
+            nextEntry = null;
+            return new IteratorValue(entry, false);
+        } else if (!isNull(nextIter)) {
+            entry = nextIter.next();
+
+            if (!nextIter.hasNext()) {
+                nextIter = null;
+            }
+
+            return new IteratorValue(entry, false);
+        } else if (advance()) {
+            return next();
+        } else {
+            return new IteratorValue(undefined, true);
+        }
+    }
+
+    return new Iterator(hasNext, next);
+}
+},
+function(require, exports, module, undefined, global) {
+/*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/ArrayNode.js-=@*/
+var isNull = require(6),
+    isNullOrUndefined = require(20),
+    consts = require(63),
+    mask = require(67),
+    cloneAndSet = require(65),
+    Iterator = require(61),
+    BitmapIndexedNode;
+
+
+var SHIFT = consts.SHIFT,
+    MAX_ARRAY_MAP_SIZE = consts.MAX_ARRAY_MAP_SIZE,
+    EMPTY = new ArrayNode(0, []),
+    IteratorValue = Iterator.Value,
+    ArrayNodePrototype = ArrayNode.prototype;
+
+
+module.exports = ArrayNode;
+
+
+BitmapIndexedNode = require(62);
+
+
+function ArrayNode(count, array) {
+    this.count = count;
+    this.array = array;
+}
+
+ArrayNode.EMPTY = EMPTY;
+
+ArrayNodePrototype.get = function(shift, keyHash, key, notSetValue) {
+    var index = mask(keyHash, shift),
+        node = this.array[index];
+
+    if (isNullOrUndefined(node)) {
+        return notSetValue;
+    } else {
+        return node.get(shift + SHIFT, hash, key, notSetValue);
+    }
+};
+
+ArrayNodePrototype.set = function(shift, keyHash, key, value, addedLeaf) {
+    var index = mask(keyHash, shift),
+        array = this.array,
+        count = this.count,
+        node = array[index],
+        newNode;
+
+    if (isNullOrUndefined(node)) {
+        return new ArrayNode(count + 1, cloneAndSet(array, index, BitmapIndexedNode.EMPTY.set(shift + SHIFT, keyHash, key, value, addedLeaf)));
+    } else {
+        newNode = node.set(shift + SHIFT, keyHash, key, value, addedLeaf);
+
+        if (newNode === node) {
+            return this;
+        } else {
+            return new ArrayNode(count, cloneAndSet(array, index, newNode));
+        }
+    }
+};
+
+ArrayNodePrototype.remove = function(shift, keyHash, key) {
+    var index = mask(keyHash, shift),
+        array = this.array,
+        node = array[index],
+        newNode, count;
+
+    if (isNullOrUndefined(node)) {
+        return this;
+    } else {
+        newNode = node.remove(shift + SHIFT, keyHash, key);
+
+        if (newNode === node) {
+            return this;
+        } else {
+            array = this.array;
+            count = this.count;
+
+            if (isNull(newNode)) {
+                if (count <= MAX_ARRAY_MAP_SIZE) {
+                    return pack(array, index);
+                } else {
+                    return new ArrayNode(count - 1, cloneAndSet(array, index, newNode));
+                }
+            } else {
+                return new ArrayNode(count, cloneAndSet(array, index, newNode));
+            }
+        }
+    }
+};
+
+function ArrayNode_iterator(_this) {
+    var array = _this.array,
+        index = 0,
+        length = array.length,
+        nestedIter = null;
+
+    function hasNext() {
+        var node;
+
+        while (true) {
+            if (!isNull(nestedIter)) {
+                if (nestedIter.hasNext()) {
+                    return true;
+                } else {
+                    nestedIter = null;
+                }
+            } else {
+                if (index === length) {
+                    return false;
+                } else {
+                    node = array[index];
+                    index += 1;
+
+                    if (!isNullOrUndefined(node)) {
+                        nestedIter = node.iterator();
+                    }
+                }
+            }
+        }
+    }
+
+    function next() {
+        if (hasNext()) {
+            return nestedIter.next();
+        } else {
+            return new IteratorValue(undefined, true);
+        }
+    }
+
+    return new Iterator(hasNext, next);
+}
+
+function ArrayNode_iteratorReverse(_this) {
+    var array = _this.array,
+        length = array.length,
+        index = length - 1,
+        nestedIter = null;
+
+    function hasNext() {
+        var node;
+
+        while (true) {
+            if (!isNull(nestedIter)) {
+                if (nestedIter.hasNext()) {
+                    return true;
+                } else {
+                    nestedIter = null;
+                }
+            } else {
+                if (index === -1) {
+                    return false;
+                } else {
+                    node = array[index];
+                    index -= 1;
+
+                    if (!isNullOrUndefined(node)) {
+                        nestedIter = node.iterator();
+                    }
+                }
+            }
+        }
+    }
+
+    function next() {
+        if (hasNext()) {
+            return nestedIter.next();
+        } else {
+            return new IteratorValue(undefined, true);
+        }
+    }
+
+    return new Iterator(hasNext, next);
+}
+
+ArrayNodePrototype.iterator = function(reverse) {
+    if (reverse !== true) {
+        return ArrayNode_iterator(this);
+    } else {
+        return ArrayNode_iteratorReverse(this);
+    }
+};
+
+function pack(array, index) {
+    var newArray = new Array(2 * (count - 1)),
+        j = 1,
+        bitmap = 0,
+        i = -1,
+        il = index - 1;
+
+    while (i++ < il) {
+        if (!isNull(array[i])) {
+            newArray[j] = array[i];
+            bitmap |= 1 << i;
+            j += 2;
+        }
+    }
+
+    i = index - 1;
+    il = array.length - 1;
+    while (i++ < il) {
+        if (!isNull(array[i])) {
+            newArray[j] = array[i];
+            bitmap |= 1 << i;
+            j += 2;
+        }
+    }
+
+    return new BitmapIndexedNode(bitmap, newArray);
+}
+},
+function(require, exports, module, undefined, global) {
+/*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/createNode.js-=@*/
+var hashCode = require(30),
+    Box = require(60),
+    HashCollisionNode, BitmapIndexedNode;
+
+
+module.exports = createNode;
+
+
+HashCollisionNode = require(71);
+BitmapIndexedNode = require(62);
+
+
+function createNode(shift, key0, value0, keyHash1, key1, value1) {
+    var keyHash0 = hashCode(key0),
+        addedLeaf;
+
+    if (keyHash0 === keyHash1) {
+        return new HashCollisionNode(keyHash0, 2, [key0, value0, key1, value1]);
+    } else {
+        addedLeaf = new Box(null);
+        return BitmapIndexedNode.EMPTY
+            .set(shift, keyHash0, key0, value0, addedLeaf)
+            .set(shift, keyHash1, key1, value1, addedLeaf);
+    }
+}
+},
+function(require, exports, module, undefined, global) {
+/*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/HashCollisionNode.js-=@*/
+var isEqual = require(15),
+    bitpos = require(64),
+    arrayCopy = require(51),
+    cloneAndSet = require(65),
+    removePair = require(66),
+    nodeIterator = require(68),
+    BitmapIndexedNode;
+
+
+var baseArrayCopy = arrayCopy.base,
+    EMPTY = new HashCollisionNode(0, []),
+    HashCollisionNodePrototype = HashCollisionNode.prototype;
+
+
+module.exports = HashCollisionNode;
+
+
+BitmapIndexedNode = require(62);
 
 
 function HashCollisionNode(keyHash, count, array) {
