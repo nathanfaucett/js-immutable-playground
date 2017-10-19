@@ -27,14 +27,21 @@ input.addEventListener("keypress", function onKeyPress(e) {
 
 
 function evaluate(value) {
-    var result = vm.runInNewContext(value, context);
+    var result;
+
+    try {
+        result = vm.runInNewContext(value, context);
+    } catch(e) {
+        result = e.toString();
+    }
 
     code.innerHTML += "> " + value + "\n";
     code.innerHTML += "  " + result + "\n";
 
     input.value = "";
-    
+
     scroll.scrollTop = scroll.scrollHeight;
 }
 
+evaluate("// Simple JS Console");
 evaluate("ImmutableList.of(0, 1, 2, 3, 4);");

@@ -76,7 +76,7 @@
         }
     };
 
-    global["ZlJzpjVY-TVYT-4vVX-ZVU9-DOmL0zDSwAYor"] = function(asyncDependencies) {
+    global["AVfCePMB-3dcz-4N3p-Nsma-JyLP9SqwBtGQo"] = function(asyncDependencies) {
         var i = -1,
             il = asyncDependencies.length - 1,
             dependency, index;
@@ -136,16 +136,23 @@ input.addEventListener("keypress", function onKeyPress(e) {
 
 
 function evaluate(value) {
-    var result = vm.runInNewContext(value, context);
+    var result;
+
+    try {
+        result = vm.runInNewContext(value, context);
+    } catch(e) {
+        result = e.toString();
+    }
 
     code.innerHTML += "> " + value + "\n";
     code.innerHTML += "  " + result + "\n";
 
     input.value = "";
-    
+
     scroll.scrollTop = scroll.scrollHeight;
 }
 
+evaluate("// Simple JS Console");
 evaluate("ImmutableList.of(0, 1, 2, 3, 4);");
 
 },
