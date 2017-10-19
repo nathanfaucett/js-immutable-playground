@@ -1,6 +1,72 @@
 @import "@nathanfaucett/native.less";
 
-body {
-    max-width: 720px;
-    margin: 0 auto;
+
+html, body{
+  font-family: "Roboto", sans-serif;
+  font-size: 1em;
+  line-height: 2em;
+}
+
+hr {
+  border-color: #EEE;
+  margin: 8px 0px;
+  padding: 0px;
+}
+
+a {
+  color: #0000EE;
+}
+a:hover {
+  color: #0000F0;
+}
+
+#wrapper {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 16px 16px 128px 16px;
+}
+
+pre.code {
+  font-family: monospace, monospace;
+  padding: 8px;
+  margin: 0px;
+  font-size: 1em;
+  line-height: 1.25em;
+  background-color: #EEE;
+  border: 1px solid #DDD;
+}
+
+.console {
+  background-color: #EEE;
+  padding: 8px;
+  border: 1px solid #DDD;
+}
+.console .scroll {
+  overflow: auto;
+  max-height: 386px;
+}
+.console .scroll .code {
+  background-color: none;
+  border: none;
+}
+.console .input {
+  position: relative;
+}
+
+.console .input .dollor {
+  font-family: monospace, monospace;
+  font-size: 1em;
+  height: 36px;
+  line-height: 36px;
+  position: absolute;
+  top: 0px;
+  left: 8px;
+}
+.console .input .text {
+  font-family: monospace, monospace;
+  font-size: 1em;
+  line-height: 1.25em;
+  height: 36px;
+  display: inline-block;
+  padding: 8px 8px 8px 24px;
 }

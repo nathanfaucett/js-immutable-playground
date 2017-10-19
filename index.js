@@ -76,7 +76,7 @@
         }
     };
 
-    global["BeuPiJp3-4Aw6-4pNn-2YQ4-lajwC4PVAnvng"] = function(asyncDependencies) {
+    global["ZlJzpjVY-TVYT-4vVX-ZVU9-DOmL0zDSwAYor"] = function(asyncDependencies) {
         var i = -1,
             il = asyncDependencies.length - 1,
             dependency, index;
@@ -106,26 +106,203 @@
     }
 }([
 function(require, exports, module, undefined, global) {
-/*@=-/var/www/html/node/_immutable/immutable-playground/src/index.js-=@*/
-global.ImmutableList = require(1);
-global.ImmutableVector = require(2);
-global.ImmutableHashMap = require(3);
-global.ImmutableSet = require(4);
-global.ImmutableRecord = require(5);
+/*@=-/var/www/html/node/_immutable/js-immutable-playground/src/index.js-=@*/
+var vm = require(1),
+    ImmutableList = require(2),
+    ImmutableVector = require(3),
+    ImmutableHashMap = require(4),
+    ImmutableSet = require(5),
+    ImmutableRecord = require(6);
+
+
+var context = {
+    ImmutableList: ImmutableList,
+    ImmutableVector: ImmutableVector,
+    ImmutableHashMap: ImmutableHashMap,
+    ImmutableSet: ImmutableSet,
+    ImmutableRecord: ImmutableRecord
+};
+
+
+var input = document.getElementById("input"),
+    code = document.getElementById("code"),
+    scroll = document.getElementById("scroll");
+
+input.addEventListener("keypress", function onKeyPress(e) {
+    if (e.which === 13) {
+        evaluate(input.value || "\n");
+    }
+});
+
+
+function evaluate(value) {
+    var result = vm.runInNewContext(value, context);
+
+    code.innerHTML += "> " + value + "\n";
+    code.innerHTML += "  " + result + "\n";
+
+    input.value = "";
+    
+    scroll.scrollTop = scroll.scrollHeight;
+}
+
+evaluate("ImmutableList.of(0, 1, 2, 3, 4);");
+
+},
+function(require, exports, module, undefined, global) {
+/*@=-vm-browserify@0.0.4/index.js-=@*/
+var indexOf = require(7);
+
+var Object_keys = function (obj) {
+    if (Object.keys) return Object.keys(obj)
+    else {
+        var res = [];
+        for (var key in obj) res.push(key)
+        return res;
+    }
+};
+
+var forEach = function (xs, fn) {
+    if (xs.forEach) return xs.forEach(fn)
+    else for (var i = 0; i < xs.length; i++) {
+        fn(xs[i], i, xs);
+    }
+};
+
+var defineProp = (function() {
+    try {
+        Object.defineProperty({}, '_', {});
+        return function(obj, name, value) {
+            Object.defineProperty(obj, name, {
+                writable: true,
+                enumerable: false,
+                configurable: true,
+                value: value
+            })
+        };
+    } catch(e) {
+        return function(obj, name, value) {
+            obj[name] = value;
+        };
+    }
+}());
+
+var globals = ['Array', 'Boolean', 'Date', 'Error', 'EvalError', 'Function',
+'Infinity', 'JSON', 'Math', 'NaN', 'Number', 'Object', 'RangeError',
+'ReferenceError', 'RegExp', 'String', 'SyntaxError', 'TypeError', 'URIError',
+'decodeURI', 'decodeURIComponent', 'encodeURI', 'encodeURIComponent', 'escape',
+'eval', 'isFinite', 'isNaN', 'parseFloat', 'parseInt', 'undefined', 'unescape'];
+
+function Context() {}
+Context.prototype = {};
+
+var Script = exports.Script = function NodeScript (code) {
+    if (!(this instanceof Script)) return new Script(code);
+    this.code = code;
+};
+
+Script.prototype.runInContext = function (context) {
+    if (!(context instanceof Context)) {
+        throw new TypeError("needs a 'context' argument.");
+    }
+    
+    var iframe = document.createElement('iframe');
+    if (!iframe.style) iframe.style = {};
+    iframe.style.display = 'none';
+    
+    document.body.appendChild(iframe);
+    
+    var win = iframe.contentWindow;
+    var wEval = win.eval, wExecScript = win.execScript;
+
+    if (!wEval && wExecScript) {
+        // win.eval() magically appears when this is called in IE:
+        wExecScript.call(win, 'null');
+        wEval = win.eval;
+    }
+    
+    forEach(Object_keys(context), function (key) {
+        win[key] = context[key];
+    });
+    forEach(globals, function (key) {
+        if (context[key]) {
+            win[key] = context[key];
+        }
+    });
+    
+    var winKeys = Object_keys(win);
+
+    var res = wEval.call(win, this.code);
+    
+    forEach(Object_keys(win), function (key) {
+        // Avoid copying circular objects like `top` and `window` by only
+        // updating existing context properties or new properties in the `win`
+        // that was only introduced after the eval.
+        if (key in context || indexOf(winKeys, key) === -1) {
+            context[key] = win[key];
+        }
+    });
+
+    forEach(globals, function (key) {
+        if (!(key in context)) {
+            defineProp(context, key, win[key]);
+        }
+    });
+    
+    document.body.removeChild(iframe);
+    
+    return res;
+};
+
+Script.prototype.runInThisContext = function () {
+    return eval(this.code); // maybe...
+};
+
+Script.prototype.runInNewContext = function (context) {
+    var ctx = Script.createContext(context);
+    var res = this.runInContext(ctx);
+
+    forEach(Object_keys(ctx), function (key) {
+        context[key] = ctx[key];
+    });
+
+    return res;
+};
+
+forEach(Object_keys(Script.prototype), function (name) {
+    exports[name] = Script[name] = function (code) {
+        var s = Script(code);
+        return s[name].apply(s, [].slice.call(arguments, 1));
+    };
+});
+
+exports.createScript = function (code) {
+    return exports.Script(code);
+};
+
+exports.createContext = Script.createContext = function (context) {
+    var copy = new Context();
+    if(typeof context === 'object') {
+        forEach(Object_keys(context), function (key) {
+            copy[key] = context[key];
+        });
+    }
+    return copy;
+};
 
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-list@0.0.3/src/index.js-=@*/
-var isNull = require(6),
-    isUndefined = require(7),
-    isArrayLike = require(8),
-    isNumber = require(9),
-    Iterator = require(10),
-    fastBindThis = require(11),
-    fastSlice = require(12),
-    defineProperty = require(13),
-    freeze = require(14),
-    isEqual = require(15);
+var isNull = require(8),
+    isUndefined = require(9),
+    isArrayLike = require(10),
+    isNumber = require(11),
+    Iterator = require(12),
+    fastBindThis = require(13),
+    fastSlice = require(14),
+    defineProperty = require(15),
+    freeze = require(16),
+    isEqual = require(17);
 
 
 var INTERNAL_CREATE = {},
@@ -923,16 +1100,16 @@ function findNode(root, index) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-vector@0.0.3/src/index.js-=@*/
-var freeze = require(14),
-    Iterator = require(10),
-    isNull = require(6),
-    isUndefined = require(7),
-    isNumber = require(9),
-    isArrayLike = require(8),
-    fastBindThis = require(11),
-    fastSlice = require(12),
-    defineProperty = require(13),
-    isEqual = require(15);
+var freeze = require(16),
+    Iterator = require(12),
+    isNull = require(8),
+    isUndefined = require(9),
+    isNumber = require(11),
+    isArrayLike = require(10),
+    fastBindThis = require(13),
+    fastSlice = require(14),
+    defineProperty = require(15),
+    isEqual = require(17);
 
 
 var INTERNAL_CREATE = {},
@@ -1804,20 +1981,20 @@ function cloneArray(a, length) {
 }
 },
 function(require, exports, module, undefined, global) {
-/*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/index.js-=@*/
-var has = require(24),
-    freeze = require(14),
-    isNull = require(6),
-    isUndefined = require(7),
-    isObject = require(18),
-    defineProperty = require(13),
-    isEqual = require(15),
-    hashCode = require(30),
-    isArrayLike = require(8),
-    fastBindThis = require(11),
-    Box = require(31),
-    Iterator = require(32),
-    BitmapIndexedNode = require(33);
+/*@=-@nathanfaucett/immutable-hash_map@0.0.4/src/index.js-=@*/
+var has = require(26),
+    freeze = require(16),
+    isNull = require(8),
+    isUndefined = require(9),
+    isObject = require(20),
+    defineProperty = require(15),
+    isEqual = require(17),
+    hashCode = require(32),
+    isArrayLike = require(10),
+    fastBindThis = require(13),
+    Box = require(33),
+    Iterator = require(34),
+    BitmapIndexedNode = require(35);
 
 
 var INTERNAL_CREATE = {},
@@ -2324,12 +2501,12 @@ HashMapPrototype.equals = function(b) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-set@0.0.3/src/index.js-=@*/
-var freeze = require(14),
-    Iterator = require(10),
-    ImmutableHashMap = require(59),
-    isUndefined = require(7),
-    isArrayLike = require(8),
-    defineProperty = require(13);
+var freeze = require(16),
+    Iterator = require(12),
+    ImmutableHashMap = require(61),
+    isUndefined = require(9),
+    isArrayLike = require(10),
+    defineProperty = require(15);
 
 
 var INTERNAL_CREATE = {},
@@ -2771,12 +2948,12 @@ SetPrototype.equals = function(other) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-record@0.0.3/src/index.js-=@*/
-var ImmutableHashMap = require(3),
-    defineProperty = require(13),
-    inherits = require(40),
-    keys = require(47),
-    has = require(24),
-    freeze = require(14);
+var ImmutableHashMap = require(74),
+    defineProperty = require(15),
+    inherits = require(42),
+    keys = require(49),
+    has = require(26),
+    freeze = require(16);
 
 
 var INTERNAL_CREATE = {},
@@ -3053,6 +3230,19 @@ function Record_createProps(defaultProps, props, keys) {
 }
 },
 function(require, exports, module, undefined, global) {
+/*@=-indexof@0.0.1/index.js-=@*/
+
+var indexOf = [].indexOf;
+
+module.exports = function(arr, obj){
+  if (indexOf) return arr.indexOf(obj);
+  for (var i = 0; i < arr.length; ++i) {
+    if (arr[i] === obj) return i;
+  }
+  return -1;
+};
+},
+function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/is_null@0.0.1/src/index.js-=@*/
 module.exports = isNull;
 
@@ -3074,9 +3264,9 @@ function isUndefined(value) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/is_array_like@0.0.2/src/index.js-=@*/
-var isLength = require(16),
-    isFunction = require(17),
-    isObject = require(18);
+var isLength = require(18),
+    isFunction = require(19),
+    isObject = require(20);
 
 
 module.exports = isArrayLike;
@@ -3099,9 +3289,9 @@ function isNumber(value) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/iterator@0.0.2/src/index.js-=@*/
-var apply = require(19),
-    isFunction = require(17),
-    isUndefined = require(7);
+var apply = require(21),
+    isFunction = require(19),
+    isUndefined = require(9);
 
 
 var KEYS = 0,
@@ -3199,7 +3389,7 @@ IteratorPrototype[ITERATOR_SYMBOL] = IteratorPrototype.iterator;
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/fast_bind_this@0.0.1/src/index.js-=@*/
-var isNumber = require(9);
+var isNumber = require(11);
 
 
 module.exports = fastBindThis;
@@ -3237,8 +3427,8 @@ function fastBindThis(callback, thisArg, length) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/fast_slice@0.0.1/src/index.js-=@*/
-var clamp = require(21),
-    isNumber = require(9);
+var clamp = require(23),
+    isNumber = require(11);
 
 
 module.exports = fastSlice;
@@ -3265,11 +3455,11 @@ function fastSlice(array, offset) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/define_property@0.0.3/src/index.js-=@*/
-var isObject = require(18),
-    isFunction = require(17),
-    isPrimitive = require(22),
-    isNative = require(23),
-    has = require(24);
+var isObject = require(20),
+    isFunction = require(19),
+    isPrimitive = require(24),
+    isNative = require(25),
+    has = require(26);
 
 
 var nativeDefineProperty = Object.defineProperty;
@@ -3323,8 +3513,8 @@ if (!isNative(nativeDefineProperty) || !(function() {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/freeze@0.0.1/src/index.js-=@*/
-var isNative = require(23),
-    emptyFunction = require(29);
+var isNative = require(25),
+    emptyFunction = require(31);
 
 
 var nativeFreeze = Object.freeze;
@@ -3363,7 +3553,7 @@ function isEqual(a, b) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/is_length@0.0.1/src/index.js-=@*/
-var isNumber = require(9);
+var isNumber = require(11);
 
 
 var MAX_SAFE_INTEGER = Math.pow(2, 53) - 1;
@@ -3403,7 +3593,7 @@ module.exports = isFunction;
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/is_object@0.0.1/src/index.js-=@*/
-var isNull = require(6);
+var isNull = require(8);
 
 
 module.exports = isObject;
@@ -3417,7 +3607,7 @@ function isObject(value) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/apply@0.0.1/src/index.js-=@*/
-var isNullOrUndefined = require(20);
+var isNullOrUndefined = require(22);
 
 
 module.exports = apply;
@@ -3472,8 +3662,8 @@ function applyThisArg(fn, args, thisArg) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/is_null_or_undefined@0.0.1/src/index.js-=@*/
-var isNull = require(6),
-    isUndefined = require(7);
+var isNull = require(8),
+    isUndefined = require(9);
 
 
 module.exports = isNullOrUndefined;
@@ -3514,7 +3704,7 @@ function clamp(x, min, max) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/is_primitive@0.0.2/src/index.js-=@*/
-var isNullOrUndefined = require(20);
+var isNullOrUndefined = require(22);
 
 
 module.exports = isPrimitive;
@@ -3528,9 +3718,9 @@ function isPrimitive(obj) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/is_native@0.0.2/src/index.js-=@*/
-var isFunction = require(17),
-    isNullOrUndefined = require(20),
-    escapeRegExp = require(25);
+var isFunction = require(19),
+    isNullOrUndefined = require(22),
+    escapeRegExp = require(27);
 
 
 var reHostCtor = /^\[object .+?Constructor\]$/,
@@ -3576,9 +3766,9 @@ isHostObject = function isHostObject(value) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/has@0.0.2/src/index.js-=@*/
-var isNative = require(23),
-    getPrototypeOf = require(28),
-    isNullOrUndefined = require(20);
+var isNative = require(25),
+    getPrototypeOf = require(30),
+    isNullOrUndefined = require(22);
 
 
 var nativeHasOwnProp = Object.prototype.hasOwnProperty,
@@ -3619,7 +3809,7 @@ if (isNative(nativeHasOwnProp)) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/escape_regexp@0.0.1/src/index.js-=@*/
-var toString = require(26);
+var toString = require(28);
 
 
 var reRegExpChars = /[.*+?\^${}()|\[\]\/\\]/g,
@@ -3641,8 +3831,8 @@ function escapeRegExp(string) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/to_string@0.0.1/src/index.js-=@*/
-var isString = require(27),
-    isNullOrUndefined = require(20);
+var isString = require(29),
+    isNullOrUndefined = require(22);
 
 
 module.exports = toString;
@@ -3671,9 +3861,9 @@ function isString(value) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/get_prototype_of@0.0.1/src/index.js-=@*/
-var isObject = require(18),
-    isNative = require(23),
-    isNullOrUndefined = require(20);
+var isObject = require(20),
+    isNative = require(25),
+    isNullOrUndefined = require(22);
 
 
 var nativeGetPrototypeOf = Object.getPrototypeOf,
@@ -3735,15 +3925,15 @@ emptyFunction.thatReturnsArgument = function(argument) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/hash_code@0.0.2/src/index.js-=@*/
-var WeakMapPolyfill = require(34),
-    isNumber = require(9),
-    isString = require(27),
-    isFunction = require(17),
-    isBoolean = require(35),
-    isNullOrUndefined = require(20),
-    numberHashCode = require(36),
-    booleanHashCode = require(37),
-    stringHashCode = require(38);
+var WeakMapPolyfill = require(36),
+    isNumber = require(11),
+    isString = require(29),
+    isFunction = require(19),
+    isBoolean = require(37),
+    isNullOrUndefined = require(22),
+    numberHashCode = require(38),
+    booleanHashCode = require(39),
+    stringHashCode = require(40);
 
 
 var WEAK_MAP = new WeakMapPolyfill(),
@@ -3806,7 +3996,7 @@ function setHashCode(value) {
 
 },
 function(require, exports, module, undefined, global) {
-/*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/Box.js-=@*/
+/*@=-@nathanfaucett/immutable-hash_map@0.0.4/src/Box.js-=@*/
 module.exports = Box;
 
 
@@ -3815,9 +4005,9 @@ function Box(value) {
 }
 },
 function(require, exports, module, undefined, global) {
-/*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/Iterator.js-=@*/
-var inherits = require(40),
-    BaseIterator = require(10);
+/*@=-@nathanfaucett/immutable-hash_map@0.0.4/src/Iterator.js-=@*/
+var inherits = require(42),
+    BaseIterator = require(12);
 
 
 module.exports = Iterator;
@@ -3830,18 +4020,18 @@ function Iterator(hasNext, next) {
 inherits(Iterator, BaseIterator);
 },
 function(require, exports, module, undefined, global) {
-/*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/BitmapIndexedNode.js-=@*/
-var isNull = require(6),
-    isEqual = require(15),
-    hashCode = require(30),
-    bitCount = require(48),
-    consts = require(49),
-    bitpos = require(50),
-    arrayCopy = require(51),
-    cloneAndSet = require(52),
-    removePair = require(53),
-    mask = require(54),
-    nodeIterator = require(55),
+/*@=-@nathanfaucett/immutable-hash_map@0.0.4/src/BitmapIndexedNode.js-=@*/
+var isNull = require(8),
+    isEqual = require(17),
+    hashCode = require(32),
+    bitCount = require(50),
+    consts = require(51),
+    bitpos = require(52),
+    arrayCopy = require(53),
+    cloneAndSet = require(54),
+    removePair = require(55),
+    mask = require(56),
+    nodeIterator = require(57),
     ArrayNode, createNode;
 
 
@@ -3855,8 +4045,8 @@ var baseArrayCopy = arrayCopy.base,
 module.exports = BitmapIndexedNode;
 
 
-ArrayNode = require(56);
-createNode = require(57);
+ArrayNode = require(58);
+createNode = require(59);
 
 
 function BitmapIndexedNode(bitmap, array) {
@@ -4005,9 +4195,9 @@ function getIndex(bitmap, bit) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/weak_map_polyfill@0.0.2/src/index.js-=@*/
-var isNative = require(23),
-    isPrimitive = require(22),
-    createStore = require(39);
+var isNative = require(25),
+    isPrimitive = require(24),
+    createStore = require(41);
 
 
 var NativeWeakMap = typeof(WeakMap) !== "undefined" ? WeakMap : null,
@@ -4100,7 +4290,7 @@ function booleanHashCode(bool) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/string-hash_code@0.0.1/src/index.js-=@*/
-var isUndefined = require(7);
+var isUndefined = require(9);
 
 
 var STRING_HASH_CACHE_MIN_STRING_LENGTH = 16,
@@ -4153,9 +4343,9 @@ function hashString(string) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/create_store@0.0.2/src/index.js-=@*/
-var has = require(24),
-    defineProperty = require(13),
-    isPrimitive = require(22);
+var has = require(26),
+    defineProperty = require(15),
+    isPrimitive = require(24);
 
 
 var emptyStore = {
@@ -4269,10 +4459,10 @@ function privateStore(key, privateKey) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/inherits@0.0.3/src/index.js-=@*/
-var create = require(41),
-    extend = require(42),
-    mixin = require(43),
-    defineProperty = require(44);
+var create = require(43),
+    extend = require(44),
+    mixin = require(45),
+    defineProperty = require(46);
 
 
 var descriptor = {
@@ -4319,9 +4509,9 @@ function defineStatic(name, value) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/create@0.0.2/src/index.js-=@*/
-var isNull = require(6),
-    isNative = require(23),
-    isPrimitive = require(22);
+var isNull = require(8),
+    isNative = require(25),
+    isPrimitive = require(24);
 
 
 var nativeCreate = Object.create;
@@ -4358,8 +4548,8 @@ if (!isNative(nativeCreate)) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/extend@0.0.2/src/index.js-=@*/
-var keys = require(45),
-    isNative = require(23);
+var keys = require(47),
+    isNative = require(25);
 
 
 var nativeAssign = Object.assign,
@@ -4398,8 +4588,8 @@ module.exports = extend;
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/mixin@0.0.2/src/index.js-=@*/
-var keys = require(47),
-    isNullOrUndefined = require(20);
+var keys = require(49),
+    isNullOrUndefined = require(22);
 
 
 module.exports = mixin;
@@ -4434,11 +4624,11 @@ function baseMixin(a, b) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/define_property@0.0.2/src/index.js-=@*/
-var isObject = require(18),
-    isFunction = require(17),
-    isPrimitive = require(22),
-    isNative = require(23),
-    has = require(46);
+var isObject = require(20),
+    isFunction = require(19),
+    isPrimitive = require(24),
+    isNative = require(25),
+    has = require(48);
 
 
 var nativeDefineProperty = Object.defineProperty;
@@ -4492,10 +4682,10 @@ if (!isNative(nativeDefineProperty) || !(function() {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/keys@0.0.1/src/index.js-=@*/
-var has = require(46),
-    isNative = require(23),
-    isNullOrUndefined = require(20),
-    isObject = require(18);
+var has = require(48),
+    isNative = require(25),
+    isNullOrUndefined = require(22),
+    isObject = require(20);
 
 
 var nativeKeys = Object.keys;
@@ -4532,9 +4722,9 @@ if (!isNative(nativeKeys)) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/has@0.0.1/src/index.js-=@*/
-var isNative = require(23),
-    getPrototypeOf = require(28),
-    isNullOrUndefined = require(20);
+var isNative = require(25),
+    getPrototypeOf = require(30),
+    isNullOrUndefined = require(22);
 
 
 var nativeHasOwnProp = Object.prototype.hasOwnProperty,
@@ -4575,10 +4765,10 @@ if (isNative(nativeHasOwnProp)) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/keys@0.0.2/src/index.js-=@*/
-var has = require(24),
-    isNative = require(23),
-    isNullOrUndefined = require(20),
-    isObject = require(18);
+var has = require(26),
+    isNative = require(25),
+    isNullOrUndefined = require(22),
+    isObject = require(20);
 
 
 var nativeKeys = Object.keys;
@@ -4629,7 +4819,7 @@ function bitCount(i) {
 
 },
 function(require, exports, module, undefined, global) {
-/*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/consts.js-=@*/
+/*@=-@nathanfaucett/immutable-hash_map@0.0.4/src/consts.js-=@*/
 var consts = exports;
 
 
@@ -4641,8 +4831,8 @@ consts.MAX_ARRAY_MAP_SIZE = consts.SIZE / 4;
 consts.MAX_BITMAP_INDEXED_SIZE = consts.SIZE / 2;
 },
 function(require, exports, module, undefined, global) {
-/*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/bitpos.js-=@*/
-var mask = require(54);
+/*@=-@nathanfaucett/immutable-hash_map@0.0.4/src/bitpos.js-=@*/
+var mask = require(56);
 
 
 module.exports = bitpos;
@@ -4654,8 +4844,8 @@ function bitpos(hashCode, shift) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/array_copy@0.0.1/src/index.js-=@*/
-var clamp = require(21),
-    isUndefined = require(7);
+var clamp = require(23),
+    isUndefined = require(9);
 
 
 module.exports = copyArray;
@@ -4685,9 +4875,9 @@ function baseArrayCopy(src, srcPos, dest, destPos, length) {
 
 },
 function(require, exports, module, undefined, global) {
-/*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/cloneAndSet.js-=@*/
-var isUndefined = require(7),
-    arrayCopy = require(51);
+/*@=-@nathanfaucett/immutable-hash_map@0.0.4/src/cloneAndSet.js-=@*/
+var isUndefined = require(9),
+    arrayCopy = require(53);
 
 
 var baseArrayCopy = arrayCopy.base;
@@ -4711,8 +4901,8 @@ function cloneAndSet(array, index0, value0, index1, value1) {
 }
 },
 function(require, exports, module, undefined, global) {
-/*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/removePair.js-=@*/
-var arrayCopy = require(51);
+/*@=-@nathanfaucett/immutable-hash_map@0.0.4/src/removePair.js-=@*/
+var arrayCopy = require(53);
 
 
 var baseArrayCopy = arrayCopy.base;
@@ -4732,8 +4922,8 @@ function removePair(array, index) {
 }
 },
 function(require, exports, module, undefined, global) {
-/*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/mask.js-=@*/
-var consts = require(49);
+/*@=-@nathanfaucett/immutable-hash_map@0.0.4/src/mask.js-=@*/
+var consts = require(51);
 
 
 var MASK = consts.MASK;
@@ -4747,10 +4937,10 @@ function mask(hashCode, shift) {
 }
 },
 function(require, exports, module, undefined, global) {
-/*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/nodeIterator.js-=@*/
-var isNull = require(6),
-    isUndefined = require(7),
-    Iterator = require(32);
+/*@=-@nathanfaucett/immutable-hash_map@0.0.4/src/nodeIterator.js-=@*/
+var isNull = require(8),
+    isUndefined = require(9),
+    Iterator = require(34);
 
 
 var IteratorValue = Iterator.Value;
@@ -4894,13 +5084,13 @@ function iteratorReverse(_this) {
 }
 },
 function(require, exports, module, undefined, global) {
-/*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/ArrayNode.js-=@*/
-var isNull = require(6),
-    isNullOrUndefined = require(20),
-    consts = require(49),
-    mask = require(54),
-    cloneAndSet = require(52),
-    Iterator = require(32),
+/*@=-@nathanfaucett/immutable-hash_map@0.0.4/src/ArrayNode.js-=@*/
+var isNull = require(8),
+    isNullOrUndefined = require(22),
+    consts = require(51),
+    mask = require(56),
+    cloneAndSet = require(54),
+    Iterator = require(34),
     BitmapIndexedNode;
 
 
@@ -4914,7 +5104,7 @@ var SHIFT = consts.SHIFT,
 module.exports = ArrayNode;
 
 
-BitmapIndexedNode = require(33);
+BitmapIndexedNode = require(35);
 
 
 function ArrayNode(count, array) {
@@ -4931,7 +5121,7 @@ ArrayNodePrototype.get = function(shift, keyHash, key, notSetValue) {
     if (isNullOrUndefined(node)) {
         return notSetValue;
     } else {
-        return node.get(shift + SHIFT, hash, key, notSetValue);
+        return node.get(shift + SHIFT, keyHash, key, notSetValue);
     }
 };
 
@@ -5104,19 +5294,20 @@ function pack(array, index) {
 
     return new BitmapIndexedNode(bitmap, newArray);
 }
+
 },
 function(require, exports, module, undefined, global) {
-/*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/createNode.js-=@*/
-var hashCode = require(30),
-    Box = require(31),
+/*@=-@nathanfaucett/immutable-hash_map@0.0.4/src/createNode.js-=@*/
+var hashCode = require(32),
+    Box = require(33),
     HashCollisionNode, BitmapIndexedNode;
 
 
 module.exports = createNode;
 
 
-HashCollisionNode = require(58);
-BitmapIndexedNode = require(33);
+HashCollisionNode = require(60);
+BitmapIndexedNode = require(35);
 
 
 function createNode(shift, key0, value0, keyHash1, key1, value1) {
@@ -5134,13 +5325,13 @@ function createNode(shift, key0, value0, keyHash1, key1, value1) {
 }
 },
 function(require, exports, module, undefined, global) {
-/*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/HashCollisionNode.js-=@*/
-var isEqual = require(15),
-    bitpos = require(50),
-    arrayCopy = require(51),
-    cloneAndSet = require(52),
-    removePair = require(53),
-    nodeIterator = require(55),
+/*@=-@nathanfaucett/immutable-hash_map@0.0.4/src/HashCollisionNode.js-=@*/
+var isEqual = require(17),
+    bitpos = require(52),
+    arrayCopy = require(53),
+    cloneAndSet = require(54),
+    removePair = require(55),
+    nodeIterator = require(57),
     BitmapIndexedNode;
 
 
@@ -5152,7 +5343,7 @@ var baseArrayCopy = arrayCopy.base,
 module.exports = HashCollisionNode;
 
 
-BitmapIndexedNode = require(33);
+BitmapIndexedNode = require(35);
 
 
 function HashCollisionNode(keyHash, count, array) {
@@ -5237,19 +5428,19 @@ function getIndex(array, key) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/index.js-=@*/
-var has = require(24),
-    freeze = require(14),
-    isNull = require(6),
-    isUndefined = require(7),
-    isObject = require(18),
-    defineProperty = require(13),
-    isEqual = require(15),
-    hashCode = require(30),
-    isArrayLike = require(8),
-    fastBindThis = require(11),
-    Box = require(60),
-    Iterator = require(61),
-    BitmapIndexedNode = require(62);
+var has = require(26),
+    freeze = require(16),
+    isNull = require(8),
+    isUndefined = require(9),
+    isObject = require(20),
+    defineProperty = require(15),
+    isEqual = require(17),
+    hashCode = require(32),
+    isArrayLike = require(10),
+    fastBindThis = require(13),
+    Box = require(62),
+    Iterator = require(63),
+    BitmapIndexedNode = require(64);
 
 
 var INTERNAL_CREATE = {},
@@ -5758,8 +5949,8 @@ function Box(value) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/Iterator.js-=@*/
-var inherits = require(40),
-    BaseIterator = require(10);
+var inherits = require(42),
+    BaseIterator = require(12);
 
 
 module.exports = Iterator;
@@ -5773,17 +5964,17 @@ inherits(Iterator, BaseIterator);
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/BitmapIndexedNode.js-=@*/
-var isNull = require(6),
-    isEqual = require(15),
-    hashCode = require(30),
-    bitCount = require(48),
-    consts = require(63),
-    bitpos = require(64),
-    arrayCopy = require(51),
-    cloneAndSet = require(65),
-    removePair = require(66),
-    mask = require(67),
-    nodeIterator = require(68),
+var isNull = require(8),
+    isEqual = require(17),
+    hashCode = require(32),
+    bitCount = require(50),
+    consts = require(65),
+    bitpos = require(66),
+    arrayCopy = require(53),
+    cloneAndSet = require(67),
+    removePair = require(68),
+    mask = require(69),
+    nodeIterator = require(70),
     ArrayNode, createNode;
 
 
@@ -5797,8 +5988,8 @@ var baseArrayCopy = arrayCopy.base,
 module.exports = BitmapIndexedNode;
 
 
-ArrayNode = require(69);
-createNode = require(70);
+ArrayNode = require(71);
+createNode = require(72);
 
 
 function BitmapIndexedNode(bitmap, array) {
@@ -5959,7 +6150,7 @@ consts.MAX_BITMAP_INDEXED_SIZE = consts.SIZE / 2;
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/bitpos.js-=@*/
-var mask = require(67);
+var mask = require(69);
 
 
 module.exports = bitpos;
@@ -5971,8 +6162,8 @@ function bitpos(hashCode, shift) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/cloneAndSet.js-=@*/
-var isUndefined = require(7),
-    arrayCopy = require(51);
+var isUndefined = require(9),
+    arrayCopy = require(53);
 
 
 var baseArrayCopy = arrayCopy.base;
@@ -5997,7 +6188,7 @@ function cloneAndSet(array, index0, value0, index1, value1) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/removePair.js-=@*/
-var arrayCopy = require(51);
+var arrayCopy = require(53);
 
 
 var baseArrayCopy = arrayCopy.base;
@@ -6018,7 +6209,7 @@ function removePair(array, index) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/mask.js-=@*/
-var consts = require(63);
+var consts = require(65);
 
 
 var MASK = consts.MASK;
@@ -6033,9 +6224,9 @@ function mask(hashCode, shift) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/nodeIterator.js-=@*/
-var isNull = require(6),
-    isUndefined = require(7),
-    Iterator = require(61);
+var isNull = require(8),
+    isUndefined = require(9),
+    Iterator = require(63);
 
 
 var IteratorValue = Iterator.Value;
@@ -6180,12 +6371,12 @@ function iteratorReverse(_this) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/ArrayNode.js-=@*/
-var isNull = require(6),
-    isNullOrUndefined = require(20),
-    consts = require(63),
-    mask = require(67),
-    cloneAndSet = require(65),
-    Iterator = require(61),
+var isNull = require(8),
+    isNullOrUndefined = require(22),
+    consts = require(65),
+    mask = require(69),
+    cloneAndSet = require(67),
+    Iterator = require(63),
     BitmapIndexedNode;
 
 
@@ -6199,7 +6390,7 @@ var SHIFT = consts.SHIFT,
 module.exports = ArrayNode;
 
 
-BitmapIndexedNode = require(62);
+BitmapIndexedNode = require(64);
 
 
 function ArrayNode(count, array) {
@@ -6392,16 +6583,16 @@ function pack(array, index) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/createNode.js-=@*/
-var hashCode = require(30),
-    Box = require(60),
+var hashCode = require(32),
+    Box = require(62),
     HashCollisionNode, BitmapIndexedNode;
 
 
 module.exports = createNode;
 
 
-HashCollisionNode = require(71);
-BitmapIndexedNode = require(62);
+HashCollisionNode = require(73);
+BitmapIndexedNode = require(64);
 
 
 function createNode(shift, key0, value0, keyHash1, key1, value1) {
@@ -6420,12 +6611,12 @@ function createNode(shift, key0, value0, keyHash1, key1, value1) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/HashCollisionNode.js-=@*/
-var isEqual = require(15),
-    bitpos = require(64),
-    arrayCopy = require(51),
-    cloneAndSet = require(65),
-    removePair = require(66),
-    nodeIterator = require(68),
+var isEqual = require(17),
+    bitpos = require(66),
+    arrayCopy = require(53),
+    cloneAndSet = require(67),
+    removePair = require(68),
+    nodeIterator = require(70),
     BitmapIndexedNode;
 
 
@@ -6437,7 +6628,1299 @@ var baseArrayCopy = arrayCopy.base,
 module.exports = HashCollisionNode;
 
 
-BitmapIndexedNode = require(62);
+BitmapIndexedNode = require(64);
+
+
+function HashCollisionNode(keyHash, count, array) {
+    this.keyHash = keyHash;
+    this.count = count;
+    this.array = array;
+}
+
+HashCollisionNode.EMPTY = EMPTY;
+
+HashCollisionNodePrototype.get = function(shift, keyHash, key, notSetValue) {
+    var array = this.array,
+        index = getIndex(array, key);
+
+    if (index === -1) {
+        return notFound;
+    } else {
+        if (isEqual(key, array[index])) {
+            return array[index + 1];
+        } else {
+            return notSetValue;
+        }
+    }
+};
+
+HashCollisionNodePrototype.set = function(shift, keyHash, key, value, addedLeaf) {
+    var index, count, array, newArray;
+
+    if (keyHash === this.keyHash) {
+        array = this.array;
+        count = this.count,
+            index = getIndex(array, key);
+
+        if (index !== -1) {
+            if (array[index + 1] === value) {
+                return this;
+            } else {
+                return new HashCollisionNode(keyHash, count, cloneAndSet(array, index + 1, value));
+            }
+        } else {
+            newArray = new Array(2 * (count + 1));
+            baseArrayCopy(array, 0, newArray, 0, 2 * count);
+            newArray[2 * count] = key;
+            newArray[2 * count + 1] = value;
+            addedLeaf.value = addedLeaf;
+            return new HashCollisionNode(keyHash, count + 1, newArray);
+        }
+    } else {
+        return new BitmapIndexedNode(bitpos(this.keyHash, shift), [null, this]).set(shift, keyHash, key, value, addedLeaf);
+    }
+};
+
+HashCollisionNodePrototype.remove = function(shift, keyHash, key) {
+    var array = this.array,
+        index = getIndex(array, key);
+
+    if (index === -1) {
+        return this;
+    } else {
+        if (array.length === 1) {
+            return null;
+        } else {
+            return new HashCollisionNode(hash, count - 1, removePair(array, index / 2));
+        }
+    }
+};
+
+HashCollisionNodePrototype.iterator = nodeIterator;
+
+function getIndex(array, key) {
+    var i = -1,
+        il = array.length - 1;
+
+    while (i++ < il) {
+        if (isEqual(array[i], key)) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+},
+function(require, exports, module, undefined, global) {
+/*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/index.js-=@*/
+var has = require(26),
+    freeze = require(16),
+    isNull = require(8),
+    isUndefined = require(9),
+    isObject = require(20),
+    defineProperty = require(15),
+    isEqual = require(17),
+    hashCode = require(32),
+    isArrayLike = require(10),
+    fastBindThis = require(13),
+    Box = require(75),
+    Iterator = require(76),
+    BitmapIndexedNode = require(77);
+
+
+var INTERNAL_CREATE = {},
+
+    ITERATOR_SYMBOL = typeof(Symbol) === "function" ? Symbol.iterator : false,
+    IS_MAP = "__ImmutableHashMap__",
+
+    NOT_SET = {},
+    EMPTY_MAP = freeze(new HashMap(INTERNAL_CREATE)),
+
+    IteratorValue = Iterator.Value,
+
+    HashMapPrototype;
+
+
+module.exports = HashMap;
+
+
+function HashMap(value) {
+    if (!(this instanceof HashMap)) {
+        throw new Error("HashMap() must be called with new");
+    }
+
+    this._size = 0;
+    this._root = null;
+
+    if (value !== INTERNAL_CREATE) {
+        return HashMap_createHashMap(this, value, arguments);
+    } else {
+        return this;
+    }
+}
+HashMapPrototype = HashMap.prototype;
+
+HashMap.EMPTY = EMPTY_MAP;
+
+function HashMap_createHashMap(_this, value, args) {
+    var length = args.length;
+
+    if (length === 1) {
+        if (isArrayLike(value)) {
+            return HashMap_fromArray(_this, value.toArray ? value.toArray() : value);
+        } else if (isObject(value)) {
+            return HashMap_fromObject(_this, value);
+        } else {
+            return EMPTY_MAP;
+        }
+    } else if (length > 1) {
+        return HashMap_fromArray(_this, args);
+    } else {
+        return EMPTY_MAP;
+    }
+}
+
+function HashMap_fromObject(_this, object) {
+    var size = 0,
+        root = BitmapIndexedNode.EMPTY,
+        key, value, newRoot, addedLeaf;
+
+    for (key in object) {
+        if (has(object, key)) {
+            value = object[key];
+
+            addedLeaf = new Box(null);
+            newRoot = root.set(0, hashCode(key), key, value, addedLeaf);
+
+            if (newRoot !== root) {
+                root = newRoot;
+                if (!isNull(addedLeaf.value)) {
+                    size += 1;
+                }
+            }
+        }
+    }
+
+    if (size !== 0) {
+        _this._size = size;
+        _this._root = newRoot;
+        return freeze(_this);
+    } else {
+        return EMPTY_MAP;
+    }
+}
+
+function HashMap_fromArray(_this, array) {
+    var i = 0,
+        il = array.length,
+        root = BitmapIndexedNode.EMPTY,
+        size = 0,
+        newRoot, key, value, addedLeaf;
+
+    while (i < il) {
+        key = array[i];
+        value = array[i + 1];
+        addedLeaf = new Box(null);
+
+        newRoot = root.set(0, hashCode(key), key, value, addedLeaf);
+        if (newRoot !== root) {
+            root = newRoot;
+            if (!isNull(addedLeaf.value)) {
+                size += 1;
+            }
+        }
+
+        i += 2;
+    }
+
+    if (size !== 0) {
+        _this._root = root;
+        _this._size = size;
+        return freeze(_this);
+    } else {
+        return EMPTY_MAP;
+    }
+}
+
+HashMap.fromArray = function(array) {
+    if (array.length > 0) {
+        return HashMap_createHashMap(new HashMap(INTERNAL_CREATE), array[0], array);
+    } else {
+        return EMPTY_MAP;
+    }
+};
+
+HashMap.fromObject = function(object) {
+    return HashMap_fromObject(new HashMap(INTERNAL_CREATE), object);
+};
+
+HashMap.of = function() {
+    return HashMap.fromArray(arguments);
+};
+
+HashMap.isHashMap = function(value) {
+    return !!(value && value[IS_MAP]);
+};
+
+defineProperty(HashMapPrototype, IS_MAP, {
+    configurable: false,
+    enumerable: false,
+    writable: false,
+    value: true
+});
+
+HashMapPrototype.size = function() {
+    return this._size;
+};
+
+if (defineProperty.hasGettersSetters) {
+    defineProperty(HashMapPrototype, "length", {
+        get: HashMapPrototype.size
+    });
+}
+
+HashMapPrototype.count = HashMapPrototype.size;
+
+HashMapPrototype.isEmpty = function() {
+    return this._size === 0;
+};
+
+HashMapPrototype.has = function(key) {
+    var root = this._root;
+    return isNull(root) ? false : root.get(0, hashCode(key), key, NOT_SET) !== NOT_SET;
+};
+
+HashMapPrototype.get = function(key, notSetValue) {
+    var root = this._root;
+    return isNull(root) ? notSetValue : root.get(0, hashCode(key), key);
+};
+
+HashMapPrototype.set = function(key, value) {
+    var root = this._root,
+        size = this._size,
+        addedLeaf = new Box(null),
+        newRoot = (isNull(root) ? BitmapIndexedNode.EMPTY : root).set(0, hashCode(key), key, value, addedLeaf),
+        map;
+
+    if (newRoot === root) {
+        return this;
+    } else {
+        map = new HashMap(INTERNAL_CREATE);
+        map._size = isNull(addedLeaf.value) ? size : size + 1;
+        map._root = newRoot;
+        return freeze(map);
+    }
+};
+
+HashMapPrototype.remove = function(key) {
+    var root = this._root,
+        size = this._size,
+        newRoot;
+
+    if (isNull(root)) {
+        return this;
+    } else if (size === 1) {
+        return EMPTY_MAP;
+    } else {
+        newRoot = root.remove(0, hashCode(key), key);
+
+        if (newRoot === root) {
+            return this;
+        } else {
+            map = new HashMap(INTERNAL_CREATE);
+            map._size = size - 1;
+            map._root = newRoot;
+            return freeze(map);
+        }
+    }
+};
+
+function hasNext() {
+    return false;
+}
+
+function next() {
+    return new IteratorValue(undefined, true);
+}
+
+HashMapPrototype.iterator = function(reverse) {
+    var root = this._root;
+
+    if (isNull(root)) {
+        return new Iterator(hasNext, next);
+    } else {
+        return root.iterator(reverse);
+    }
+};
+
+if (ITERATOR_SYMBOL) {
+    HashMapPrototype[ITERATOR_SYMBOL] = HashMapPrototype.iterator;
+}
+
+function HashMap_every(_this, it, callback) {
+    var next = it.next(),
+        nextValue;
+
+    while (next.done === false) {
+        nextValue = next.value;
+        if (!callback(nextValue[1], nextValue[0], _this)) {
+            return false;
+        }
+        next = it.next();
+    }
+
+    return true;
+}
+
+HashMapPrototype.every = function(callback, thisArg) {
+    return HashMap_every(this, this.iterator(), isUndefined(thisArg) ? callback : fastBindThis(callback, thisArg, 3));
+};
+
+function HashMap_filter(_this, it, callback) {
+    var results = [],
+        next = it.next(),
+        index = 0,
+        nextValue, key, value;
+
+    while (next.done === false) {
+        nextValue = next.value;
+        key = nextValue[0];
+        value = nextValue[1];
+
+        if (callback(value, key, _this)) {
+            results[index++] = key;
+            results[index++] = value;
+        }
+
+        next = it.next();
+    }
+
+    return HashMap.of(results);
+}
+
+HashMapPrototype.filter = function(callback, thisArg) {
+    return HashMap_filter(this, this.iterator(), isUndefined(thisArg) ? callback : fastBindThis(callback, thisArg, 3));
+};
+
+function HashMap_forEach(_this, it, callback) {
+    var next = it.next(),
+        nextValue;
+
+    while (next.done === false) {
+        nextValue = next.value;
+        if (callback(nextValue[1], nextValue[0], _this) === false) {
+            break;
+        }
+        next = it.next();
+    }
+
+    return _this;
+}
+
+HashMapPrototype.forEach = function(callback, thisArg) {
+    return HashMap_forEach(this, this.iterator(), isUndefined(thisArg) ? callback : fastBindThis(callback, thisArg, 3));
+};
+
+HashMapPrototype.each = HashMapPrototype.forEach;
+
+function HashMap_forEachRight(_this, it, callback) {
+    var next = it.next(),
+        nextValue;
+
+    while (next.done === false) {
+        nextValue = next.value;
+        if (callback(nextValue[1], nextValue[0], _this) === false) {
+            break;
+        }
+        next = it.next();
+    }
+
+    return _this;
+}
+
+HashMapPrototype.forEachRight = function(callback, thisArg) {
+    return HashMap_forEachRight(this, this.iterator(true), isUndefined(thisArg) ? callback : fastBindThis(callback, thisArg, 3));
+};
+
+HashMapPrototype.eachRight = HashMapPrototype.forEachRight;
+
+function HashMap_map(_this, it, callback) {
+    var next = it.next(),
+        results = new Array(_this._size * 2),
+        index = 0,
+        nextValue, key;
+
+    while (next.done === false) {
+        nextValue = next.value;
+        key = nextValue[0];
+        results[index++] = key;
+        results[index++] = callback(nextValue[1], key, _this);
+        next = it.next();
+    }
+
+    return HashMap.of(results);
+}
+
+HashMapPrototype.map = function(callback, thisArg) {
+    return HashMap_map(this, this.iterator(), isUndefined(thisArg) ? callback : fastBindThis(callback, thisArg, 3));
+};
+
+function HashMap_reduce(_this, it, callback, initialValue) {
+    var next = it.next(),
+        value = initialValue,
+        nextValue, key;
+
+    if (isUndefined(value)) {
+        nextValue = next.value;
+        key = nextValue[0];
+        value = nextValue[1];
+        next = it.next();
+    }
+
+    while (next.done === false) {
+        nextValue = next.value;
+        value = callback(value, nextValue[1], key, _this);
+        next = it.next();
+    }
+
+    return value;
+}
+
+HashMapPrototype.reduce = function(callback, initialValue, thisArg) {
+    return HashMap_reduce(this, this.iterator(), isUndefined(thisArg) ? callback : fastBindThis(callback, thisArg, 4), initialValue);
+};
+
+function HashMap_reduceRight(_this, it, callback, initialValue) {
+    var next = it.next(),
+        value = initialValue,
+        nextValue, key;
+
+    if (isUndefined(value)) {
+        nextValue = next.value;
+        key = nextValue[0];
+        value = nextValue[1];
+        next = it.next();
+    }
+
+    while (next.done === false) {
+        nextValue = next.value;
+        value = callback(value, nextValue[1], key, _this);
+        next = it.next();
+    }
+
+    return value;
+}
+
+HashMapPrototype.reduceRight = function(callback, initialValue, thisArg) {
+    return HashMap_reduceRight(this, this.iterator(true), isUndefined(thisArg) ? callback : fastBindThis(callback, thisArg, 4), initialValue);
+};
+
+function HashMap_some(_this, it, callback) {
+    var next = it.next(),
+        nextValue;
+
+    while (next.done === false) {
+        nextValue = next.value;
+
+        if (callback(nextValue[1], nextValue[0], _this)) {
+            return true;
+        }
+        next = it.next();
+    }
+
+    return false;
+}
+
+HashMapPrototype.some = function(callback, thisArg) {
+    return HashMap_some(this, this.iterator(), isUndefined(thisArg) ? callback : fastBindThis(callback, thisArg, 3));
+};
+
+HashMapPrototype.toArray = function() {
+    var it = this.iterator(),
+        next = it.next(),
+        results = new Array(this._size * 2),
+        index = 0;
+
+    while (next.done === false) {
+        nextValue = next.value;
+        results[index++] = nextValue[0];
+        results[index++] = nextValue[1];
+        next = it.next();
+    }
+
+    return results;
+};
+
+HashMapPrototype.toObject = function() {
+    var it = this.iterator(),
+        results = {},
+        step;
+
+    while ((step = it.next()).done === false) {
+        nextValue = step.value;
+        results[nextValue[0]] = nextValue[1];
+    }
+
+    return results;
+};
+
+HashMap.fromJSON = HashMap.fromObject;
+HashMapPrototype.toJSON = HashMapPrototype.toObject;
+
+HashMapPrototype.join = function(separator, keyValueSeparator) {
+    var it = this.iterator(),
+        next = it.next(),
+        result = "";
+
+    separator = separator || ", ";
+    keyValueSeparator = keyValueSeparator || ": ";
+
+    while (!next.done) {
+        nextValue = next.value;
+        next = it.next();
+
+        if (next.done) {
+            result += nextValue[0] + keyValueSeparator + nextValue[1];
+            break;
+        } else {
+            result += nextValue[0] + keyValueSeparator + nextValue[1] + separator;
+        }
+    }
+
+    return result;
+};
+
+HashMapPrototype.toString = function() {
+    return "{" + this.join() + "}";
+};
+
+HashMapPrototype.inspect = HashMapPrototype.toString;
+
+function HashMap_equal(ait, bit) {
+    var anext = ait.next(),
+        bnext = bit.next(),
+        anextValue, bnextValue;
+
+    while (anext.done === false) {
+        anextValue = anext.value;
+        bnextValue = bnext.value;
+
+        if (!isEqual(anextValue[0], bnextValue[0]) || !isEqual(anextValue[1], bnextValue[1])) {
+            return false;
+        }
+
+        anext = ait.next();
+        bnext = bit.next();
+    }
+
+    return true;
+}
+
+HashMap.equal = function(a, b) {
+    if (a === b) {
+        return true;
+    } else if (!a || !b || a._size !== b._size) {
+        return false;
+    } else {
+        return HashMap_equal(a.iterator(), b.iterator());
+    }
+};
+
+HashMapPrototype.equals = function(b) {
+    return HashMap.equal(this, b);
+};
+},
+function(require, exports, module, undefined, global) {
+/*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/Box.js-=@*/
+module.exports = Box;
+
+
+function Box(value) {
+    this.value = value;
+}
+},
+function(require, exports, module, undefined, global) {
+/*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/Iterator.js-=@*/
+var inherits = require(42),
+    BaseIterator = require(12);
+
+
+module.exports = Iterator;
+
+
+function Iterator(hasNext, next) {
+    this.hasNext = hasNext;
+    this.next = next;
+}
+inherits(Iterator, BaseIterator);
+},
+function(require, exports, module, undefined, global) {
+/*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/BitmapIndexedNode.js-=@*/
+var isNull = require(8),
+    isEqual = require(17),
+    hashCode = require(32),
+    bitCount = require(50),
+    consts = require(78),
+    bitpos = require(79),
+    arrayCopy = require(53),
+    cloneAndSet = require(80),
+    removePair = require(81),
+    mask = require(82),
+    nodeIterator = require(83),
+    ArrayNode, createNode;
+
+
+var baseArrayCopy = arrayCopy.base,
+    SHIFT = consts.SHIFT,
+    MAX_BITMAP_INDEXED_SIZE = consts.MAX_BITMAP_INDEXED_SIZE,
+    EMPTY = new BitmapIndexedNode(0, []),
+    BitmapIndexedNodePrototype = BitmapIndexedNode.prototype;
+
+
+module.exports = BitmapIndexedNode;
+
+
+ArrayNode = require(84);
+createNode = require(85);
+
+
+function BitmapIndexedNode(bitmap, array) {
+    this.bitmap = bitmap;
+    this.array = array;
+}
+
+BitmapIndexedNode.EMPTY = EMPTY;
+
+BitmapIndexedNodePrototype.get = function(shift, keyHash, key, notSetValue) {
+    var bitmap = this.bitmap,
+        bit = bitpos(keyHash, shift),
+        array, index, keyOrNull, valueOrNode;
+
+    if ((bitmap & bit) === 0) {
+        return notSetValue;
+    } else {
+        array = this.array;
+        index = getIndex(bitmap, bit);
+
+        keyOrNull = array[2 * index];
+        valueOrNode = array[2 * index + 1];
+
+        if (isNull(keyOrNull)) {
+            return valueOrNode.get(shift + SHIFT, keyHash, key, notSetValue);
+        } else {
+            if (isEqual(key, keyOrNull)) {
+                return valueOrNode;
+            } else {
+                return notSetValue;
+            }
+        }
+    }
+};
+
+BitmapIndexedNodePrototype.set = function(shift, keyHash, key, value, addedLeaf) {
+    var array = this.array,
+        bitmap = this.bitmap,
+        bit = bitpos(keyHash, shift),
+        index = getIndex(bitmap, bit),
+        keyOrNull, valueOrNode, newNode, nodes, jIndex, i, j, newArray;
+
+    if ((bitmap & bit) !== 0) {
+        keyOrNull = array[2 * index];
+        valueOrNode = array[2 * index + 1];
+
+        if (isNull(keyOrNull)) {
+            newNode = valueOrNode.set(shift + SHIFT, keyHash, key, value, addedLeaf);
+
+            if (newNode === valueOrNode) {
+                return this;
+            } else {
+                return new BitmapIndexedNode(bitmap, cloneAndSet(array, 2 * index + 1, newNode));
+            }
+        }
+        if (isEqual(key, keyOrNull)) {
+            if (value === valueOrNode) {
+                return this;
+            } else {
+                return new BitmapIndexedNode(bitmap, cloneAndSet(array, 2 * index + 1, value));
+            }
+        }
+        addedLeaf.value = addedLeaf;
+        return new BitmapIndexedNode(bitmap,
+            cloneAndSet(array,
+                2 * index, null,
+                2 * index + 1, createNode(shift + SHIFT, keyOrNull, valueOrNode, keyHash, key, value)));
+    } else {
+        newNode = bitCount(bitmap);
+
+        if (newNode >= MAX_BITMAP_INDEXED_SIZE) {
+            nodes = new Array(32);
+            jIndex = mask(keyHash, shift);
+            nodes[jIndex] = EMPTY.set(shift + SHIFT, keyHash, key, value, addedLeaf);
+
+            i = -1;
+            j = 0;
+            while (i++ < 31) {
+                if (((bitmap >>> i) & 1) !== 0) {
+                    if (array[j] == null) {
+                        nodes[i] = array[j + 1];
+                    } else {
+                        nodes[i] = EMPTY.set(shift + SHIFT, hashCode(array[j]), array[j], array[j + 1], addedLeaf);
+                    }
+                    j += 2;
+                }
+            }
+
+            return new ArrayNode(newNode + 1, nodes);
+        } else {
+            newArray = new Array(2 * (newNode + 1));
+            baseArrayCopy(array, 0, newArray, 0, 2 * index);
+
+            newArray[2 * index] = key;
+            addedLeaf.value = addedLeaf;
+            newArray[2 * index + 1] = value;
+
+            baseArrayCopy(array, 2 * index, newArray, 2 * (index + 1), 2 * (newNode - index));
+
+            return new BitmapIndexedNode(bitmap | bit, newArray);
+        }
+    }
+};
+
+BitmapIndexedNodePrototype.remove = function(shift, keyHash, key) {
+    var bitmap = this.bitmap,
+        bit = bitpos(keyHash, shift),
+        index, array, newNode;
+
+    if ((bitmap & bit) === 0) {
+        return this;
+    } else {
+        index = getIndex(bitmap, bit);
+        array = this.array;
+
+        keyOrNull = array[2 * index];
+        valueOrNode = array[2 * index + 1];
+
+        if (isNull(keyOrNull)) {
+            newNode = valueOrNode.remove(shift + SHIFT, keyHash, key);
+
+            if (newNode === valueOrNode) {
+                return this;
+            } else if (!isNull(newNode)) {
+                return new BitmapIndexedNode(bitmap, cloneAndSet(array, 2 * index + 1, newNode));
+            } else if (bitmap === bit) {
+                return null;
+            } else {
+                return new BitmapIndexedNode(bitmap ^ bit, removePair(array, index));
+            }
+        } else {
+            if (isEqual(key, keyOrNull)) {
+                return new BitmapIndexedNode(bitmap ^ bit, removePair(array, index));
+            } else {
+                return this;
+            }
+        }
+    }
+};
+
+BitmapIndexedNodePrototype.iterator = nodeIterator;
+
+function getIndex(bitmap, bit) {
+    return bitCount(bitmap & (bit - 1));
+}
+},
+function(require, exports, module, undefined, global) {
+/*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/consts.js-=@*/
+var consts = exports;
+
+
+consts.SHIFT = 5;
+consts.SIZE = 1 << consts.SHIFT;
+consts.MASK = consts.SIZE - 1;
+
+consts.MAX_ARRAY_MAP_SIZE = consts.SIZE / 4;
+consts.MAX_BITMAP_INDEXED_SIZE = consts.SIZE / 2;
+},
+function(require, exports, module, undefined, global) {
+/*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/bitpos.js-=@*/
+var mask = require(82);
+
+
+module.exports = bitpos;
+
+
+function bitpos(hashCode, shift) {
+    return 1 << mask(hashCode, shift);
+}
+},
+function(require, exports, module, undefined, global) {
+/*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/cloneAndSet.js-=@*/
+var isUndefined = require(9),
+    arrayCopy = require(53);
+
+
+var baseArrayCopy = arrayCopy.base;
+
+
+module.exports = cloneAndSet;
+
+
+function cloneAndSet(array, index0, value0, index1, value1) {
+    var length = array.length,
+        results = new Array(length);
+
+    baseArrayCopy(array, 0, results, 0, length);
+
+    results[index0] = value0;
+    if (!isUndefined(index1)) {
+        results[index1] = value1;
+    }
+
+    return results;
+}
+},
+function(require, exports, module, undefined, global) {
+/*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/removePair.js-=@*/
+var arrayCopy = require(53);
+
+
+var baseArrayCopy = arrayCopy.base;
+
+
+module.exports = removePair;
+
+
+function removePair(array, index) {
+    var length = array.length,
+        newArray = new Array(length - 2);
+
+    baseArrayCopy(array, 0, newArray, 0, 2 * index);
+    baseArrayCopy(array, 2 * (index + 1), newArray, 2 * index, length - 2 * index);
+
+    return newArray;
+}
+},
+function(require, exports, module, undefined, global) {
+/*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/mask.js-=@*/
+var consts = require(78);
+
+
+var MASK = consts.MASK;
+
+
+module.exports = mask;
+
+
+function mask(hashCode, shift) {
+    return (hashCode >>> shift) & MASK;
+}
+},
+function(require, exports, module, undefined, global) {
+/*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/nodeIterator.js-=@*/
+var isNull = require(8),
+    isUndefined = require(9),
+    Iterator = require(76);
+
+
+var IteratorValue = Iterator.Value;
+
+
+module.exports = nodeIterator;
+
+
+function nodeIterator(reverse) {
+    if (reverse !== true) {
+        return iterator(this);
+    } else {
+        return iteratorReverse(this);
+    }
+}
+
+function iterator(_this) {
+    var array = _this.array,
+        index = 0,
+        length = array.length,
+        nextIter = null,
+        nextEntry = null;
+
+    function advance() {
+        var key, iter;
+
+        while (index < length) {
+            key = array[index];
+            valueOrNode = array[index + 1];
+            index += 2;
+
+            if (!isUndefined(key)) {
+                nextEntry = [key, valueOrNode];
+                return true;
+            } else if (!isUndefined(valueOrNode)) {
+                iter = valueOrNode.iterator();
+
+                if (!isNull(iter) && iter.hasNext()) {
+                    nextIter = iter;
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    function hasNext() {
+        if (!isNull(nextEntry) || !isNull(nextIter)) {
+            return true;
+        } else {
+            return advance();
+        }
+    }
+
+    function next() {
+        var entry = nextEntry;
+
+        if (!isNull(entry)) {
+            nextEntry = null;
+            return new IteratorValue(entry, false);
+        } else if (!isNull(nextIter)) {
+            entry = nextIter.next();
+
+            if (!nextIter.hasNext()) {
+                nextIter = null;
+            }
+
+            return new IteratorValue(entry, false);
+        } else if (advance()) {
+            return next();
+        } else {
+            return new IteratorValue(undefined, true);
+        }
+    }
+
+    return new Iterator(hasNext, next);
+}
+
+function iteratorReverse(_this) {
+    var array = _this.array,
+        length = array.length,
+        index = length - 1,
+        nextIter = null,
+        nextEntry = null;
+
+    function advance() {
+        var key, iter;
+
+        while (index > -1) {
+            key = array[index - 1];
+            valueOrNode = array[index];
+            index -= 2;
+
+            if (!isUndefined(key)) {
+                nextEntry = [key, valueOrNode];
+                return true;
+            } else if (!isUndefined(valueOrNode)) {
+                iter = valueOrNode.iterator();
+
+                if (!isNull(iter) && iter.hasNext()) {
+                    nextIter = iter;
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    function hasNext() {
+        if (!isNull(nextEntry) || !isNull(nextIter)) {
+            return true;
+        } else {
+            return advance();
+        }
+    }
+
+    function next() {
+        var entry = nextEntry;
+
+        if (!isNull(entry)) {
+            nextEntry = null;
+            return new IteratorValue(entry, false);
+        } else if (!isNull(nextIter)) {
+            entry = nextIter.next();
+
+            if (!nextIter.hasNext()) {
+                nextIter = null;
+            }
+
+            return new IteratorValue(entry, false);
+        } else if (advance()) {
+            return next();
+        } else {
+            return new IteratorValue(undefined, true);
+        }
+    }
+
+    return new Iterator(hasNext, next);
+}
+},
+function(require, exports, module, undefined, global) {
+/*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/ArrayNode.js-=@*/
+var isNull = require(8),
+    isNullOrUndefined = require(22),
+    consts = require(78),
+    mask = require(82),
+    cloneAndSet = require(80),
+    Iterator = require(76),
+    BitmapIndexedNode;
+
+
+var SHIFT = consts.SHIFT,
+    MAX_ARRAY_MAP_SIZE = consts.MAX_ARRAY_MAP_SIZE,
+    EMPTY = new ArrayNode(0, []),
+    IteratorValue = Iterator.Value,
+    ArrayNodePrototype = ArrayNode.prototype;
+
+
+module.exports = ArrayNode;
+
+
+BitmapIndexedNode = require(77);
+
+
+function ArrayNode(count, array) {
+    this.count = count;
+    this.array = array;
+}
+
+ArrayNode.EMPTY = EMPTY;
+
+ArrayNodePrototype.get = function(shift, keyHash, key, notSetValue) {
+    var index = mask(keyHash, shift),
+        node = this.array[index];
+
+    if (isNullOrUndefined(node)) {
+        return notSetValue;
+    } else {
+        return node.get(shift + SHIFT, hash, key, notSetValue);
+    }
+};
+
+ArrayNodePrototype.set = function(shift, keyHash, key, value, addedLeaf) {
+    var index = mask(keyHash, shift),
+        array = this.array,
+        count = this.count,
+        node = array[index],
+        newNode;
+
+    if (isNullOrUndefined(node)) {
+        return new ArrayNode(count + 1, cloneAndSet(array, index, BitmapIndexedNode.EMPTY.set(shift + SHIFT, keyHash, key, value, addedLeaf)));
+    } else {
+        newNode = node.set(shift + SHIFT, keyHash, key, value, addedLeaf);
+
+        if (newNode === node) {
+            return this;
+        } else {
+            return new ArrayNode(count, cloneAndSet(array, index, newNode));
+        }
+    }
+};
+
+ArrayNodePrototype.remove = function(shift, keyHash, key) {
+    var index = mask(keyHash, shift),
+        array = this.array,
+        node = array[index],
+        newNode, count;
+
+    if (isNullOrUndefined(node)) {
+        return this;
+    } else {
+        newNode = node.remove(shift + SHIFT, keyHash, key);
+
+        if (newNode === node) {
+            return this;
+        } else {
+            array = this.array;
+            count = this.count;
+
+            if (isNull(newNode)) {
+                if (count <= MAX_ARRAY_MAP_SIZE) {
+                    return pack(array, index);
+                } else {
+                    return new ArrayNode(count - 1, cloneAndSet(array, index, newNode));
+                }
+            } else {
+                return new ArrayNode(count, cloneAndSet(array, index, newNode));
+            }
+        }
+    }
+};
+
+function ArrayNode_iterator(_this) {
+    var array = _this.array,
+        index = 0,
+        length = array.length,
+        nestedIter = null;
+
+    function hasNext() {
+        var node;
+
+        while (true) {
+            if (!isNull(nestedIter)) {
+                if (nestedIter.hasNext()) {
+                    return true;
+                } else {
+                    nestedIter = null;
+                }
+            } else {
+                if (index === length) {
+                    return false;
+                } else {
+                    node = array[index];
+                    index += 1;
+
+                    if (!isNullOrUndefined(node)) {
+                        nestedIter = node.iterator();
+                    }
+                }
+            }
+        }
+    }
+
+    function next() {
+        if (hasNext()) {
+            return nestedIter.next();
+        } else {
+            return new IteratorValue(undefined, true);
+        }
+    }
+
+    return new Iterator(hasNext, next);
+}
+
+function ArrayNode_iteratorReverse(_this) {
+    var array = _this.array,
+        length = array.length,
+        index = length - 1,
+        nestedIter = null;
+
+    function hasNext() {
+        var node;
+
+        while (true) {
+            if (!isNull(nestedIter)) {
+                if (nestedIter.hasNext()) {
+                    return true;
+                } else {
+                    nestedIter = null;
+                }
+            } else {
+                if (index === -1) {
+                    return false;
+                } else {
+                    node = array[index];
+                    index -= 1;
+
+                    if (!isNullOrUndefined(node)) {
+                        nestedIter = node.iterator();
+                    }
+                }
+            }
+        }
+    }
+
+    function next() {
+        if (hasNext()) {
+            return nestedIter.next();
+        } else {
+            return new IteratorValue(undefined, true);
+        }
+    }
+
+    return new Iterator(hasNext, next);
+}
+
+ArrayNodePrototype.iterator = function(reverse) {
+    if (reverse !== true) {
+        return ArrayNode_iterator(this);
+    } else {
+        return ArrayNode_iteratorReverse(this);
+    }
+};
+
+function pack(array, index) {
+    var newArray = new Array(2 * (count - 1)),
+        j = 1,
+        bitmap = 0,
+        i = -1,
+        il = index - 1;
+
+    while (i++ < il) {
+        if (!isNull(array[i])) {
+            newArray[j] = array[i];
+            bitmap |= 1 << i;
+            j += 2;
+        }
+    }
+
+    i = index - 1;
+    il = array.length - 1;
+    while (i++ < il) {
+        if (!isNull(array[i])) {
+            newArray[j] = array[i];
+            bitmap |= 1 << i;
+            j += 2;
+        }
+    }
+
+    return new BitmapIndexedNode(bitmap, newArray);
+}
+},
+function(require, exports, module, undefined, global) {
+/*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/createNode.js-=@*/
+var hashCode = require(32),
+    Box = require(75),
+    HashCollisionNode, BitmapIndexedNode;
+
+
+module.exports = createNode;
+
+
+HashCollisionNode = require(86);
+BitmapIndexedNode = require(77);
+
+
+function createNode(shift, key0, value0, keyHash1, key1, value1) {
+    var keyHash0 = hashCode(key0),
+        addedLeaf;
+
+    if (keyHash0 === keyHash1) {
+        return new HashCollisionNode(keyHash0, 2, [key0, value0, key1, value1]);
+    } else {
+        addedLeaf = new Box(null);
+        return BitmapIndexedNode.EMPTY
+            .set(shift, keyHash0, key0, value0, addedLeaf)
+            .set(shift, keyHash1, key1, value1, addedLeaf);
+    }
+}
+},
+function(require, exports, module, undefined, global) {
+/*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/HashCollisionNode.js-=@*/
+var isEqual = require(17),
+    bitpos = require(79),
+    arrayCopy = require(53),
+    cloneAndSet = require(80),
+    removePair = require(81),
+    nodeIterator = require(83),
+    BitmapIndexedNode;
+
+
+var baseArrayCopy = arrayCopy.base,
+    EMPTY = new HashCollisionNode(0, []),
+    HashCollisionNodePrototype = HashCollisionNode.prototype;
+
+
+module.exports = HashCollisionNode;
+
+
+BitmapIndexedNode = require(77);
 
 
 function HashCollisionNode(keyHash, count, array) {

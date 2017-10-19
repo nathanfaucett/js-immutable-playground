@@ -352,6 +352,28 @@
     "@nathanfaucett/is_undefined" "^0.0.1"
     "@nathanfaucett/iterator" "^0.0.2"
 
+"@nathanfaucett/immutable-hash_map@^0.0.4":
+  version "0.0.4"
+  resolved "https://registry.yarnpkg.com/@nathanfaucett/immutable-hash_map/-/immutable-hash_map-0.0.4.tgz#9946555ab7829cf835f59af0bb350473e4608f6e"
+  dependencies:
+    "@nathanfaucett/array_copy" "^0.0.1"
+    "@nathanfaucett/bit_count" "^0.0.2"
+    "@nathanfaucett/define_property" "^0.0.3"
+    "@nathanfaucett/fast_bind_this" "^0.0.1"
+    "@nathanfaucett/fast_slice" "^0.0.1"
+    "@nathanfaucett/freeze" "^0.0.1"
+    "@nathanfaucett/has" "^0.0.2"
+    "@nathanfaucett/hash_code" "^0.0.2"
+    "@nathanfaucett/inherits" "^0.0.3"
+    "@nathanfaucett/is_array_like" "^0.0.2"
+    "@nathanfaucett/is_equal" "^0.0.1"
+    "@nathanfaucett/is_native" "^0.0.2"
+    "@nathanfaucett/is_null" "^0.0.1"
+    "@nathanfaucett/is_null_or_undefined" "^0.0.1"
+    "@nathanfaucett/is_object" "^0.0.1"
+    "@nathanfaucett/is_undefined" "^0.0.1"
+    "@nathanfaucett/iterator" "^0.0.2"
+
 "@nathanfaucett/immutable-list@^0.0.3":
   version "0.0.3"
   resolved "https://registry.yarnpkg.com/@nathanfaucett/immutable-list/-/immutable-list-0.0.3.tgz#05b8f23329de7502200db79ee719d26bbd5bef0b"
@@ -536,9 +558,9 @@
     "@nathanfaucett/is_null_or_undefined" "^0.0.1"
     "@nathanfaucett/keys" "^0.0.2"
 
-"@nathanfaucett/native.less@^0.0.2":
-  version "0.0.2"
-  resolved "https://registry.yarnpkg.com/@nathanfaucett/native.less/-/native.less-0.0.2.tgz#6a0da55a4babdf2dc7c2f4330ea60774ee2ade69"
+"@nathanfaucett/native.less@^0.0.3":
+  version "0.0.3"
+  resolved "https://registry.yarnpkg.com/@nathanfaucett/native.less/-/native.less-0.0.3.tgz#976bd616f957b53c755b777eb76d86bd4975f43b"
   dependencies:
     "@nathanfaucett/normalize.less" "^0.0.1"
 
@@ -1445,9 +1467,9 @@ is-utf8@^0.2.0:
   version "0.2.1"
   resolved "https://registry.yarnpkg.com/is-utf8/-/is-utf8-0.2.1.tgz#4b0da1442104d1b336340e80797e865cf39f7d72"
 
-"is_null_or_undefined@git://github.com/nathanfaucett/is_null_or_undefined.git":
+"is_null_or_undefined@git://github.com/nathanfaucett/is_null_or_undefined":
   version "0.0.1"
-  resolved "git://github.com/nathanfaucett/is_null_or_undefined.git#12c79245ce566b5b356df09f47aad3b9c5ac9286"
+  resolved "git://github.com/nathanfaucett/is_null_or_undefined#12c79245ce566b5b356df09f47aad3b9c5ac9286"
   dependencies:
     "@nathanfaucett/is_null" "0.0.1"
     "@nathanfaucett/is_undefined" "0.0.1"
@@ -2161,7 +2183,7 @@ verror@1.3.6:
   dependencies:
     extsprintf "1.0.2"
 
-vm-browserify@~0.0.1:
+vm-browserify@^0.0.4, vm-browserify@~0.0.1:
   version "0.0.4"
   resolved "https://registry.yarnpkg.com/vm-browserify/-/vm-browserify-0.0.4.tgz#5d7ea45bbef9e4a6ff65f95438e0a87c357d5a73"
   dependencies:

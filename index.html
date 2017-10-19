@@ -17,31 +17,73 @@
 
     <title>Immutable Playground</title>
 
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto"/>
     <link href="index.css" rel="stylesheet"/>
-
-    <script type="application/javascript" async src="index.js"></script>
 
   </head>
 
   <body>
 
-    <h1>Module Immutable Persistent Data Structures</h1>
-    <p>Open console to play with ImmutableList, ImmutableVector, ImmutableHashMap, ImmutableSet, and ImmutableRecord.</p>
+    <div id="wrapper">
 
-    <h1>Example</h1>
-    <pre>
-        > var a = new ImmutableList(0, 1, 2, 3);
-        > var b = a.push(4, 5, 6);
-        > a.toArray(); // -> [0, 1, 2, 3]
-        > b.toArray(); // -> [0, 1, 2, 3, 4, 5, 6]
-    </pre>
+      <h1>Immutable Persistent Data Structures<hr/></h1>
 
-    <h1>Github</h1>
-    <a href="https://github.com/nathanfaucett/immutable-list" target="_blank">Immutable List</a><br/>
-    <a href="https://github.com/nathanfaucett/immutable-vector" target="_blank">Immutable Vector</a><br/>
-    <a href="https://github.com/nathanfaucett/immutable-hash_map" target="_blank">Immutable HashMap</a><br/>
-    <a href="https://github.com/nathanfaucett/immutable-set" target="_blank">Immutable Set</a><br/>
-    <a href="https://github.com/nathanfaucett/immutable-record" target="_blank">Immutable Record</a><br/>
+      <div class="console">
+        <div id="scroll" class="scroll">
+          <pre id="code" class="code"></pre>
+        </div>
+        <div class="input">
+          <span class="dollor">></span>
+          <input id="input" class="text" type="text" value=""/>
+        </div>
+      </div>
+
+      <h1><a href="https://github.com/nathanfaucett/immutable-list" target="_blank">Immutable List</a><hr></h1>
+      <pre class="code">
+> var a = ImmutableList.of(0, 1, 2, 3);
+> var b = a.push(4, 5, 6);
+> a.toArray(); // -> [0, 1, 2, 3]
+> b.toArray(); // -> [0, 1, 2, 3, 4, 5, 6]
+      </pre>
+
+      <h1><a href="https://github.com/nathanfaucett/immutable-vector" target="_blank">Immutable Vector</a><hr></h1>
+      <pre class="code">
+> var a = ImmutableVector.of(0, 1, 2, 3);
+> var b = a.push(4, 5, 6);
+> a.toArray(); // -> [0, 1, 2, 3]
+> b.toArray(); // -> [0, 1, 2, 3, 4, 5, 6]
+      </pre>
+
+      <h1><a href="https://github.com/nathanfaucett/immutable-hash_map" target="_blank">Immutable HashMap</a><hr></h1>
+      <pre class="code">
+> var a = ImmutableHashMap.of({a: 0, b: 1});
+> var b = a.set("c", 2);
+> a.toObject(); // -> {a: 0, b: 1}
+> b.toObject(); // -> {a: 0, b: 1, c: 2}
+      </pre>
+
+      <h1><a href="https://github.com/nathanfaucett/immutable-set" target="_blank">Immutable Set</a><hr></h1>
+      <pre class="code">
+> var a = ImmutableSet.of(0, 1, 2, 3);
+> var b = a.push(4, 5, 6);
+> a.toArray(); // -> [0, 1, 2, 3]
+> b.toArray(); // -> [0, 1, 2, 3, 4, 5, 6]
+      </pre>
+
+      <h1><a href="https://github.com/nathanfaucett/immutable-record" target="_blank">Immutable Record</a><hr></h1>
+      <pre class="code">
+> var Person = ImmutableRecord({
+      name: null
+  }, "Person");
+> var a = new Person({name: "Bob"});
+> var b = a.set("name", "Billy");
+> a.toObject(); // -> {name: "Bob"}
+> b.toObject(); // -> {name: "Billy"}
+      </pre>
+
+    </div>
+
+    <script type="application/javascript" async src="index.js"></script>
 
   </body>
 
