@@ -28,6 +28,8 @@
 
       <h1>Immutable Persistent Data Structures<hr/></h1>
 
+      <p>Simple Interactive JS Console</p>
+
       <div class="console">
         <div id="scroll" class="scroll">
           <pre id="code" class="code"></pre>
@@ -40,46 +42,51 @@
       </div>
 
       <h1><a href="https://github.com/nathanfaucett/immutable-list" target="_blank">Immutable List</a><hr></h1>
+      <p>Example Code</p>
       <pre class="code">
-> var a = ImmutableList.of(0, 1, 2, 3);
-> var b = a.push(4, 5, 6);
-> a.toArray(); // -> [0, 1, 2, 3]
-> b.toArray(); // -> [0, 1, 2, 3, 4, 5, 6]
+var a = ImmutableList.of(0, 1, 2, 3);
+var b = a.push(4, 5, 6);
+a.toArray(); // -> [0, 1, 2, 3]
+b.toArray(); // -> [0, 1, 2, 3, 4, 5, 6]
       </pre>
 
       <h1><a href="https://github.com/nathanfaucett/immutable-vector" target="_blank">Immutable Vector</a><hr></h1>
+      <p>Example Code</p>
       <pre class="code">
-> var a = ImmutableVector.of(0, 1, 2, 3);
-> var b = a.push(4, 5, 6);
-> a.toArray(); // -> [0, 1, 2, 3]
-> b.toArray(); // -> [0, 1, 2, 3, 4, 5, 6]
+var a = ImmutableVector.of(0, 1, 2, 3);
+var b = a.push(4, 5, 6);
+a.toArray(); // -> [0, 1, 2, 3]
+b.toArray(); // -> [0, 1, 2, 3, 4, 5, 6]
       </pre>
 
       <h1><a href="https://github.com/nathanfaucett/immutable-hash_map" target="_blank">Immutable HashMap</a><hr></h1>
+      <p>Example Code</p>
       <pre class="code">
-> var a = ImmutableHashMap.of({a: 0, b: 1});
-> var b = a.set("c", 2);
-> a.toObject(); // -> {a: 0, b: 1}
-> b.toObject(); // -> {a: 0, b: 1, c: 2}
+var a = ImmutableHashMap.of({a: 0, b: 1});
+var b = a.set("c", 2);
+a.toObject(); // -> {a: 0, b: 1}
+b.toObject(); // -> {a: 0, b: 1, c: 2}
       </pre>
 
       <h1><a href="https://github.com/nathanfaucett/immutable-set" target="_blank">Immutable Set</a><hr></h1>
+      <p>Example Code</p>
       <pre class="code">
-> var a = ImmutableSet.of(0, 1, 2, 3);
-> var b = a.push(4, 5, 6);
-> a.toArray(); // -> [0, 1, 2, 3]
-> b.toArray(); // -> [0, 1, 2, 3, 4, 5, 6]
+var a = ImmutableSet.of(0, 1, 2, 3);
+var b = a.set(2, 3, 4);
+a.toArray(); // -> [0, 1, 2, 3]
+b.toArray(); // -> [0, 1, 2, 3, 4]
       </pre>
 
       <h1><a href="https://github.com/nathanfaucett/immutable-record" target="_blank">Immutable Record</a><hr></h1>
+      <p>Example Code</p>
       <pre class="code">
-> var Person = ImmutableRecord({
-      name: null
-  }, "Person");
-> var a = new Person({name: "Bob"});
-> var b = a.set("name", "Billy");
-> a.toObject(); // -> {name: "Bob"}
-> b.toObject(); // -> {name: "Billy"}
+var Person = ImmutableRecord({
+    name: null
+}, "Person");
+var a = new Person({name: "Bob"});
+var b = a.set("name", "Billy");
+a.toObject(); // -> {name: "Bob"}
+b.toObject(); // -> {name: "Billy"}
       </pre>
 
     </div>
