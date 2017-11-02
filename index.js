@@ -76,7 +76,7 @@
         }
     };
 
-    global["6VkjTrde-Z02J-4FJJ-4gHl-nPtaD6IdYyJpg"] = function(asyncDependencies) {
+    global["XePhJ1zJ-jCPf-43Y8-uXms-MpMYudOL9R8cy"] = function(asyncDependencies) {
         var i = -1,
             il = asyncDependencies.length - 1,
             dependency, index;
@@ -110,7 +110,7 @@ function(require, exports, module, undefined, global) {
 var jsconsole = require(1);
 
 
-window.onload = function() {
+window.onload = function onLoad() {
     jsconsole(
         document.getElementById("jsconsole"),
         "var list = ImmutableList.of(0, 1, 2, 3, 4);"
