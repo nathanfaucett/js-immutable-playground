@@ -20,6 +20,8 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto"/>
     <link href="index.css" rel="stylesheet"/>
 
+    <script async="" src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.2.9/ace.js" type="text/javascript" charset="utf-8"></script>
+
   </head>
 
   <body>
@@ -30,19 +32,14 @@
 
       <p>Simple Interactive JS Console</p>
 
-      <div class="console">
-        <div id="scroll" class="scroll">
-          <pre id="code" class="code"></pre>
-        </div>
-        <hr/>
-        <div class="input">
-          <span class="dollor">></span>
-          <input id="input" class="text" type="text" value=""/>
-        </div>
-      </div>
+      <div id="jsconsole"></div>
 
       <h1><a href="https://github.com/nathanfaucett/immutable-list" target="_blank">Immutable List</a><hr></h1>
-      <p>Example Code</p>
+      <p>
+        List are singly linked lists which support efficient O(1) addition and removal from the front using unshift(value) and shift().
+        <a href="https://en.wikipedia.org/wiki/Persistent_data_structure#Linked_lists" target="_blank">Wikipedia Persistent Data Structure Linked Lists</a>
+      </p>
+      <h3>Example Code</h3>
       <pre class="code">
 var a = ImmutableList.of(0, 1, 2, 3);
 var b = a.push(4, 5, 6);
@@ -51,7 +48,11 @@ b.toArray(); // -> [0, 1, 2, 3, 4, 5, 6]
       </pre>
 
       <h1><a href="https://github.com/nathanfaucett/immutable-vector" target="_blank">Immutable Vector</a><hr></h1>
-      <p>Example Code</p>
+      <p>
+        Vectors are ordered indexed collections.
+        <a href="http://blog.higher-order.net/2009/02/01/understanding-clojures-persistentvector-implementation.html" target="_blank">Understanding Clojure's Persistent Vector</a>
+      </p>
+      <h3>Example Code</h3>
       <pre class="code">
 var a = ImmutableVector.of(0, 1, 2, 3);
 var b = a.push(4, 5, 6);
@@ -60,7 +61,11 @@ b.toArray(); // -> [0, 1, 2, 3, 4, 5, 6]
       </pre>
 
       <h1><a href="https://github.com/nathanfaucett/immutable-hash_map" target="_blank">Immutable HashMap</a><hr></h1>
-      <p>Example Code</p>
+      <p>
+        HashMap is an unordered collection of (key, value) pairs.
+        <a href="http://blog.higher-order.net/2009/09/08/understanding-clojures-persistenthashmap-deftwice" target="_blank">Understanding Clojure's Persistent HashMap</a>
+      </p>
+      <h3>Example Code</h3>
       <pre class="code">
 var a = ImmutableHashMap.of({a: 0, b: 1});
 var b = a.set("c", 2);
@@ -69,7 +74,11 @@ b.toObject(); // -> {a: 0, b: 1, c: 2}
       </pre>
 
       <h1><a href="https://github.com/nathanfaucett/immutable-set" target="_blank">Immutable Set</a><hr></h1>
-      <p>Example Code</p>
+      <p>
+        Sets are a collection of unique values. It is a wrapper class where
+        Set&ltV&gt = HashMap&ltV, Void&gt.
+      </p>
+      <h3>Example Code</h3>
       <pre class="code">
 var a = ImmutableSet.of(0, 1, 2, 3);
 var b = a.set(2, 3, 4);
@@ -78,7 +87,10 @@ b.toArray(); // -> [0, 1, 2, 3, 4]
       </pre>
 
       <h1><a href="https://github.com/nathanfaucett/immutable-record" target="_blank">Immutable Record</a><hr></h1>
-      <p>Example Code</p>
+      <p>
+        A Record is a wrapper class around a HashMap with rescrited fields.
+      </p>
+      <h3>Example Code</h3>
       <pre class="code">
 var Person = ImmutableRecord({
     name: null

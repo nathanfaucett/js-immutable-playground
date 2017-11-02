@@ -76,7 +76,7 @@
         }
     };
 
-    global["gcqSxmZx-9J7o-4xmc-g7zu-XUOHdlX5N5yTS"] = function(asyncDependencies) {
+    global["6VkjTrde-Z02J-4FJJ-4gHl-nPtaD6IdYyJpg"] = function(asyncDependencies) {
         var i = -1,
             il = asyncDependencies.length - 1,
             dependency, index;
@@ -107,81 +107,131 @@
 }([
 function(require, exports, module, undefined, global) {
 /*@=-/var/www/html/node/_immutable/js-immutable-playground/src/index.js-=@*/
-var vm = require(1),
-    util = require(2),
-    ImmutableList = require(3),
-    ImmutableVector = require(4),
-    ImmutableHashMap = require(5),
-    ImmutableSet = require(6),
-    ImmutableRecord = require(7);
+var jsconsole = require(1);
 
 
-var context = {
-    ImmutableList: ImmutableList,
-    ImmutableVector: ImmutableVector,
-    ImmutableHashMap: ImmutableHashMap,
-    ImmutableSet: ImmutableSet,
-    ImmutableRecord: ImmutableRecord
+window.onload = function() {
+    jsconsole(
+        document.getElementById("jsconsole"),
+        "var list = ImmutableList.of(0, 1, 2, 3, 4);"
+    );
 };
 
-var history = [],
-    historyIndex = 0;
+},
+function(require, exports, module, undefined, global) {
+/*@=-/var/www/html/node/_immutable/js-immutable-playground/src/jsconsole.js-=@*/
+var vm = require(2),
+    util = require(3),
+    ImmutableList = require(4),
+    ImmutableVector = require(5),
+    ImmutableHashMap = require(6),
+    ImmutableSet = require(7),
+    ImmutableRecord = require(8);
 
 
-var input = document.getElementById("input"),
-    code = document.getElementById("code"),
-    scroll = document.getElementById("scroll");
+var JSCONSOLE_HTML = [
+    '<div class="console" style="background-color: #EEE; padding: 8px; border: 1px solid #DDD;">',
+    '  <div class="scroll" style="overflow: auto; max-height: 386px;">',
+    '    <pre class="code" style="background-color: none; border: none;"></pre>',
+    '  </div>',
+    '  <hr/>',
+    '  <div class="input" style="position: relative;">',
+    '    <span class="arrow" style="',
+    '       font-family: monospace,',
+    '       monospace; font-size: 1em;',
+    '       height: 36px;',
+    '       line-height: 36px;',
+    '       position: absolute;',
+    '       top: 0px;',
+    '       left: 8px;',
+    '    ">></span>',
+    '    <input class="input text" type="text" value="" style="',
+    '       font-family: monospace, monospace;',
+    '        font-size: 1em;',
+    '        line-height: 1.25em;',
+    '        height: 36px;',
+    '        display: inline-block;',
+    '        padding: 8px 8px 8px 24px;',
+    '    "/>',
+    '  </div>',
+    '</div>'
+].join("\n");
 
-input.addEventListener("keypress", function onKeyPress(e) {
-    if (e.which === 13) {
-        evaluate(input.value || "\n");
-    } else if (e.keyCode === 38) {
-        input.value = history[historyIndex];
-        historyIndex -= 1;
 
-        if (historyIndex < 0) {
-            historyIndex = 0;
+module.exports = jsconsole;
+
+
+function jsconsole(rootElement, defaultExpr) {
+    var history = [],
+        historyIndex = 0,
+
+        context = {
+            ImmutableList: ImmutableList,
+            ImmutableVector: ImmutableVector,
+            ImmutableHashMap: ImmutableHashMap,
+            ImmutableSet: ImmutableSet,
+            ImmutableRecord: ImmutableRecord
+        };
+
+    rootElement.innerHTML = JSCONSOLE_HTML;
+
+    var input = rootElement.querySelector("input.input"),
+        code = rootElement.querySelector("pre.code"),
+        scroll = rootElement.querySelector("div.scroll");
+
+    function evaluate(value) {
+        var result;
+
+        history.push(value);
+        historyIndex = history.length - 1;
+
+        try {
+            result = vm.runInNewContext(value, context);
+        } catch(e) {
+            result = e.toString();
         }
-    } else if (e.keyCode === 40) {
-        input.value = history[historyIndex];
-        historyIndex += 1;
 
-        if (historyIndex >= history.length) {
-            historyIndex = history.length - 1;
+        code.innerHTML += "> " + value + "\n";
+        code.innerHTML += "  " + util.inspect(result) + "\n";
+
+        input.value = "";
+
+        scroll.scrollTop = scroll.scrollHeight;
+    }
+
+    function onKeyPress(e) {
+        if (e.which === 13) {
+            evaluate(input.value || "\n");
+        } else if (e.keyCode === 38) {
+            input.value = history[historyIndex];
+            historyIndex -= 1;
+
+            if (historyIndex < 0) {
+                historyIndex = 0;
+            }
+        } else if (e.keyCode === 40) {
+            input.value = history[historyIndex];
+            historyIndex += 1;
+
+            if (historyIndex >= history.length) {
+                historyIndex = history.length - 1;
+            }
         }
     }
-});
 
-try {
-    input.focus();
-} catch(e) {}
-
-function evaluate(value) {
-    var result;
-
-    history.push(value);
-    historyIndex = history.length - 1;
+    input.addEventListener("keypress", onKeyPress);
 
     try {
-        result = vm.runInNewContext(value, context);
-    } catch(e) {
-        result = e.toString();
-    }
+        input.focus();
+    } catch(e) {}
 
-    code.innerHTML += "> " + value + "\n";
-    code.innerHTML += "  " + util.inspect(result) + "\n";
-
-    input.value = "";
-
-    scroll.scrollTop = scroll.scrollHeight;
-}
-
-evaluate("ImmutableList.of(0, 1, 2, 3, 4);");
+    evaluate(defaultExpr);
+};
 
 },
 function(require, exports, module, undefined, global) {
 /*@=-vm-browserify@0.0.4/index.js-=@*/
-var indexOf = require(8);
+var indexOf = require(9);
 
 var Object_keys = function (obj) {
     if (Object.keys) return Object.keys(obj)
@@ -323,7 +373,7 @@ exports.createContext = Script.createContext = function (context) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-util@0.10.3/util.js-=@*/
-var process = require(9);
+var process = require(10);
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -849,7 +899,7 @@ function isPrimitive(arg) {
 }
 exports.isPrimitive = isPrimitive;
 
-exports.isBuffer = require(10);
+exports.isBuffer = require(11);
 
 function objectToString(o) {
   return Object.prototype.toString.call(o);
@@ -893,7 +943,7 @@ exports.log = function() {
  *     prototype.
  * @param {function} superCtor Constructor function to inherit prototype from.
  */
-exports.inherits = require(11);
+exports.inherits = require(12);
 
 exports._extend = function(origin, add) {
   // Don't do anything if add isn't an object
@@ -914,16 +964,16 @@ function hasOwnProperty(obj, prop) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-list@0.0.3/src/index.js-=@*/
-var isNull = require(16),
-    isUndefined = require(17),
-    isArrayLike = require(18),
-    isNumber = require(19),
-    Iterator = require(20),
-    fastBindThis = require(21),
-    fastSlice = require(22),
-    defineProperty = require(23),
-    freeze = require(24),
-    isEqual = require(25);
+var isNull = require(17),
+    isUndefined = require(18),
+    isArrayLike = require(19),
+    isNumber = require(20),
+    Iterator = require(21),
+    fastBindThis = require(22),
+    fastSlice = require(23),
+    defineProperty = require(24),
+    freeze = require(25),
+    isEqual = require(26);
 
 
 var INTERNAL_CREATE = {},
@@ -1721,16 +1771,16 @@ function findNode(root, index) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-vector@0.0.3/src/index.js-=@*/
-var freeze = require(24),
-    Iterator = require(20),
-    isNull = require(16),
-    isUndefined = require(17),
-    isNumber = require(19),
-    isArrayLike = require(18),
-    fastBindThis = require(21),
-    fastSlice = require(22),
-    defineProperty = require(23),
-    isEqual = require(25);
+var freeze = require(25),
+    Iterator = require(21),
+    isNull = require(17),
+    isUndefined = require(18),
+    isNumber = require(20),
+    isArrayLike = require(19),
+    fastBindThis = require(22),
+    fastSlice = require(23),
+    defineProperty = require(24),
+    isEqual = require(26);
 
 
 var INTERNAL_CREATE = {},
@@ -2603,19 +2653,19 @@ function cloneArray(a, length) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.4/src/index.js-=@*/
-var has = require(34),
-    freeze = require(24),
-    isNull = require(16),
-    isUndefined = require(17),
-    isObject = require(28),
-    defineProperty = require(23),
-    isEqual = require(25),
-    hashCode = require(40),
-    isArrayLike = require(18),
-    fastBindThis = require(21),
-    Box = require(41),
-    Iterator = require(42),
-    BitmapIndexedNode = require(43);
+var has = require(35),
+    freeze = require(25),
+    isNull = require(17),
+    isUndefined = require(18),
+    isObject = require(29),
+    defineProperty = require(24),
+    isEqual = require(26),
+    hashCode = require(41),
+    isArrayLike = require(19),
+    fastBindThis = require(22),
+    Box = require(42),
+    Iterator = require(43),
+    BitmapIndexedNode = require(44);
 
 
 var INTERNAL_CREATE = {},
@@ -3122,12 +3172,12 @@ HashMapPrototype.equals = function(b) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-set@0.0.3/src/index.js-=@*/
-var freeze = require(24),
-    Iterator = require(20),
-    ImmutableHashMap = require(69),
-    isUndefined = require(17),
-    isArrayLike = require(18),
-    defineProperty = require(23);
+var freeze = require(25),
+    Iterator = require(21),
+    ImmutableHashMap = require(70),
+    isUndefined = require(18),
+    isArrayLike = require(19),
+    defineProperty = require(24);
 
 
 var INTERNAL_CREATE = {},
@@ -3569,12 +3619,12 @@ SetPrototype.equals = function(other) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-record@0.0.3/src/index.js-=@*/
-var ImmutableHashMap = require(82),
-    defineProperty = require(23),
-    inherits = require(50),
-    keys = require(57),
-    has = require(34),
-    freeze = require(24);
+var ImmutableHashMap = require(83),
+    defineProperty = require(24),
+    inherits = require(51),
+    keys = require(58),
+    has = require(35),
+    freeze = require(25);
 
 
 var INTERNAL_CREATE = {},
@@ -4049,7 +4099,7 @@ process.umask = function() { return 0; };
 },
 function(require, exports, module, undefined, global) {
 /*@=-util@0.10.3/support/isBuffer.js-=@*/
-var Buffer = require(12).Buffer;
+var Buffer = require(13).Buffer;
 module.exports = function isBuffer(arg) {
   return arg instanceof Buffer;
 }
@@ -4094,9 +4144,9 @@ function(require, exports, module, undefined, global) {
 
 'use strict'
 
-var base64 = require(13)
-var ieee754 = require(14)
-var isArray = require(15)
+var base64 = require(14)
+var ieee754 = require(15)
+var isArray = require(16)
 
 exports.Buffer = Buffer
 exports.SlowBuffer = SlowBuffer
@@ -5881,9 +5931,9 @@ function isUndefined(value) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/is_array_like@0.0.2/src/index.js-=@*/
-var isLength = require(26),
-    isFunction = require(27),
-    isObject = require(28);
+var isLength = require(27),
+    isFunction = require(28),
+    isObject = require(29);
 
 
 module.exports = isArrayLike;
@@ -5906,9 +5956,9 @@ function isNumber(value) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/iterator@0.0.2/src/index.js-=@*/
-var apply = require(29),
-    isFunction = require(27),
-    isUndefined = require(17);
+var apply = require(30),
+    isFunction = require(28),
+    isUndefined = require(18);
 
 
 var KEYS = 0,
@@ -6006,7 +6056,7 @@ IteratorPrototype[ITERATOR_SYMBOL] = IteratorPrototype.iterator;
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/fast_bind_this@0.0.1/src/index.js-=@*/
-var isNumber = require(19);
+var isNumber = require(20);
 
 
 module.exports = fastBindThis;
@@ -6044,8 +6094,8 @@ function fastBindThis(callback, thisArg, length) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/fast_slice@0.0.1/src/index.js-=@*/
-var clamp = require(31),
-    isNumber = require(19);
+var clamp = require(32),
+    isNumber = require(20);
 
 
 module.exports = fastSlice;
@@ -6072,11 +6122,11 @@ function fastSlice(array, offset) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/define_property@0.0.3/src/index.js-=@*/
-var isObject = require(28),
-    isFunction = require(27),
-    isPrimitive = require(32),
-    isNative = require(33),
-    has = require(34);
+var isObject = require(29),
+    isFunction = require(28),
+    isPrimitive = require(33),
+    isNative = require(34),
+    has = require(35);
 
 
 var nativeDefineProperty = Object.defineProperty;
@@ -6130,8 +6180,8 @@ if (!isNative(nativeDefineProperty) || !(function() {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/freeze@0.0.1/src/index.js-=@*/
-var isNative = require(33),
-    emptyFunction = require(39);
+var isNative = require(34),
+    emptyFunction = require(40);
 
 
 var nativeFreeze = Object.freeze;
@@ -6170,7 +6220,7 @@ function isEqual(a, b) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/is_length@0.0.1/src/index.js-=@*/
-var isNumber = require(19);
+var isNumber = require(20);
 
 
 var MAX_SAFE_INTEGER = Math.pow(2, 53) - 1;
@@ -6210,7 +6260,7 @@ module.exports = isFunction;
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/is_object@0.0.1/src/index.js-=@*/
-var isNull = require(16);
+var isNull = require(17);
 
 
 module.exports = isObject;
@@ -6224,7 +6274,7 @@ function isObject(value) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/apply@0.0.1/src/index.js-=@*/
-var isNullOrUndefined = require(30);
+var isNullOrUndefined = require(31);
 
 
 module.exports = apply;
@@ -6279,8 +6329,8 @@ function applyThisArg(fn, args, thisArg) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/is_null_or_undefined@0.0.1/src/index.js-=@*/
-var isNull = require(16),
-    isUndefined = require(17);
+var isNull = require(17),
+    isUndefined = require(18);
 
 
 module.exports = isNullOrUndefined;
@@ -6321,7 +6371,7 @@ function clamp(x, min, max) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/is_primitive@0.0.2/src/index.js-=@*/
-var isNullOrUndefined = require(30);
+var isNullOrUndefined = require(31);
 
 
 module.exports = isPrimitive;
@@ -6335,9 +6385,9 @@ function isPrimitive(obj) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/is_native@0.0.2/src/index.js-=@*/
-var isFunction = require(27),
-    isNullOrUndefined = require(30),
-    escapeRegExp = require(35);
+var isFunction = require(28),
+    isNullOrUndefined = require(31),
+    escapeRegExp = require(36);
 
 
 var reHostCtor = /^\[object .+?Constructor\]$/,
@@ -6383,9 +6433,9 @@ isHostObject = function isHostObject(value) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/has@0.0.2/src/index.js-=@*/
-var isNative = require(33),
-    getPrototypeOf = require(38),
-    isNullOrUndefined = require(30);
+var isNative = require(34),
+    getPrototypeOf = require(39),
+    isNullOrUndefined = require(31);
 
 
 var nativeHasOwnProp = Object.prototype.hasOwnProperty,
@@ -6426,7 +6476,7 @@ if (isNative(nativeHasOwnProp)) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/escape_regexp@0.0.1/src/index.js-=@*/
-var toString = require(36);
+var toString = require(37);
 
 
 var reRegExpChars = /[.*+?\^${}()|\[\]\/\\]/g,
@@ -6448,8 +6498,8 @@ function escapeRegExp(string) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/to_string@0.0.1/src/index.js-=@*/
-var isString = require(37),
-    isNullOrUndefined = require(30);
+var isString = require(38),
+    isNullOrUndefined = require(31);
 
 
 module.exports = toString;
@@ -6478,9 +6528,9 @@ function isString(value) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/get_prototype_of@0.0.1/src/index.js-=@*/
-var isObject = require(28),
-    isNative = require(33),
-    isNullOrUndefined = require(30);
+var isObject = require(29),
+    isNative = require(34),
+    isNullOrUndefined = require(31);
 
 
 var nativeGetPrototypeOf = Object.getPrototypeOf,
@@ -6542,15 +6592,15 @@ emptyFunction.thatReturnsArgument = function(argument) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/hash_code@0.0.2/src/index.js-=@*/
-var WeakMapPolyfill = require(44),
-    isNumber = require(19),
-    isString = require(37),
-    isFunction = require(27),
-    isBoolean = require(45),
-    isNullOrUndefined = require(30),
-    numberHashCode = require(46),
-    booleanHashCode = require(47),
-    stringHashCode = require(48);
+var WeakMapPolyfill = require(45),
+    isNumber = require(20),
+    isString = require(38),
+    isFunction = require(28),
+    isBoolean = require(46),
+    isNullOrUndefined = require(31),
+    numberHashCode = require(47),
+    booleanHashCode = require(48),
+    stringHashCode = require(49);
 
 
 var WEAK_MAP = new WeakMapPolyfill(),
@@ -6623,8 +6673,8 @@ function Box(value) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.4/src/Iterator.js-=@*/
-var inherits = require(50),
-    BaseIterator = require(20);
+var inherits = require(51),
+    BaseIterator = require(21);
 
 
 module.exports = Iterator;
@@ -6638,17 +6688,17 @@ inherits(Iterator, BaseIterator);
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.4/src/BitmapIndexedNode.js-=@*/
-var isNull = require(16),
-    isEqual = require(25),
-    hashCode = require(40),
-    bitCount = require(58),
-    consts = require(59),
-    bitpos = require(60),
-    arrayCopy = require(61),
-    cloneAndSet = require(62),
-    removePair = require(63),
-    mask = require(64),
-    nodeIterator = require(65),
+var isNull = require(17),
+    isEqual = require(26),
+    hashCode = require(41),
+    bitCount = require(59),
+    consts = require(60),
+    bitpos = require(61),
+    arrayCopy = require(62),
+    cloneAndSet = require(63),
+    removePair = require(64),
+    mask = require(65),
+    nodeIterator = require(66),
     ArrayNode, createNode;
 
 
@@ -6662,8 +6712,8 @@ var baseArrayCopy = arrayCopy.base,
 module.exports = BitmapIndexedNode;
 
 
-ArrayNode = require(66);
-createNode = require(67);
+ArrayNode = require(67);
+createNode = require(68);
 
 
 function BitmapIndexedNode(bitmap, array) {
@@ -6812,9 +6862,9 @@ function getIndex(bitmap, bit) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/weak_map_polyfill@0.0.2/src/index.js-=@*/
-var isNative = require(33),
-    isPrimitive = require(32),
-    createStore = require(49);
+var isNative = require(34),
+    isPrimitive = require(33),
+    createStore = require(50);
 
 
 var NativeWeakMap = typeof(WeakMap) !== "undefined" ? WeakMap : null,
@@ -6907,7 +6957,7 @@ function booleanHashCode(bool) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/string-hash_code@0.0.1/src/index.js-=@*/
-var isUndefined = require(17);
+var isUndefined = require(18);
 
 
 var STRING_HASH_CACHE_MIN_STRING_LENGTH = 16,
@@ -6960,9 +7010,9 @@ function hashString(string) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/create_store@0.0.2/src/index.js-=@*/
-var has = require(34),
-    defineProperty = require(23),
-    isPrimitive = require(32);
+var has = require(35),
+    defineProperty = require(24),
+    isPrimitive = require(33);
 
 
 var emptyStore = {
@@ -7076,10 +7126,10 @@ function privateStore(key, privateKey) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/inherits@0.0.3/src/index.js-=@*/
-var create = require(51),
-    extend = require(52),
-    mixin = require(53),
-    defineProperty = require(54);
+var create = require(52),
+    extend = require(53),
+    mixin = require(54),
+    defineProperty = require(55);
 
 
 var descriptor = {
@@ -7126,9 +7176,9 @@ function defineStatic(name, value) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/create@0.0.2/src/index.js-=@*/
-var isNull = require(16),
-    isNative = require(33),
-    isPrimitive = require(32);
+var isNull = require(17),
+    isNative = require(34),
+    isPrimitive = require(33);
 
 
 var nativeCreate = Object.create;
@@ -7165,8 +7215,8 @@ if (!isNative(nativeCreate)) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/extend@0.0.2/src/index.js-=@*/
-var keys = require(55),
-    isNative = require(33);
+var keys = require(56),
+    isNative = require(34);
 
 
 var nativeAssign = Object.assign,
@@ -7205,8 +7255,8 @@ module.exports = extend;
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/mixin@0.0.2/src/index.js-=@*/
-var keys = require(57),
-    isNullOrUndefined = require(30);
+var keys = require(58),
+    isNullOrUndefined = require(31);
 
 
 module.exports = mixin;
@@ -7241,11 +7291,11 @@ function baseMixin(a, b) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/define_property@0.0.2/src/index.js-=@*/
-var isObject = require(28),
-    isFunction = require(27),
-    isPrimitive = require(32),
-    isNative = require(33),
-    has = require(56);
+var isObject = require(29),
+    isFunction = require(28),
+    isPrimitive = require(33),
+    isNative = require(34),
+    has = require(57);
 
 
 var nativeDefineProperty = Object.defineProperty;
@@ -7299,10 +7349,10 @@ if (!isNative(nativeDefineProperty) || !(function() {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/keys@0.0.1/src/index.js-=@*/
-var has = require(56),
-    isNative = require(33),
-    isNullOrUndefined = require(30),
-    isObject = require(28);
+var has = require(57),
+    isNative = require(34),
+    isNullOrUndefined = require(31),
+    isObject = require(29);
 
 
 var nativeKeys = Object.keys;
@@ -7339,9 +7389,9 @@ if (!isNative(nativeKeys)) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/has@0.0.1/src/index.js-=@*/
-var isNative = require(33),
-    getPrototypeOf = require(38),
-    isNullOrUndefined = require(30);
+var isNative = require(34),
+    getPrototypeOf = require(39),
+    isNullOrUndefined = require(31);
 
 
 var nativeHasOwnProp = Object.prototype.hasOwnProperty,
@@ -7382,10 +7432,10 @@ if (isNative(nativeHasOwnProp)) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/keys@0.0.2/src/index.js-=@*/
-var has = require(34),
-    isNative = require(33),
-    isNullOrUndefined = require(30),
-    isObject = require(28);
+var has = require(35),
+    isNative = require(34),
+    isNullOrUndefined = require(31),
+    isObject = require(29);
 
 
 var nativeKeys = Object.keys;
@@ -7449,7 +7499,7 @@ consts.MAX_BITMAP_INDEXED_SIZE = consts.SIZE / 2;
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.4/src/bitpos.js-=@*/
-var mask = require(64);
+var mask = require(65);
 
 
 module.exports = bitpos;
@@ -7461,8 +7511,8 @@ function bitpos(hashCode, shift) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/array_copy@0.0.1/src/index.js-=@*/
-var clamp = require(31),
-    isUndefined = require(17);
+var clamp = require(32),
+    isUndefined = require(18);
 
 
 module.exports = copyArray;
@@ -7493,8 +7543,8 @@ function baseArrayCopy(src, srcPos, dest, destPos, length) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.4/src/cloneAndSet.js-=@*/
-var isUndefined = require(17),
-    arrayCopy = require(61);
+var isUndefined = require(18),
+    arrayCopy = require(62);
 
 
 var baseArrayCopy = arrayCopy.base;
@@ -7519,7 +7569,7 @@ function cloneAndSet(array, index0, value0, index1, value1) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.4/src/removePair.js-=@*/
-var arrayCopy = require(61);
+var arrayCopy = require(62);
 
 
 var baseArrayCopy = arrayCopy.base;
@@ -7540,7 +7590,7 @@ function removePair(array, index) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.4/src/mask.js-=@*/
-var consts = require(59);
+var consts = require(60);
 
 
 var MASK = consts.MASK;
@@ -7555,9 +7605,9 @@ function mask(hashCode, shift) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.4/src/nodeIterator.js-=@*/
-var isNull = require(16),
-    isUndefined = require(17),
-    Iterator = require(42);
+var isNull = require(17),
+    isUndefined = require(18),
+    Iterator = require(43);
 
 
 var IteratorValue = Iterator.Value;
@@ -7702,12 +7752,12 @@ function iteratorReverse(_this) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.4/src/ArrayNode.js-=@*/
-var isNull = require(16),
-    isNullOrUndefined = require(30),
-    consts = require(59),
-    mask = require(64),
-    cloneAndSet = require(62),
-    Iterator = require(42),
+var isNull = require(17),
+    isNullOrUndefined = require(31),
+    consts = require(60),
+    mask = require(65),
+    cloneAndSet = require(63),
+    Iterator = require(43),
     BitmapIndexedNode;
 
 
@@ -7721,7 +7771,7 @@ var SHIFT = consts.SHIFT,
 module.exports = ArrayNode;
 
 
-BitmapIndexedNode = require(43);
+BitmapIndexedNode = require(44);
 
 
 function ArrayNode(count, array) {
@@ -7915,16 +7965,16 @@ function pack(array, index) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.4/src/createNode.js-=@*/
-var hashCode = require(40),
-    Box = require(41),
+var hashCode = require(41),
+    Box = require(42),
     HashCollisionNode, BitmapIndexedNode;
 
 
 module.exports = createNode;
 
 
-HashCollisionNode = require(68);
-BitmapIndexedNode = require(43);
+HashCollisionNode = require(69);
+BitmapIndexedNode = require(44);
 
 
 function createNode(shift, key0, value0, keyHash1, key1, value1) {
@@ -7943,12 +7993,12 @@ function createNode(shift, key0, value0, keyHash1, key1, value1) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.4/src/HashCollisionNode.js-=@*/
-var isEqual = require(25),
-    bitpos = require(60),
-    arrayCopy = require(61),
-    cloneAndSet = require(62),
-    removePair = require(63),
-    nodeIterator = require(65),
+var isEqual = require(26),
+    bitpos = require(61),
+    arrayCopy = require(62),
+    cloneAndSet = require(63),
+    removePair = require(64),
+    nodeIterator = require(66),
     BitmapIndexedNode;
 
 
@@ -7960,7 +8010,7 @@ var baseArrayCopy = arrayCopy.base,
 module.exports = HashCollisionNode;
 
 
-BitmapIndexedNode = require(43);
+BitmapIndexedNode = require(44);
 
 
 function HashCollisionNode(keyHash, count, array) {
@@ -8045,19 +8095,19 @@ function getIndex(array, key) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/index.js-=@*/
-var has = require(34),
-    freeze = require(24),
-    isNull = require(16),
-    isUndefined = require(17),
-    isObject = require(28),
-    defineProperty = require(23),
-    isEqual = require(25),
-    hashCode = require(40),
-    isArrayLike = require(18),
-    fastBindThis = require(21),
-    Box = require(70),
-    Iterator = require(71),
-    BitmapIndexedNode = require(72);
+var has = require(35),
+    freeze = require(25),
+    isNull = require(17),
+    isUndefined = require(18),
+    isObject = require(29),
+    defineProperty = require(24),
+    isEqual = require(26),
+    hashCode = require(41),
+    isArrayLike = require(19),
+    fastBindThis = require(22),
+    Box = require(71),
+    Iterator = require(72),
+    BitmapIndexedNode = require(73);
 
 
 var INTERNAL_CREATE = {},
@@ -8566,8 +8616,8 @@ function Box(value) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/Iterator.js-=@*/
-var inherits = require(50),
-    BaseIterator = require(20);
+var inherits = require(51),
+    BaseIterator = require(21);
 
 
 module.exports = Iterator;
@@ -8581,17 +8631,17 @@ inherits(Iterator, BaseIterator);
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/BitmapIndexedNode.js-=@*/
-var isNull = require(16),
-    isEqual = require(25),
-    hashCode = require(40),
-    bitCount = require(58),
-    consts = require(73),
-    bitpos = require(74),
-    arrayCopy = require(61),
-    cloneAndSet = require(75),
-    removePair = require(76),
-    mask = require(77),
-    nodeIterator = require(78),
+var isNull = require(17),
+    isEqual = require(26),
+    hashCode = require(41),
+    bitCount = require(59),
+    consts = require(74),
+    bitpos = require(75),
+    arrayCopy = require(62),
+    cloneAndSet = require(76),
+    removePair = require(77),
+    mask = require(78),
+    nodeIterator = require(79),
     ArrayNode, createNode;
 
 
@@ -8605,8 +8655,8 @@ var baseArrayCopy = arrayCopy.base,
 module.exports = BitmapIndexedNode;
 
 
-ArrayNode = require(79);
-createNode = require(80);
+ArrayNode = require(80);
+createNode = require(81);
 
 
 function BitmapIndexedNode(bitmap, array) {
@@ -8767,7 +8817,7 @@ consts.MAX_BITMAP_INDEXED_SIZE = consts.SIZE / 2;
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/bitpos.js-=@*/
-var mask = require(77);
+var mask = require(78);
 
 
 module.exports = bitpos;
@@ -8779,8 +8829,8 @@ function bitpos(hashCode, shift) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/cloneAndSet.js-=@*/
-var isUndefined = require(17),
-    arrayCopy = require(61);
+var isUndefined = require(18),
+    arrayCopy = require(62);
 
 
 var baseArrayCopy = arrayCopy.base;
@@ -8805,7 +8855,7 @@ function cloneAndSet(array, index0, value0, index1, value1) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/removePair.js-=@*/
-var arrayCopy = require(61);
+var arrayCopy = require(62);
 
 
 var baseArrayCopy = arrayCopy.base;
@@ -8826,7 +8876,7 @@ function removePair(array, index) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/mask.js-=@*/
-var consts = require(73);
+var consts = require(74);
 
 
 var MASK = consts.MASK;
@@ -8841,9 +8891,9 @@ function mask(hashCode, shift) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/nodeIterator.js-=@*/
-var isNull = require(16),
-    isUndefined = require(17),
-    Iterator = require(71);
+var isNull = require(17),
+    isUndefined = require(18),
+    Iterator = require(72);
 
 
 var IteratorValue = Iterator.Value;
@@ -8988,12 +9038,12 @@ function iteratorReverse(_this) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/ArrayNode.js-=@*/
-var isNull = require(16),
-    isNullOrUndefined = require(30),
-    consts = require(73),
-    mask = require(77),
-    cloneAndSet = require(75),
-    Iterator = require(71),
+var isNull = require(17),
+    isNullOrUndefined = require(31),
+    consts = require(74),
+    mask = require(78),
+    cloneAndSet = require(76),
+    Iterator = require(72),
     BitmapIndexedNode;
 
 
@@ -9007,7 +9057,7 @@ var SHIFT = consts.SHIFT,
 module.exports = ArrayNode;
 
 
-BitmapIndexedNode = require(72);
+BitmapIndexedNode = require(73);
 
 
 function ArrayNode(count, array) {
@@ -9200,16 +9250,16 @@ function pack(array, index) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/createNode.js-=@*/
-var hashCode = require(40),
-    Box = require(70),
+var hashCode = require(41),
+    Box = require(71),
     HashCollisionNode, BitmapIndexedNode;
 
 
 module.exports = createNode;
 
 
-HashCollisionNode = require(81);
-BitmapIndexedNode = require(72);
+HashCollisionNode = require(82);
+BitmapIndexedNode = require(73);
 
 
 function createNode(shift, key0, value0, keyHash1, key1, value1) {
@@ -9228,12 +9278,12 @@ function createNode(shift, key0, value0, keyHash1, key1, value1) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.2/src/HashCollisionNode.js-=@*/
-var isEqual = require(25),
-    bitpos = require(74),
-    arrayCopy = require(61),
-    cloneAndSet = require(75),
-    removePair = require(76),
-    nodeIterator = require(78),
+var isEqual = require(26),
+    bitpos = require(75),
+    arrayCopy = require(62),
+    cloneAndSet = require(76),
+    removePair = require(77),
+    nodeIterator = require(79),
     BitmapIndexedNode;
 
 
@@ -9245,7 +9295,7 @@ var baseArrayCopy = arrayCopy.base,
 module.exports = HashCollisionNode;
 
 
-BitmapIndexedNode = require(72);
+BitmapIndexedNode = require(73);
 
 
 function HashCollisionNode(keyHash, count, array) {
@@ -9330,19 +9380,19 @@ function getIndex(array, key) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/index.js-=@*/
-var has = require(34),
-    freeze = require(24),
-    isNull = require(16),
-    isUndefined = require(17),
-    isObject = require(28),
-    defineProperty = require(23),
-    isEqual = require(25),
-    hashCode = require(40),
-    isArrayLike = require(18),
-    fastBindThis = require(21),
-    Box = require(83),
-    Iterator = require(84),
-    BitmapIndexedNode = require(85);
+var has = require(35),
+    freeze = require(25),
+    isNull = require(17),
+    isUndefined = require(18),
+    isObject = require(29),
+    defineProperty = require(24),
+    isEqual = require(26),
+    hashCode = require(41),
+    isArrayLike = require(19),
+    fastBindThis = require(22),
+    Box = require(84),
+    Iterator = require(85),
+    BitmapIndexedNode = require(86);
 
 
 var INTERNAL_CREATE = {},
@@ -9858,8 +9908,8 @@ function Box(value) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/Iterator.js-=@*/
-var inherits = require(50),
-    BaseIterator = require(20);
+var inherits = require(51),
+    BaseIterator = require(21);
 
 
 module.exports = Iterator;
@@ -9873,17 +9923,17 @@ inherits(Iterator, BaseIterator);
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/BitmapIndexedNode.js-=@*/
-var isNull = require(16),
-    isEqual = require(25),
-    hashCode = require(40),
-    bitCount = require(58),
-    consts = require(86),
-    bitpos = require(87),
-    arrayCopy = require(61),
-    cloneAndSet = require(88),
-    removePair = require(89),
-    mask = require(90),
-    nodeIterator = require(91),
+var isNull = require(17),
+    isEqual = require(26),
+    hashCode = require(41),
+    bitCount = require(59),
+    consts = require(87),
+    bitpos = require(88),
+    arrayCopy = require(62),
+    cloneAndSet = require(89),
+    removePair = require(90),
+    mask = require(91),
+    nodeIterator = require(92),
     ArrayNode, createNode;
 
 
@@ -9897,8 +9947,8 @@ var baseArrayCopy = arrayCopy.base,
 module.exports = BitmapIndexedNode;
 
 
-ArrayNode = require(92);
-createNode = require(93);
+ArrayNode = require(93);
+createNode = require(94);
 
 
 function BitmapIndexedNode(bitmap, array) {
@@ -10059,7 +10109,7 @@ consts.MAX_BITMAP_INDEXED_SIZE = consts.SIZE / 2;
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/bitpos.js-=@*/
-var mask = require(90);
+var mask = require(91);
 
 
 module.exports = bitpos;
@@ -10071,8 +10121,8 @@ function bitpos(hashCode, shift) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/cloneAndSet.js-=@*/
-var isUndefined = require(17),
-    arrayCopy = require(61);
+var isUndefined = require(18),
+    arrayCopy = require(62);
 
 
 var baseArrayCopy = arrayCopy.base;
@@ -10097,7 +10147,7 @@ function cloneAndSet(array, index0, value0, index1, value1) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/removePair.js-=@*/
-var arrayCopy = require(61);
+var arrayCopy = require(62);
 
 
 var baseArrayCopy = arrayCopy.base;
@@ -10118,7 +10168,7 @@ function removePair(array, index) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/mask.js-=@*/
-var consts = require(86);
+var consts = require(87);
 
 
 var MASK = consts.MASK;
@@ -10133,9 +10183,9 @@ function mask(hashCode, shift) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/nodeIterator.js-=@*/
-var isNull = require(16),
-    isUndefined = require(17),
-    Iterator = require(84);
+var isNull = require(17),
+    isUndefined = require(18),
+    Iterator = require(85);
 
 
 var IteratorValue = Iterator.Value;
@@ -10280,12 +10330,12 @@ function iteratorReverse(_this) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/ArrayNode.js-=@*/
-var isNull = require(16),
-    isNullOrUndefined = require(30),
-    consts = require(86),
-    mask = require(90),
-    cloneAndSet = require(88),
-    Iterator = require(84),
+var isNull = require(17),
+    isNullOrUndefined = require(31),
+    consts = require(87),
+    mask = require(91),
+    cloneAndSet = require(89),
+    Iterator = require(85),
     BitmapIndexedNode;
 
 
@@ -10299,7 +10349,7 @@ var SHIFT = consts.SHIFT,
 module.exports = ArrayNode;
 
 
-BitmapIndexedNode = require(85);
+BitmapIndexedNode = require(86);
 
 
 function ArrayNode(count, array) {
@@ -10492,16 +10542,16 @@ function pack(array, index) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/createNode.js-=@*/
-var hashCode = require(40),
-    Box = require(83),
+var hashCode = require(41),
+    Box = require(84),
     HashCollisionNode, BitmapIndexedNode;
 
 
 module.exports = createNode;
 
 
-HashCollisionNode = require(94);
-BitmapIndexedNode = require(85);
+HashCollisionNode = require(95);
+BitmapIndexedNode = require(86);
 
 
 function createNode(shift, key0, value0, keyHash1, key1, value1) {
@@ -10520,12 +10570,12 @@ function createNode(shift, key0, value0, keyHash1, key1, value1) {
 },
 function(require, exports, module, undefined, global) {
 /*@=-@nathanfaucett/immutable-hash_map@0.0.3/src/HashCollisionNode.js-=@*/
-var isEqual = require(25),
-    bitpos = require(87),
-    arrayCopy = require(61),
-    cloneAndSet = require(88),
-    removePair = require(89),
-    nodeIterator = require(91),
+var isEqual = require(26),
+    bitpos = require(88),
+    arrayCopy = require(62),
+    cloneAndSet = require(89),
+    removePair = require(90),
+    nodeIterator = require(92),
     BitmapIndexedNode;
 
 
@@ -10537,7 +10587,7 @@ var baseArrayCopy = arrayCopy.base,
 module.exports = HashCollisionNode;
 
 
-BitmapIndexedNode = require(85);
+BitmapIndexedNode = require(86);
 
 
 function HashCollisionNode(keyHash, count, array) {
